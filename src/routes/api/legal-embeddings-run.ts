@@ -42,7 +42,7 @@ export const Route = createFileRoute("/api/legal-embeddings-run")({
             });
             jobId = job.id;
           }
-          const apiKey = process.env.LOVABLE_API_KEY;
+          const apiKey = process.env.OPENAI_API_KEY;
           const result = await EmbeddingBatchProcessor.processBatch({
             jobId, jobRepo, chunkRepo, embeddingRepo: embRepo,
             ctx: { modelId, apiKey },

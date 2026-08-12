@@ -1,4 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { AIProviderFactory } from "@/services/editorial/ai/providers/AIProviderFactory";
+import { AIError } from "@/services/editorial/ai/types";
 
 type CaseRef = {
   id: string;
@@ -32,9 +34,6 @@ export const Route = createFileRoute("/api/ai-match-similar-cases")({
         } catch {
           return new Response("Invalid JSON", { status: 400 });
         }
-
-        const key = process.env.LOVABLE_API_KEY;
-        if (!key) return new Response("LOVABLE_API_KEY missing", { status: 500 });
 
         const currentId = body.current_id ?? "";
         const cases = (body.cases ?? []).filter((c) => c.id && c.id !== currentId).slice(0, 400);
@@ -92,39 +91,28 @@ export const Route = createFileRoute("/api/ai-match-similar-cases")({
           required: ["matches"],
         };
 
-        const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-          method: "POST",
-          headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
-          body: JSON.stringify({
-            model: "google/gemini-3-flash-preview",
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        let parsed: any;
+        try {
+          const provider = AIProviderFactory.get("anthropic-native");
+          const result = await provider.complete({
+            model: "anthropic/claude-haiku-4-5",
             messages: [
               { role: "system", content: system },
               { role: "user", content: JSON.stringify(user) },
             ],
-            response_format: {
-              type: "json_schema",
-              json_schema: { name: "similar_case_match", strict: false, schema },
-            },
-          }),
-        });
-
-        if (!res.ok) {
-          const text = await res.text();
+            jsonSchema: { name: "similar_case_match", schema },
+          });
+          parsed = result.json;
+        } catch (err) {
+          if (err instanceof AIError) {
+            return new Response(
+              JSON.stringify({ error: err.userMessage, detail: err.detail }),
+              { status: err.status ?? 500, headers: { "Content-Type": "application/json" } },
+            );
+          }
           return new Response(
-            JSON.stringify({ error: `AI Gateway ${res.status}: ${text.slice(0, 500)}` }),
-            { status: res.status, headers: { "Content-Type": "application/json" } },
-          );
-        }
-
-        const json = (await res.json()) as { choices?: Array<{ message?: { content?: string } }> };
-        const content = json.choices?.[0]?.message?.content ?? "";
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        let parsed: any;
-        try {
-          parsed = JSON.parse(content);
-        } catch {
-          return new Response(
-            JSON.stringify({ error: "AI-Antwort konnte nicht als JSON gelesen werden.", raw: content }),
+            JSON.stringify({ error: "AI-Antwort konnte nicht als JSON gelesen werden." }),
             { status: 502, headers: { "Content-Type": "application/json" } },
           );
         }

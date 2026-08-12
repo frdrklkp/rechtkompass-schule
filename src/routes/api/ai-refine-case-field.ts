@@ -1,4 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { AIProviderFactory } from "@/services/editorial/ai/providers/AIProviderFactory";
+import { AIError } from "@/services/editorial/ai/types";
 
 /**
  * Gezielte KI-Nachbesserung eines einzelnen Feldes.
@@ -38,9 +40,6 @@ export const Route = createFileRoute("/api/ai-refine-case-field")({
         const caseRow = body.caseRow ?? {};
         const reason = (body.reason ?? "").trim();
         if (!field) return new Response("field required", { status: 400 });
-
-        const key = process.env.LOVABLE_API_KEY;
-        if (!key) return new Response("LOVABLE_API_KEY missing", { status: 500 });
 
         const system = [
           "Du bist juristischer Redaktionsassistent für den RechtKompass Schule (NRW).",
@@ -107,36 +106,26 @@ export const Route = createFileRoute("/api/ai-refine-case-field")({
             "Antworte AUSSCHLIESSLICH mit dem Feldwert im Feld 'value'. Kein Score. Keine Bewertung. Keine Erklärung außerhalb des Feldwertes.",
         };
 
-        const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-          method: "POST",
-          headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
-          body: JSON.stringify({
-            model: "google/gemini-3-flash-preview",
+        let parsed: { value?: unknown };
+        try {
+          const provider = AIProviderFactory.get("anthropic-native");
+          const result = await provider.complete({
+            model: "anthropic/claude-haiku-4-5",
             messages: [
               { role: "system", content: system },
               { role: "user", content: JSON.stringify(user) },
             ],
-            response_format: {
-              type: "json_schema",
-              json_schema: { name: "refined_field", strict: false, schema },
-            },
-          }),
-        });
-
-        if (!res.ok) {
-          const text = await res.text();
-          return new Response(
-            JSON.stringify({ error: `AI Gateway ${res.status}: ${text.slice(0, 300)}` }),
-            { status: res.status, headers: { "Content-Type": "application/json" } },
-          );
-        }
-        const json = (await res.json()) as { choices?: Array<{ message?: { content?: string } }> };
-        const content = json.choices?.[0]?.message?.content ?? "";
-        let parsed: { value?: unknown };
-        try {
-          parsed = JSON.parse(content);
-        } catch {
-          return new Response(JSON.stringify({ error: "Antwort nicht als JSON lesbar", raw: content }), {
+            jsonSchema: { name: "refined_field", schema },
+          });
+          parsed = (result.json ?? {}) as { value?: unknown };
+        } catch (err) {
+          if (err instanceof AIError) {
+            return new Response(
+              JSON.stringify({ error: err.userMessage, detail: err.detail }),
+              { status: err.status ?? 500, headers: { "Content-Type": "application/json" } },
+            );
+          }
+          return new Response(JSON.stringify({ error: "Antwort nicht als JSON lesbar" }), {
             status: 502,
             headers: { "Content-Type": "application/json" },
           });

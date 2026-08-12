@@ -134,7 +134,7 @@ function SearchIndexAdmin() {
               Service-Role-Key:{" "}
               {status.env.hasServiceRoleKey ? "✓ vorhanden" : "✗ fehlt (EXTERNAL_SUPABASE_SERVICE_ROLE_KEY)"}
             </li>
-            <li>KI-Gateway: {status.env.hasAiGatewayKey ? "✓ vorhanden" : "✗ fehlt (LOVABLE_API_KEY)"}</li>
+            <li>Embedding-Anbieter: {status.env.hasAiGatewayKey ? "✓ vorhanden" : "✗ fehlt (OPENAI_API_KEY)"}</li>
           </ul>
         </div>
       )}
@@ -182,7 +182,7 @@ function SearchIndexAdmin() {
                 Reindex deaktiviert:
                 {!status?.env?.hasServiceRoleKey &&
                   " SUPABASE_SERVICE_ROLE_KEY fehlt (Secret EXTERNAL_SUPABASE_SERVICE_ROLE_KEY setzen)."}
-                {!status?.env?.hasAiGatewayKey && " KI-Gateway (LOVABLE_API_KEY) fehlt."}
+                {!status?.env?.hasAiGatewayKey && " Embedding-Anbieter (OPENAI_API_KEY) fehlt."}
               </div>
             )}
           </>

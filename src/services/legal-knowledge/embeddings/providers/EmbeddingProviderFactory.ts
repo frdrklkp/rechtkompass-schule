@@ -6,6 +6,7 @@ import { EmbeddingModelRegistry } from "../registry/EmbeddingModelRegistry";
 import { legalEmbeddingFlags } from "../runtime/featureFlags";
 import { GatewayEmbeddingProvider } from "./GatewayEmbeddingProvider";
 import { MockEmbeddingProvider } from "./MockEmbeddingProvider";
+import { OpenAIEmbeddingProvider } from "./OpenAIEmbeddingProvider";
 import type { EmbeddingProvider } from "./types";
 
 export interface FactoryOptions {
@@ -29,6 +30,14 @@ export const EmbeddingProviderFactory = {
       const key = opts.apiKey ?? (typeof process !== "undefined" ? process.env.LOVABLE_API_KEY : undefined);
       if (!key) throw new Error("LOVABLE_API_KEY fehlt für Gateway-Provider");
       return new GatewayEmbeddingProvider(key);
+    }
+    if (model.providerId === "openai-native") {
+      if (!legalEmbeddingFlags.externalProviderEnabled) {
+        return new MockEmbeddingProvider();
+      }
+      const key = opts.apiKey ?? (typeof process !== "undefined" ? process.env.OPENAI_API_KEY : undefined);
+      if (!key) throw new Error("OPENAI_API_KEY fehlt für OpenAI-Provider");
+      return new OpenAIEmbeddingProvider(key);
     }
     throw new Error(`Kein Provider registriert für ${model.providerId}`);
   },

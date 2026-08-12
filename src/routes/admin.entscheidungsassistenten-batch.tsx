@@ -728,7 +728,7 @@ function BatchPage() {
       (payload.meta as any).status = "draft";
       (payload.meta as any).source = "ai_batch";
       (payload.meta as any).generatedAt = new Date().toISOString();
-      (payload.meta as any).model = "google/gemini-3-flash-preview";
+      (payload.meta as any).model = "anthropic/claude-haiku-4-5";
 
       await updateCase(row.id, { decision_tree: payload as any } as any);
 

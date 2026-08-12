@@ -87,9 +87,9 @@ function tryParseJson(text: string): RawLlmAnswer {
 
 export const AnswerGenerator = {
   async generate(prompt: BuiltPrompt, opts: { forceMock?: boolean; model?: string; signal?: AbortSignal } = {}): Promise<GeneratedAnswer> {
-    const providerId = opts.forceMock ? "mock" : "lovable-gateway";
+    const providerId = opts.forceMock ? "mock" : "anthropic-native";
     const provider = AIProviderFactory.get(providerId);
-    const model = opts.model ?? "google/gemini-3.6-flash";
+    const model = opts.model ?? "anthropic/claude-haiku-4-5";
     const started = Date.now();
     try {
       const res = await provider.complete({

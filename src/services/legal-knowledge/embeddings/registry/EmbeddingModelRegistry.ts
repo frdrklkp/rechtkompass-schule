@@ -10,7 +10,7 @@ const NOW = "2026-07-29T00:00:00.000Z";
 const MODELS: EmbeddingModelDefinition[] = [
   {
     modelId: "openai/text-embedding-3-small",
-    providerId: "lovable-gateway",
+    providerId: "openai-native",
     displayName: "OpenAI text-embedding-3-small (1536)",
     dimensions: 1536,
     maxInputTokens: 8192,

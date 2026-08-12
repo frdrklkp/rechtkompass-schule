@@ -27,31 +27,35 @@ export interface TaskRoute {
   fallbackModels?: string[];
 }
 
-const DEFAULT_MODEL = "google/gemini-3.6-flash";
+// Vorher: google/gemini-3.6-flash über Lovables Gateway. Umgestellt auf
+// Anthropic direkt (siehe AnthropicProvider). Der Pro-Tier für juristische
+// Nuancen (vorher gemini-2.5-pro) ist jetzt Sonnet statt Haiku.
+const DEFAULT_MODEL = "anthropic/claude-haiku-4-5";
+const PRO_MODEL = "anthropic/claude-sonnet-5";
 
 const TASK_ROUTES: Record<AITaskType, TaskRoute> = {
-  "improve.title": { primaryModel: DEFAULT_MODEL, fallbackModels: ["google/gemini-2.5-flash"] },
-  "improve.shortDescription": { primaryModel: DEFAULT_MODEL, fallbackModels: ["google/gemini-2.5-flash"] },
-  "improve.recommendation": { primaryModel: DEFAULT_MODEL, fallbackModels: ["google/gemini-2.5-flash"] },
-  "improve.legalExplanation": { primaryModel: "google/gemini-2.5-pro", fallbackModels: [DEFAULT_MODEL] },
+  "improve.title": { primaryModel: DEFAULT_MODEL },
+  "improve.shortDescription": { primaryModel: DEFAULT_MODEL },
+  "improve.recommendation": { primaryModel: DEFAULT_MODEL },
+  "improve.legalExplanation": { primaryModel: PRO_MODEL, fallbackModels: [DEFAULT_MODEL] },
   "generate.checklist": { primaryModel: DEFAULT_MODEL },
-  "generate.faq": { primaryModel: DEFAULT_MODEL, fallbackModels: ["google/gemini-2.5-flash"] },
+  "generate.faq": { primaryModel: DEFAULT_MODEL },
   "generate.documentation": { primaryModel: DEFAULT_MODEL },
   "generate.practiceTips": { primaryModel: DEFAULT_MODEL },
-  "generate.decisionTree": { primaryModel: "google/gemini-2.5-pro", fallbackModels: [DEFAULT_MODEL] },
+  "generate.decisionTree": { primaryModel: PRO_MODEL, fallbackModels: [DEFAULT_MODEL] },
   "summarize.changes": { primaryModel: DEFAULT_MODEL },
   "detect.duplicates": { primaryModel: DEFAULT_MODEL },
-  "quality.improve": { primaryModel: "google/gemini-2.5-pro", fallbackModels: [DEFAULT_MODEL] },
-  "review.readiness": { primaryModel: "google/gemini-2.5-pro", fallbackModels: [DEFAULT_MODEL] },
-  // Legal Intelligence – bevorzugt Pro-Modell für juristische Nuancen.
-  "legal.analyzeCompleteness": { primaryModel: "google/gemini-2.5-pro", fallbackModels: [DEFAULT_MODEL] },
-  "legal.suggestSources": { primaryModel: "google/gemini-2.5-pro", fallbackModels: [DEFAULT_MODEL] },
-  "legal.checkConsistency": { primaryModel: "google/gemini-2.5-pro", fallbackModels: [DEFAULT_MODEL] },
-  "legal.checkDocumentation": { primaryModel: DEFAULT_MODEL, fallbackModels: ["google/gemini-2.5-flash"] },
-  "legal.compareCases": { primaryModel: "google/gemini-2.5-pro", fallbackModels: [DEFAULT_MODEL] },
-  "legal.explainCitation": { primaryModel: DEFAULT_MODEL, fallbackModels: ["google/gemini-2.5-flash"] },
-  "legal.riskIndicators": { primaryModel: DEFAULT_MODEL, fallbackModels: ["google/gemini-2.5-flash"] },
-  "legal.summarize": { primaryModel: DEFAULT_MODEL, fallbackModels: ["google/gemini-2.5-flash"] },
+  "quality.improve": { primaryModel: PRO_MODEL, fallbackModels: [DEFAULT_MODEL] },
+  "review.readiness": { primaryModel: PRO_MODEL, fallbackModels: [DEFAULT_MODEL] },
+  // Legal Intelligence – bevorzugt Sonnet für juristische Nuancen.
+  "legal.analyzeCompleteness": { primaryModel: PRO_MODEL, fallbackModels: [DEFAULT_MODEL] },
+  "legal.suggestSources": { primaryModel: PRO_MODEL, fallbackModels: [DEFAULT_MODEL] },
+  "legal.checkConsistency": { primaryModel: PRO_MODEL, fallbackModels: [DEFAULT_MODEL] },
+  "legal.checkDocumentation": { primaryModel: DEFAULT_MODEL },
+  "legal.compareCases": { primaryModel: PRO_MODEL, fallbackModels: [DEFAULT_MODEL] },
+  "legal.explainCitation": { primaryModel: DEFAULT_MODEL },
+  "legal.riskIndicators": { primaryModel: DEFAULT_MODEL },
+  "legal.summarize": { primaryModel: DEFAULT_MODEL },
 };
 
 /** Erweiterungspunkt: Route zur Laufzeit anpassen (z. B. Admin-Konsole). */
@@ -86,7 +90,7 @@ function planAttempts(task: AITaskType): RouteAttempt[] {
   // Sicherheitsnetz: falls kein bekanntes Modell gefunden wurde, versuche
   // Default über Gateway/Mock (Factory entscheidet fallback).
   if (attempts.length === 0) {
-    attempts.push({ model: DEFAULT_MODEL, providerId: "lovable-gateway" });
+    attempts.push({ model: DEFAULT_MODEL, providerId: "anthropic-native" });
   }
   return attempts;
 }

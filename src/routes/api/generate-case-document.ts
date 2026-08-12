@@ -1,4 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { AIProviderFactory } from "@/services/editorial/ai/providers/AIProviderFactory";
+import { AIError } from "@/services/editorial/ai/types";
 
 
 type LegalSectionRef = {
@@ -46,15 +48,6 @@ export const Route = createFileRoute("/api/generate-case-document")({
         }
         const caseId = body.case_id;
         if (!caseId) return new Response("case_id fehlt", { status: 400 });
-
-        const apiKey = process.env.LOVABLE_API_KEY;
-        if (!apiKey) {
-          console.error("[generate-case-document] LOVABLE_API_KEY fehlt");
-          return new Response(
-            JSON.stringify({ error: "KI-Gateway ist derzeit nicht konfiguriert." }),
-            { status: 503, headers: { "Content-Type": "application/json" } },
-          );
-        }
 
         let supabase;
         try {
@@ -246,41 +239,28 @@ export const Route = createFileRoute("/api/generate-case-document")({
           required: ["title", "content", "placeholders", "used_legal_section_ids"],
         };
 
-        const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${apiKey}`,
-          },
-          body: JSON.stringify({
-            model: "google/gemini-3-flash-preview",
+        const generationModel = "anthropic/claude-haiku-4-5";
+        let parsed: any;
+        try {
+          const provider = AIProviderFactory.get("anthropic-native");
+          const result = await provider.complete({
+            model: generationModel,
             messages: [
               { role: "system", content: system },
               { role: "user", content: JSON.stringify(user) },
             ],
-            response_format: {
-              type: "json_schema",
-              json_schema: { name: "case_document", strict: false, schema },
-            },
-          }),
-        });
-        if (!aiRes.ok) {
-          const t = await aiRes.text();
+            jsonSchema: { name: "case_document", schema },
+          });
+          parsed = result.json;
+        } catch (err) {
+          if (err instanceof AIError) {
+            return new Response(
+              JSON.stringify({ error: err.userMessage, detail: err.detail }),
+              { status: err.status ?? 500, headers: { "Content-Type": "application/json" } },
+            );
+          }
           return new Response(
-            JSON.stringify({ error: `AI Gateway ${aiRes.status}: ${t.slice(0, 500)}` }),
-            { status: aiRes.status, headers: { "Content-Type": "application/json" } },
-          );
-        }
-        const aiJson = (await aiRes.json()) as {
-          choices?: Array<{ message?: { content?: string } }>;
-        };
-        const raw = aiJson.choices?.[0]?.message?.content ?? "";
-        let parsed: any;
-        try {
-          parsed = JSON.parse(raw);
-        } catch {
-          return new Response(
-            JSON.stringify({ error: "AI-Antwort konnte nicht als JSON gelesen werden.", raw }),
+            JSON.stringify({ error: "AI-Antwort konnte nicht als JSON gelesen werden." }),
             { status: 502, headers: { "Content-Type": "application/json" } },
           );
         }
@@ -369,7 +349,7 @@ export const Route = createFileRoute("/api/generate-case-document")({
             placeholders,
             used_sources: usedSources,
             generation_metadata: {
-              model: "google/gemini-3-flash-preview",
+              model: generationModel,
               generated_at: new Date().toISOString(),
               template_id: templateRow?.id ?? null,
               used_legal_section_ids: usedIds,

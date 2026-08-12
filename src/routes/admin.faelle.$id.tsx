@@ -926,7 +926,7 @@ export function PracticeCaseWizard({ forcedId }: { forcedId?: string } = {}) {
           ai: {
             ...(p.meta.ai ?? {}),
             used: true,
-            model: p.meta.ai?.model || "google/gemini-3-flash-preview",
+            model: p.meta.ai?.model || "anthropic/claude-haiku-4-5",
             last_assist_at: new Date().toISOString(),
             created_at: p.meta.ai?.created_at ?? new Date().toISOString(),
           },
@@ -1484,7 +1484,7 @@ export function PracticeCaseWizard({ forcedId }: { forcedId?: string } = {}) {
                     <Input
                       value={ai.model ?? ""}
                       onChange={(e) => setAi({ model: e.target.value })}
-                      placeholder="z. B. google/gemini-3-flash-preview"
+                      placeholder="z. B. anthropic/claude-haiku-4-5"
                       className="h-7 text-[11px]"
                     />
                   </div>

@@ -36,7 +36,7 @@ export function getSearchIndexEnvStatus() {
     hasUrl: !!readUrl(),
     hasPublishableKey: !!readPublishableKey(),
     hasServiceRoleKey: !!readServiceRoleKey(),
-    hasAiGatewayKey: !!process.env.LOVABLE_API_KEY,
+    hasAiGatewayKey: !!process.env.OPENAI_API_KEY || !!process.env.LOVABLE_API_KEY,
   };
 }
 

@@ -9,178 +9,128 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as VorgaengeRouteImport } from './routes/vorgaenge'
-import { Route as RechtsgrundlagenRouteImport } from './routes/rechtsgrundlagen'
-import { Route as PraesentationRouteImport } from './routes/praesentation'
-import { Route as NavigatorRouteImport } from './routes/navigator'
-import { Route as KollegeRouteImport } from './routes/kollege'
-import { Route as FaelleRouteImport } from './routes/faelle'
-import { Route as EinstellungenRouteImport } from './routes/einstellungen'
-import { Route as DokumenteRouteImport } from './routes/dokumente'
-import { Route as DokumentationRouteImport } from './routes/dokumentation'
-import { Route as DebugRouteImport } from './routes/debug'
-import { Route as AssistentRouteImport } from './routes/assistent'
-import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as WorkflowsIndexRouteImport } from './routes/workflows.index'
+import { Route as AdminRouteImport } from './routes/admin'
+import { Route as AssistentRouteImport } from './routes/assistent'
+import { Route as DebugRouteImport } from './routes/debug'
+import { Route as DokumentationRouteImport } from './routes/dokumentation'
+import { Route as DokumenteRouteImport } from './routes/dokumente'
+import { Route as EinstellungenRouteImport } from './routes/einstellungen'
+import { Route as FaelleRouteImport } from './routes/faelle'
+import { Route as KollegeRouteImport } from './routes/kollege'
+import { Route as NavigatorRouteImport } from './routes/navigator'
+import { Route as PraesentationRouteImport } from './routes/praesentation'
+import { Route as RechtsgrundlagenRouteImport } from './routes/rechtsgrundlagen'
+import { Route as VorgaengeRouteImport } from './routes/vorgaenge'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
-import { Route as WorkflowsTemplateIdRouteImport } from './routes/workflows.$templateId'
-import { Route as RechtsgrundlagenIdRouteImport } from './routes/rechtsgrundlagen.$id'
-import { Route as FallIdRouteImport } from './routes/fall.$id'
-import { Route as FaelleIdRouteImport } from './routes/faelle.$id'
-import { Route as ApiWorkflowsRouteImport } from './routes/api/workflows'
-import { Route as ApiWorkflowSessionsRouteImport } from './routes/api/workflow-sessions'
-import { Route as ApiSendCaseDocumentEmailRouteImport } from './routes/api/send-case-document-email'
-import { Route as ApiSearchTestsetOverridesRouteImport } from './routes/api/search-testset-overrides'
-import { Route as ApiSearchEmbeddingsStatusRouteImport } from './routes/api/search-embeddings-status'
-import { Route as ApiSearchEmbeddingsReindexRouteImport } from './routes/api/search-embeddings-reindex'
-import { Route as ApiSearchEmbeddingsQueryRouteImport } from './routes/api/search-embeddings-query'
-import { Route as ApiLegalSourceCrawlRouteImport } from './routes/api/legal-source-crawl'
-import { Route as ApiLegalRetrievalSearchRouteImport } from './routes/api/legal-retrieval-search'
-import { Route as ApiLegalEmbeddingsValidateRouteImport } from './routes/api/legal-embeddings-validate'
-import { Route as ApiLegalEmbeddingsStatusRouteImport } from './routes/api/legal-embeddings-status'
-import { Route as ApiLegalEmbeddingsRunRouteImport } from './routes/api/legal-embeddings-run'
-import { Route as ApiLegalEmbeddingsRetryRouteImport } from './routes/api/legal-embeddings-retry'
-import { Route as ApiLegalEmbeddingsPreviewRouteImport } from './routes/api/legal-embeddings-preview'
-import { Route as ApiLegalEmbeddingsCancelRouteImport } from './routes/api/legal-embeddings-cancel'
-import { Route as ApiLegalCopilotAskRouteImport } from './routes/api/legal-copilot-ask'
-import { Route as ApiLegalChunksSyncRouteImport } from './routes/api/legal-chunks-sync'
-import { Route as ApiImportLegalSourceRouteImport } from './routes/api/import-legal-source'
-import { Route as ApiGenerateCaseDocumentRouteImport } from './routes/api/generate-case-document'
-import { Route as ApiEnrichLegalSectionRouteImport } from './routes/api/enrich-legal-section'
-import { Route as ApiCrawlLegalSourceRouteImport } from './routes/api/crawl-legal-source'
-import { Route as ApiCopilotTrackRouteImport } from './routes/api/copilot-track'
-import { Route as ApiAiRefineCaseFieldRouteImport } from './routes/api/ai-refine-case-field'
-import { Route as ApiAiReevaluateLegalLinksRouteImport } from './routes/api/ai-reevaluate-legal-links'
-import { Route as ApiAiMatchTemplatesRouteImport } from './routes/api/ai-match-templates'
-import { Route as ApiAiMatchSimilarCasesRouteImport } from './routes/api/ai-match-similar-cases'
-import { Route as ApiAiMatchLegalSectionsRouteImport } from './routes/api/ai-match-legal-sections'
-import { Route as ApiAiMatchKeywordsRouteImport } from './routes/api/ai-match-keywords'
-import { Route as ApiAiEditorialSuggestRouteImport } from './routes/api/ai-editorial-suggest'
-import { Route as ApiAiDraftTopicsRouteImport } from './routes/api/ai-draft-topics'
-import { Route as ApiAiDraftDecisionTreeRouteImport } from './routes/api/ai-draft-decision-tree'
-import { Route as ApiAiDraftCaseRouteImport } from './routes/api/ai-draft-case'
-import { Route as ApiAiDraftBatchItemRouteImport } from './routes/api/ai-draft-batch-item'
-import { Route as AdminVorlagenRouteImport } from './routes/admin.vorlagen'
-import { Route as AdminVerknuepfungenRouteImport } from './routes/admin.verknuepfungen'
-import { Route as AdminSuchtestRouteImport } from './routes/admin.suchtest'
-import { Route as AdminSuchindexRouteImport } from './routes/admin.suchindex'
-import { Route as AdminSchlagwoerterRouteImport } from './routes/admin.schlagwoerter'
-import { Route as AdminRechtsgrundlagenRouteImport } from './routes/admin.rechtsgrundlagen'
-import { Route as AdminQuellenwaechterRouteImport } from './routes/admin.quellenwaechter'
-import { Route as AdminQualitaetsmanagerRouteImport } from './routes/admin.qualitaetsmanager'
-import { Route as AdminQualitaetRouteImport } from './routes/admin.qualitaet'
-import { Route as AdminPraxisfallMatchingRouteImport } from './routes/admin.praxisfall-matching'
-import { Route as AdminLegalTestmatrixRouteImport } from './routes/admin.legal-testmatrix'
-import { Route as AdminLegalKnowledgeRouteImport } from './routes/admin.legal-knowledge'
-import { Route as AdminKnowledgeGraphRouteImport } from './routes/admin.knowledge-graph'
-import { Route as AdminKiEntwurfsmaschineRouteImport } from './routes/admin.ki-entwurfsmaschine'
-import { Route as AdminKategorienRouteImport } from './routes/admin.kategorien'
-import { Route as AdminImportUebersichtRouteImport } from './routes/admin.import-uebersicht'
-import { Route as AdminImportProtokollRouteImport } from './routes/admin.import-protokoll'
-import { Route as AdminImportRouteImport } from './routes/admin.import'
-import { Route as AdminFallmanagerRouteImport } from './routes/admin.fallmanager'
-import { Route as AdminFaelleRouteImport } from './routes/admin.faelle'
-import { Route as AdminEntscheidungsbaeumeRouteImport } from './routes/admin.entscheidungsbaeume'
-import { Route as AdminEntscheidungsassistentenBatchRouteImport } from './routes/admin.entscheidungsassistenten-batch'
-import { Route as AdminEinstellungenRouteImport } from './routes/admin.einstellungen'
-import { Route as AdminCopilotRouteImport } from './routes/admin.copilot'
 import { Route as AdminAenderungenRouteImport } from './routes/admin.aenderungen'
-import { Route as AdminLegalKnowledgeIndexRouteImport } from './routes/admin.legal-knowledge.index'
-import { Route as AdminKiEntwurfsmaschineIndexRouteImport } from './routes/admin.ki-entwurfsmaschine.index'
-import { Route as AdminFaelleIndexRouteImport } from './routes/admin.faelle.index'
+import { Route as AdminCopilotRouteImport } from './routes/admin.copilot'
+import { Route as AdminEinstellungenRouteImport } from './routes/admin.einstellungen'
+import { Route as AdminEntscheidungsassistentenBatchRouteImport } from './routes/admin.entscheidungsassistenten-batch'
+import { Route as AdminEntscheidungsbaeumeRouteImport } from './routes/admin.entscheidungsbaeume'
+import { Route as AdminFaelleRouteImport } from './routes/admin.faelle'
+import { Route as AdminFallmanagerRouteImport } from './routes/admin.fallmanager'
+import { Route as AdminImportRouteImport } from './routes/admin.import'
+import { Route as AdminImportProtokollRouteImport } from './routes/admin.import-protokoll'
+import { Route as AdminImportUebersichtRouteImport } from './routes/admin.import-uebersicht'
+import { Route as AdminKategorienRouteImport } from './routes/admin.kategorien'
+import { Route as AdminKiEntwurfsmaschineRouteImport } from './routes/admin.ki-entwurfsmaschine'
+import { Route as AdminKnowledgeGraphRouteImport } from './routes/admin.knowledge-graph'
+import { Route as AdminLegalKnowledgeRouteImport } from './routes/admin.legal-knowledge'
+import { Route as AdminLegalTestmatrixRouteImport } from './routes/admin.legal-testmatrix'
+import { Route as AdminPraxisfallMatchingRouteImport } from './routes/admin.praxisfall-matching'
+import { Route as AdminQualitaetRouteImport } from './routes/admin.qualitaet'
+import { Route as AdminQualitaetsmanagerRouteImport } from './routes/admin.qualitaetsmanager'
+import { Route as AdminQuellenwaechterRouteImport } from './routes/admin.quellenwaechter'
+import { Route as AdminRechtsgrundlagenRouteImport } from './routes/admin.rechtsgrundlagen'
+import { Route as AdminSchlagwoerterRouteImport } from './routes/admin.schlagwoerter'
+import { Route as AdminSuchindexRouteImport } from './routes/admin.suchindex'
+import { Route as AdminSuchtestRouteImport } from './routes/admin.suchtest'
+import { Route as AdminVerknuepfungenRouteImport } from './routes/admin.verknuepfungen'
+import { Route as AdminVorlagenRouteImport } from './routes/admin.vorlagen'
+import { Route as ApiAiDraftBatchItemRouteImport } from './routes/api/ai-draft-batch-item'
+import { Route as ApiAiDraftCaseRouteImport } from './routes/api/ai-draft-case'
+import { Route as ApiAiDraftDecisionTreeRouteImport } from './routes/api/ai-draft-decision-tree'
+import { Route as ApiAiDraftTopicsRouteImport } from './routes/api/ai-draft-topics'
+import { Route as ApiAiEditorialSuggestRouteImport } from './routes/api/ai-editorial-suggest'
+import { Route as ApiAiMatchKeywordsRouteImport } from './routes/api/ai-match-keywords'
+import { Route as ApiAiMatchLegalSectionsRouteImport } from './routes/api/ai-match-legal-sections'
+import { Route as ApiAiMatchSimilarCasesRouteImport } from './routes/api/ai-match-similar-cases'
+import { Route as ApiAiMatchTemplatesRouteImport } from './routes/api/ai-match-templates'
+import { Route as ApiAiReevaluateLegalLinksRouteImport } from './routes/api/ai-reevaluate-legal-links'
+import { Route as ApiAiRefineCaseFieldRouteImport } from './routes/api/ai-refine-case-field'
+import { Route as ApiCopilotTrackRouteImport } from './routes/api/copilot-track'
+import { Route as ApiCrawlLegalSourceRouteImport } from './routes/api/crawl-legal-source'
+import { Route as ApiEnrichLegalSectionRouteImport } from './routes/api/enrich-legal-section'
+import { Route as ApiGenerateCaseDocumentRouteImport } from './routes/api/generate-case-document'
+import { Route as ApiImportLegalSourceRouteImport } from './routes/api/import-legal-source'
+import { Route as ApiLegalChunksSyncRouteImport } from './routes/api/legal-chunks-sync'
+import { Route as ApiLegalCopilotAskRouteImport } from './routes/api/legal-copilot-ask'
+import { Route as ApiLegalEmbeddingsCancelRouteImport } from './routes/api/legal-embeddings-cancel'
+import { Route as ApiLegalEmbeddingsPreviewRouteImport } from './routes/api/legal-embeddings-preview'
+import { Route as ApiLegalEmbeddingsRetryRouteImport } from './routes/api/legal-embeddings-retry'
+import { Route as ApiLegalEmbeddingsRunRouteImport } from './routes/api/legal-embeddings-run'
+import { Route as ApiLegalEmbeddingsStatusRouteImport } from './routes/api/legal-embeddings-status'
+import { Route as ApiLegalEmbeddingsValidateRouteImport } from './routes/api/legal-embeddings-validate'
+import { Route as ApiLegalRetrievalSearchRouteImport } from './routes/api/legal-retrieval-search'
+import { Route as ApiLegalSourceCrawlRouteImport } from './routes/api/legal-source-crawl'
+import { Route as ApiSearchEmbeddingsQueryRouteImport } from './routes/api/search-embeddings-query'
+import { Route as ApiSearchEmbeddingsReindexRouteImport } from './routes/api/search-embeddings-reindex'
+import { Route as ApiSearchEmbeddingsStatusRouteImport } from './routes/api/search-embeddings-status'
+import { Route as ApiSearchTestsetOverridesRouteImport } from './routes/api/search-testset-overrides'
+import { Route as ApiSendCaseDocumentEmailRouteImport } from './routes/api/send-case-document-email'
+import { Route as ApiWorkflowSessionsRouteImport } from './routes/api/workflow-sessions'
+import { Route as ApiWorkflowsRouteImport } from './routes/api/workflows'
+import { Route as FaelleIdRouteImport } from './routes/faelle.$id'
+import { Route as FallIdRouteImport } from './routes/fall.$id'
+import { Route as RechtsgrundlagenIdRouteImport } from './routes/rechtsgrundlagen.$id'
+import { Route as WorkflowsIndexRouteImport } from './routes/workflows.index'
+import { Route as WorkflowsTemplateIdRouteImport } from './routes/workflows.$templateId'
 import { Route as AdminEditorialIndexRouteImport } from './routes/admin.editorial.index'
-import { Route as WorkflowsSessionSessionIdRouteImport } from './routes/workflows.session.$sessionId'
-import { Route as FaelleIdDokumentRouteImport } from './routes/faelle_.$id.dokument'
-import { Route as ApiWorkflowsIdRouteImport } from './routes/api/workflows.$id'
-import { Route as ApiWorkflowSessionsIdRouteImport } from './routes/api/workflow-sessions.$id'
-import { Route as AdminRechtsgrundlagenIdRouteImport } from './routes/admin.rechtsgrundlagen.$id'
-import { Route as AdminLegalKnowledgeVersionsRouteImport } from './routes/admin.legal-knowledge.versions'
-import { Route as AdminLegalKnowledgeVeraltetRouteImport } from './routes/admin.legal-knowledge.veraltet'
-import { Route as AdminLegalKnowledgeSucheRouteImport } from './routes/admin.legal-knowledge.suche'
-import { Route as AdminLegalKnowledgeSourcesRouteImport } from './routes/admin.legal-knowledge.sources'
-import { Route as AdminLegalKnowledgeQuellenConnectorRouteImport } from './routes/admin.legal-knowledge.quellen-connector'
-import { Route as AdminLegalKnowledgePruefbedarfRouteImport } from './routes/admin.legal-knowledge.pruefbedarf'
-import { Route as AdminLegalKnowledgeImportRouteImport } from './routes/admin.legal-knowledge.import'
-import { Route as AdminLegalKnowledgeHistoryRouteImport } from './routes/admin.legal-knowledge.history'
-import { Route as AdminKiEntwurfsmaschineReviewRouteImport } from './routes/admin.ki-entwurfsmaschine.review'
-import { Route as AdminKiEntwurfsmaschinePruefungRouteImport } from './routes/admin.ki-entwurfsmaschine.pruefung'
-import { Route as AdminKiEntwurfsmaschineExcelImportRouteImport } from './routes/admin.ki-entwurfsmaschine.excel-import'
-import { Route as AdminImportProtokollIdRouteImport } from './routes/admin.import-protokoll.$id'
-import { Route as AdminFaelleNeuRouteImport } from './routes/admin.faelle.neu'
-import { Route as AdminFaelleIdRouteImport } from './routes/admin.faelle.$id'
-import { Route as AdminEditorialReviewsRouteImport } from './routes/admin.editorial.reviews'
-import { Route as AdminEditorialQualitaetRouteImport } from './routes/admin.editorial.qualitaet'
-import { Route as AdminEditorialPublishingRouteImport } from './routes/admin.editorial.publishing'
-import { Route as AdminEditorialLegalQualityRouteImport } from './routes/admin.editorial.legal-quality'
 import { Route as AdminEditorialFaelleRouteImport } from './routes/admin.editorial.faelle'
-import { Route as AdminEditorialWorkflowsIndexRouteImport } from './routes/admin.editorial.workflows.index'
-import { Route as ApiWorkflowSessionsIdTransitionsRouteImport } from './routes/api/workflow-sessions.$id.transitions'
-import { Route as ApiWorkflowSessionsIdResumeRouteImport } from './routes/api/workflow-sessions.$id.resume'
-import { Route as ApiWorkflowSessionsIdPauseRouteImport } from './routes/api/workflow-sessions.$id.pause'
-import { Route as ApiWorkflowSessionsIdEventsRouteImport } from './routes/api/workflow-sessions.$id.events'
-import { Route as ApiWorkflowSessionsIdDocumentsRouteImport } from './routes/api/workflow-sessions.$id.documents'
-import { Route as ApiWorkflowSessionsIdChecklistsRouteImport } from './routes/api/workflow-sessions.$id.checklists'
-import { Route as ApiWorkflowSessionsIdCancelRouteImport } from './routes/api/workflow-sessions.$id.cancel'
-import { Route as AdminLegalKnowledgeSourcesIdRouteImport } from './routes/admin.legal-knowledge.sources.$id'
-import { Route as AdminEditorialWorkflowsIdRouteImport } from './routes/admin.editorial.workflows.$id'
+import { Route as AdminEditorialLegalQualityRouteImport } from './routes/admin.editorial.legal-quality'
+import { Route as AdminEditorialPublishingRouteImport } from './routes/admin.editorial.publishing'
+import { Route as AdminEditorialQualitaetRouteImport } from './routes/admin.editorial.qualitaet'
+import { Route as AdminEditorialReviewsRouteImport } from './routes/admin.editorial.reviews'
+import { Route as AdminFaelleIndexRouteImport } from './routes/admin.faelle.index'
+import { Route as AdminFaelleIdRouteImport } from './routes/admin.faelle.$id'
+import { Route as AdminFaelleNeuRouteImport } from './routes/admin.faelle.neu'
+import { Route as AdminImportProtokollIdRouteImport } from './routes/admin.import-protokoll.$id'
+import { Route as AdminKiEntwurfsmaschineIndexRouteImport } from './routes/admin.ki-entwurfsmaschine.index'
+import { Route as AdminKiEntwurfsmaschineExcelImportRouteImport } from './routes/admin.ki-entwurfsmaschine.excel-import'
+import { Route as AdminKiEntwurfsmaschinePruefungRouteImport } from './routes/admin.ki-entwurfsmaschine.pruefung'
+import { Route as AdminKiEntwurfsmaschineReviewRouteImport } from './routes/admin.ki-entwurfsmaschine.review'
+import { Route as AdminLegalKnowledgeIndexRouteImport } from './routes/admin.legal-knowledge.index'
+import { Route as AdminLegalKnowledgeHistoryRouteImport } from './routes/admin.legal-knowledge.history'
+import { Route as AdminLegalKnowledgeImportRouteImport } from './routes/admin.legal-knowledge.import'
+import { Route as AdminLegalKnowledgePruefbedarfRouteImport } from './routes/admin.legal-knowledge.pruefbedarf'
+import { Route as AdminLegalKnowledgeQuellenConnectorRouteImport } from './routes/admin.legal-knowledge.quellen-connector'
+import { Route as AdminLegalKnowledgeSourcesRouteImport } from './routes/admin.legal-knowledge.sources'
+import { Route as AdminLegalKnowledgeSucheRouteImport } from './routes/admin.legal-knowledge.suche'
+import { Route as AdminLegalKnowledgeVeraltetRouteImport } from './routes/admin.legal-knowledge.veraltet'
+import { Route as AdminLegalKnowledgeVersionsRouteImport } from './routes/admin.legal-knowledge.versions'
+import { Route as AdminRechtsgrundlagenIdRouteImport } from './routes/admin.rechtsgrundlagen.$id'
+import { Route as ApiWorkflowSessionsIdRouteImport } from './routes/api/workflow-sessions.$id'
+import { Route as ApiWorkflowsIdRouteImport } from './routes/api/workflows.$id'
+import { Route as FaelleIdDokumentRouteImport } from './routes/faelle_.$id.dokument'
+import { Route as WorkflowsSessionSessionIdRouteImport } from './routes/workflows.session.$sessionId'
 import { Route as AdminEditorialFaelleIdRouteImport } from './routes/admin.editorial.faelle.$id'
+import { Route as AdminEditorialWorkflowsIndexRouteImport } from './routes/admin.editorial.workflows.index'
+import { Route as AdminEditorialWorkflowsIdRouteImport } from './routes/admin.editorial.workflows.$id'
+import { Route as AdminLegalKnowledgeSourcesIdRouteImport } from './routes/admin.legal-knowledge.sources.$id'
+import { Route as ApiWorkflowSessionsIdCancelRouteImport } from './routes/api/workflow-sessions.$id.cancel'
+import { Route as ApiWorkflowSessionsIdChecklistsRouteImport } from './routes/api/workflow-sessions.$id.checklists'
+import { Route as ApiWorkflowSessionsIdDocumentsRouteImport } from './routes/api/workflow-sessions.$id.documents'
+import { Route as ApiWorkflowSessionsIdEventsRouteImport } from './routes/api/workflow-sessions.$id.events'
+import { Route as ApiWorkflowSessionsIdPauseRouteImport } from './routes/api/workflow-sessions.$id.pause'
+import { Route as ApiWorkflowSessionsIdResumeRouteImport } from './routes/api/workflow-sessions.$id.resume'
+import { Route as ApiWorkflowSessionsIdTransitionsRouteImport } from './routes/api/workflow-sessions.$id.transitions'
 import { Route as ApiWorkflowSessionsIdDocumentsDocIdRouteImport } from './routes/api/workflow-sessions.$id.documents.$docId'
 import { Route as ApiWorkflowSessionsIdDocumentsDocIdExportRouteImport } from './routes/api/workflow-sessions.$id.documents.$docId.export'
 
-const VorgaengeRoute = VorgaengeRouteImport.update({
-  id: '/vorgaenge',
-  path: '/vorgaenge',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const RechtsgrundlagenRoute = RechtsgrundlagenRouteImport.update({
-  id: '/rechtsgrundlagen',
-  path: '/rechtsgrundlagen',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PraesentationRoute = PraesentationRouteImport.update({
-  id: '/praesentation',
-  path: '/praesentation',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const NavigatorRoute = NavigatorRouteImport.update({
-  id: '/navigator',
-  path: '/navigator',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const KollegeRoute = KollegeRouteImport.update({
-  id: '/kollege',
-  path: '/kollege',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const FaelleRoute = FaelleRouteImport.update({
-  id: '/faelle',
-  path: '/faelle',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const EinstellungenRoute = EinstellungenRouteImport.update({
-  id: '/einstellungen',
-  path: '/einstellungen',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DokumenteRoute = DokumenteRouteImport.update({
-  id: '/dokumente',
-  path: '/dokumente',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DokumentationRoute = DokumentationRouteImport.update({
-  id: '/dokumentation',
-  path: '/dokumentation',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DebugRoute = DebugRouteImport.update({
-  id: '/debug',
-  path: '/debug',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AssistentRoute = AssistentRouteImport.update({
-  id: '/assistent',
-  path: '/assistent',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminRoute = AdminRouteImport.update({
@@ -188,14 +138,59 @@ const AdminRoute = AdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const AssistentRoute = AssistentRouteImport.update({
+  id: '/assistent',
+  path: '/assistent',
   getParentRoute: () => rootRouteImport,
 } as any)
-const WorkflowsIndexRoute = WorkflowsIndexRouteImport.update({
-  id: '/workflows/',
-  path: '/workflows/',
+const DebugRoute = DebugRouteImport.update({
+  id: '/debug',
+  path: '/debug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DokumentationRoute = DokumentationRouteImport.update({
+  id: '/dokumentation',
+  path: '/dokumentation',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DokumenteRoute = DokumenteRouteImport.update({
+  id: '/dokumente',
+  path: '/dokumente',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EinstellungenRoute = EinstellungenRouteImport.update({
+  id: '/einstellungen',
+  path: '/einstellungen',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FaelleRoute = FaelleRouteImport.update({
+  id: '/faelle',
+  path: '/faelle',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const KollegeRoute = KollegeRouteImport.update({
+  id: '/kollege',
+  path: '/kollege',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NavigatorRoute = NavigatorRouteImport.update({
+  id: '/navigator',
+  path: '/navigator',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PraesentationRoute = PraesentationRouteImport.update({
+  id: '/praesentation',
+  path: '/praesentation',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RechtsgrundlagenRoute = RechtsgrundlagenRouteImport.update({
+  id: '/rechtsgrundlagen',
+  path: '/rechtsgrundlagen',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const VorgaengeRoute = VorgaengeRouteImport.update({
+  id: '/vorgaenge',
+  path: '/vorgaenge',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminIndexRoute = AdminIndexRouteImport.update({
@@ -203,148 +198,176 @@ const AdminIndexRoute = AdminIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AdminRoute,
 } as any)
-const WorkflowsTemplateIdRoute = WorkflowsTemplateIdRouteImport.update({
-  id: '/workflows/$templateId',
-  path: '/workflows/$templateId',
-  getParentRoute: () => rootRouteImport,
+const AdminAenderungenRoute = AdminAenderungenRouteImport.update({
+  id: '/aenderungen',
+  path: '/aenderungen',
+  getParentRoute: () => AdminRoute,
 } as any)
-const RechtsgrundlagenIdRoute = RechtsgrundlagenIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => RechtsgrundlagenRoute,
+const AdminCopilotRoute = AdminCopilotRouteImport.update({
+  id: '/copilot',
+  path: '/copilot',
+  getParentRoute: () => AdminRoute,
 } as any)
-const FallIdRoute = FallIdRouteImport.update({
-  id: '/fall/$id',
-  path: '/fall/$id',
-  getParentRoute: () => rootRouteImport,
+const AdminEinstellungenRoute = AdminEinstellungenRouteImport.update({
+  id: '/einstellungen',
+  path: '/einstellungen',
+  getParentRoute: () => AdminRoute,
 } as any)
-const FaelleIdRoute = FaelleIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => FaelleRoute,
-} as any)
-const ApiWorkflowsRoute = ApiWorkflowsRouteImport.update({
-  id: '/api/workflows',
-  path: '/api/workflows',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiWorkflowSessionsRoute = ApiWorkflowSessionsRouteImport.update({
-  id: '/api/workflow-sessions',
-  path: '/api/workflow-sessions',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiSendCaseDocumentEmailRoute =
-  ApiSendCaseDocumentEmailRouteImport.update({
-    id: '/api/send-case-document-email',
-    path: '/api/send-case-document-email',
-    getParentRoute: () => rootRouteImport,
+const AdminEntscheidungsassistentenBatchRoute =
+  AdminEntscheidungsassistentenBatchRouteImport.update({
+    id: '/entscheidungsassistenten-batch',
+    path: '/entscheidungsassistenten-batch',
+    getParentRoute: () => AdminRoute,
   } as any)
-const ApiSearchTestsetOverridesRoute =
-  ApiSearchTestsetOverridesRouteImport.update({
-    id: '/api/search-testset-overrides',
-    path: '/api/search-testset-overrides',
-    getParentRoute: () => rootRouteImport,
+const AdminEntscheidungsbaeumeRoute =
+  AdminEntscheidungsbaeumeRouteImport.update({
+    id: '/entscheidungsbaeume',
+    path: '/entscheidungsbaeume',
+    getParentRoute: () => AdminRoute,
   } as any)
-const ApiSearchEmbeddingsStatusRoute =
-  ApiSearchEmbeddingsStatusRouteImport.update({
-    id: '/api/search-embeddings-status',
-    path: '/api/search-embeddings-status',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiSearchEmbeddingsReindexRoute =
-  ApiSearchEmbeddingsReindexRouteImport.update({
-    id: '/api/search-embeddings-reindex',
-    path: '/api/search-embeddings-reindex',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiSearchEmbeddingsQueryRoute =
-  ApiSearchEmbeddingsQueryRouteImport.update({
-    id: '/api/search-embeddings-query',
-    path: '/api/search-embeddings-query',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiLegalSourceCrawlRoute = ApiLegalSourceCrawlRouteImport.update({
-  id: '/api/legal-source-crawl',
-  path: '/api/legal-source-crawl',
+const AdminFaelleRoute = AdminFaelleRouteImport.update({
+  id: '/faelle',
+  path: '/faelle',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminFallmanagerRoute = AdminFallmanagerRouteImport.update({
+  id: '/fallmanager',
+  path: '/fallmanager',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminImportRoute = AdminImportRouteImport.update({
+  id: '/import',
+  path: '/import',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminImportProtokollRoute = AdminImportProtokollRouteImport.update({
+  id: '/import-protokoll',
+  path: '/import-protokoll',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminImportUebersichtRoute = AdminImportUebersichtRouteImport.update({
+  id: '/import-uebersicht',
+  path: '/import-uebersicht',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminKategorienRoute = AdminKategorienRouteImport.update({
+  id: '/kategorien',
+  path: '/kategorien',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminKiEntwurfsmaschineRoute = AdminKiEntwurfsmaschineRouteImport.update({
+  id: '/ki-entwurfsmaschine',
+  path: '/ki-entwurfsmaschine',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminKnowledgeGraphRoute = AdminKnowledgeGraphRouteImport.update({
+  id: '/knowledge-graph',
+  path: '/knowledge-graph',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminLegalKnowledgeRoute = AdminLegalKnowledgeRouteImport.update({
+  id: '/legal-knowledge',
+  path: '/legal-knowledge',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminLegalTestmatrixRoute = AdminLegalTestmatrixRouteImport.update({
+  id: '/legal-testmatrix',
+  path: '/legal-testmatrix',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminPraxisfallMatchingRoute = AdminPraxisfallMatchingRouteImport.update({
+  id: '/praxisfall-matching',
+  path: '/praxisfall-matching',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminQualitaetRoute = AdminQualitaetRouteImport.update({
+  id: '/qualitaet',
+  path: '/qualitaet',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminQualitaetsmanagerRoute = AdminQualitaetsmanagerRouteImport.update({
+  id: '/qualitaetsmanager',
+  path: '/qualitaetsmanager',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminQuellenwaechterRoute = AdminQuellenwaechterRouteImport.update({
+  id: '/quellenwaechter',
+  path: '/quellenwaechter',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminRechtsgrundlagenRoute = AdminRechtsgrundlagenRouteImport.update({
+  id: '/rechtsgrundlagen',
+  path: '/rechtsgrundlagen',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminSchlagwoerterRoute = AdminSchlagwoerterRouteImport.update({
+  id: '/schlagwoerter',
+  path: '/schlagwoerter',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminSuchindexRoute = AdminSuchindexRouteImport.update({
+  id: '/suchindex',
+  path: '/suchindex',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminSuchtestRoute = AdminSuchtestRouteImport.update({
+  id: '/suchtest',
+  path: '/suchtest',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminVerknuepfungenRoute = AdminVerknuepfungenRouteImport.update({
+  id: '/verknuepfungen',
+  path: '/verknuepfungen',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminVorlagenRoute = AdminVorlagenRouteImport.update({
+  id: '/vorlagen',
+  path: '/vorlagen',
+  getParentRoute: () => AdminRoute,
+} as any)
+const ApiAiDraftBatchItemRoute = ApiAiDraftBatchItemRouteImport.update({
+  id: '/api/ai-draft-batch-item',
+  path: '/api/ai-draft-batch-item',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiLegalRetrievalSearchRoute = ApiLegalRetrievalSearchRouteImport.update({
-  id: '/api/legal-retrieval-search',
-  path: '/api/legal-retrieval-search',
+const ApiAiDraftCaseRoute = ApiAiDraftCaseRouteImport.update({
+  id: '/api/ai-draft-case',
+  path: '/api/ai-draft-case',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiLegalEmbeddingsValidateRoute =
-  ApiLegalEmbeddingsValidateRouteImport.update({
-    id: '/api/legal-embeddings-validate',
-    path: '/api/legal-embeddings-validate',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiLegalEmbeddingsStatusRoute =
-  ApiLegalEmbeddingsStatusRouteImport.update({
-    id: '/api/legal-embeddings-status',
-    path: '/api/legal-embeddings-status',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiLegalEmbeddingsRunRoute = ApiLegalEmbeddingsRunRouteImport.update({
-  id: '/api/legal-embeddings-run',
-  path: '/api/legal-embeddings-run',
+const ApiAiDraftDecisionTreeRoute = ApiAiDraftDecisionTreeRouteImport.update({
+  id: '/api/ai-draft-decision-tree',
+  path: '/api/ai-draft-decision-tree',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiLegalEmbeddingsRetryRoute = ApiLegalEmbeddingsRetryRouteImport.update({
-  id: '/api/legal-embeddings-retry',
-  path: '/api/legal-embeddings-retry',
+const ApiAiDraftTopicsRoute = ApiAiDraftTopicsRouteImport.update({
+  id: '/api/ai-draft-topics',
+  path: '/api/ai-draft-topics',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiLegalEmbeddingsPreviewRoute =
-  ApiLegalEmbeddingsPreviewRouteImport.update({
-    id: '/api/legal-embeddings-preview',
-    path: '/api/legal-embeddings-preview',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiLegalEmbeddingsCancelRoute =
-  ApiLegalEmbeddingsCancelRouteImport.update({
-    id: '/api/legal-embeddings-cancel',
-    path: '/api/legal-embeddings-cancel',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiLegalCopilotAskRoute = ApiLegalCopilotAskRouteImport.update({
-  id: '/api/legal-copilot-ask',
-  path: '/api/legal-copilot-ask',
+const ApiAiEditorialSuggestRoute = ApiAiEditorialSuggestRouteImport.update({
+  id: '/api/ai-editorial-suggest',
+  path: '/api/ai-editorial-suggest',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiLegalChunksSyncRoute = ApiLegalChunksSyncRouteImport.update({
-  id: '/api/legal-chunks-sync',
-  path: '/api/legal-chunks-sync',
+const ApiAiMatchKeywordsRoute = ApiAiMatchKeywordsRouteImport.update({
+  id: '/api/ai-match-keywords',
+  path: '/api/ai-match-keywords',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiImportLegalSourceRoute = ApiImportLegalSourceRouteImport.update({
-  id: '/api/import-legal-source',
-  path: '/api/import-legal-source',
+const ApiAiMatchLegalSectionsRoute = ApiAiMatchLegalSectionsRouteImport.update({
+  id: '/api/ai-match-legal-sections',
+  path: '/api/ai-match-legal-sections',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiGenerateCaseDocumentRoute = ApiGenerateCaseDocumentRouteImport.update({
-  id: '/api/generate-case-document',
-  path: '/api/generate-case-document',
+const ApiAiMatchSimilarCasesRoute = ApiAiMatchSimilarCasesRouteImport.update({
+  id: '/api/ai-match-similar-cases',
+  path: '/api/ai-match-similar-cases',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiEnrichLegalSectionRoute = ApiEnrichLegalSectionRouteImport.update({
-  id: '/api/enrich-legal-section',
-  path: '/api/enrich-legal-section',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiCrawlLegalSourceRoute = ApiCrawlLegalSourceRouteImport.update({
-  id: '/api/crawl-legal-source',
-  path: '/api/crawl-legal-source',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiCopilotTrackRoute = ApiCopilotTrackRouteImport.update({
-  id: '/api/copilot-track',
-  path: '/api/copilot-track',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiAiRefineCaseFieldRoute = ApiAiRefineCaseFieldRouteImport.update({
-  id: '/api/ai-refine-case-field',
-  path: '/api/ai-refine-case-field',
+const ApiAiMatchTemplatesRoute = ApiAiMatchTemplatesRouteImport.update({
+  id: '/api/ai-match-templates',
+  path: '/api/ai-match-templates',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiAiReevaluateLegalLinksRoute =
@@ -353,284 +376,211 @@ const ApiAiReevaluateLegalLinksRoute =
     path: '/api/ai-reevaluate-legal-links',
     getParentRoute: () => rootRouteImport,
   } as any)
-const ApiAiMatchTemplatesRoute = ApiAiMatchTemplatesRouteImport.update({
-  id: '/api/ai-match-templates',
-  path: '/api/ai-match-templates',
+const ApiAiRefineCaseFieldRoute = ApiAiRefineCaseFieldRouteImport.update({
+  id: '/api/ai-refine-case-field',
+  path: '/api/ai-refine-case-field',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiAiMatchSimilarCasesRoute = ApiAiMatchSimilarCasesRouteImport.update({
-  id: '/api/ai-match-similar-cases',
-  path: '/api/ai-match-similar-cases',
+const ApiCopilotTrackRoute = ApiCopilotTrackRouteImport.update({
+  id: '/api/copilot-track',
+  path: '/api/copilot-track',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiAiMatchLegalSectionsRoute = ApiAiMatchLegalSectionsRouteImport.update({
-  id: '/api/ai-match-legal-sections',
-  path: '/api/ai-match-legal-sections',
+const ApiCrawlLegalSourceRoute = ApiCrawlLegalSourceRouteImport.update({
+  id: '/api/crawl-legal-source',
+  path: '/api/crawl-legal-source',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiAiMatchKeywordsRoute = ApiAiMatchKeywordsRouteImport.update({
-  id: '/api/ai-match-keywords',
-  path: '/api/ai-match-keywords',
+const ApiEnrichLegalSectionRoute = ApiEnrichLegalSectionRouteImport.update({
+  id: '/api/enrich-legal-section',
+  path: '/api/enrich-legal-section',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiAiEditorialSuggestRoute = ApiAiEditorialSuggestRouteImport.update({
-  id: '/api/ai-editorial-suggest',
-  path: '/api/ai-editorial-suggest',
+const ApiGenerateCaseDocumentRoute = ApiGenerateCaseDocumentRouteImport.update({
+  id: '/api/generate-case-document',
+  path: '/api/generate-case-document',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiAiDraftTopicsRoute = ApiAiDraftTopicsRouteImport.update({
-  id: '/api/ai-draft-topics',
-  path: '/api/ai-draft-topics',
+const ApiImportLegalSourceRoute = ApiImportLegalSourceRouteImport.update({
+  id: '/api/import-legal-source',
+  path: '/api/import-legal-source',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiAiDraftDecisionTreeRoute = ApiAiDraftDecisionTreeRouteImport.update({
-  id: '/api/ai-draft-decision-tree',
-  path: '/api/ai-draft-decision-tree',
+const ApiLegalChunksSyncRoute = ApiLegalChunksSyncRouteImport.update({
+  id: '/api/legal-chunks-sync',
+  path: '/api/legal-chunks-sync',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiAiDraftCaseRoute = ApiAiDraftCaseRouteImport.update({
-  id: '/api/ai-draft-case',
-  path: '/api/ai-draft-case',
+const ApiLegalCopilotAskRoute = ApiLegalCopilotAskRouteImport.update({
+  id: '/api/legal-copilot-ask',
+  path: '/api/legal-copilot-ask',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiAiDraftBatchItemRoute = ApiAiDraftBatchItemRouteImport.update({
-  id: '/api/ai-draft-batch-item',
-  path: '/api/ai-draft-batch-item',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AdminVorlagenRoute = AdminVorlagenRouteImport.update({
-  id: '/vorlagen',
-  path: '/vorlagen',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminVerknuepfungenRoute = AdminVerknuepfungenRouteImport.update({
-  id: '/verknuepfungen',
-  path: '/verknuepfungen',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminSuchtestRoute = AdminSuchtestRouteImport.update({
-  id: '/suchtest',
-  path: '/suchtest',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminSuchindexRoute = AdminSuchindexRouteImport.update({
-  id: '/suchindex',
-  path: '/suchindex',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminSchlagwoerterRoute = AdminSchlagwoerterRouteImport.update({
-  id: '/schlagwoerter',
-  path: '/schlagwoerter',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminRechtsgrundlagenRoute = AdminRechtsgrundlagenRouteImport.update({
-  id: '/rechtsgrundlagen',
-  path: '/rechtsgrundlagen',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminQuellenwaechterRoute = AdminQuellenwaechterRouteImport.update({
-  id: '/quellenwaechter',
-  path: '/quellenwaechter',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminQualitaetsmanagerRoute = AdminQualitaetsmanagerRouteImport.update({
-  id: '/qualitaetsmanager',
-  path: '/qualitaetsmanager',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminQualitaetRoute = AdminQualitaetRouteImport.update({
-  id: '/qualitaet',
-  path: '/qualitaet',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminPraxisfallMatchingRoute = AdminPraxisfallMatchingRouteImport.update({
-  id: '/praxisfall-matching',
-  path: '/praxisfall-matching',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminLegalTestmatrixRoute = AdminLegalTestmatrixRouteImport.update({
-  id: '/legal-testmatrix',
-  path: '/legal-testmatrix',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminLegalKnowledgeRoute = AdminLegalKnowledgeRouteImport.update({
-  id: '/legal-knowledge',
-  path: '/legal-knowledge',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminKnowledgeGraphRoute = AdminKnowledgeGraphRouteImport.update({
-  id: '/knowledge-graph',
-  path: '/knowledge-graph',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminKiEntwurfsmaschineRoute = AdminKiEntwurfsmaschineRouteImport.update({
-  id: '/ki-entwurfsmaschine',
-  path: '/ki-entwurfsmaschine',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminKategorienRoute = AdminKategorienRouteImport.update({
-  id: '/kategorien',
-  path: '/kategorien',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminImportUebersichtRoute = AdminImportUebersichtRouteImport.update({
-  id: '/import-uebersicht',
-  path: '/import-uebersicht',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminImportProtokollRoute = AdminImportProtokollRouteImport.update({
-  id: '/import-protokoll',
-  path: '/import-protokoll',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminImportRoute = AdminImportRouteImport.update({
-  id: '/import',
-  path: '/import',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminFallmanagerRoute = AdminFallmanagerRouteImport.update({
-  id: '/fallmanager',
-  path: '/fallmanager',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminFaelleRoute = AdminFaelleRouteImport.update({
-  id: '/faelle',
-  path: '/faelle',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminEntscheidungsbaeumeRoute =
-  AdminEntscheidungsbaeumeRouteImport.update({
-    id: '/entscheidungsbaeume',
-    path: '/entscheidungsbaeume',
-    getParentRoute: () => AdminRoute,
+const ApiLegalEmbeddingsCancelRoute =
+  ApiLegalEmbeddingsCancelRouteImport.update({
+    id: '/api/legal-embeddings-cancel',
+    path: '/api/legal-embeddings-cancel',
+    getParentRoute: () => rootRouteImport,
   } as any)
-const AdminEntscheidungsassistentenBatchRoute =
-  AdminEntscheidungsassistentenBatchRouteImport.update({
-    id: '/entscheidungsassistenten-batch',
-    path: '/entscheidungsassistenten-batch',
-    getParentRoute: () => AdminRoute,
+const ApiLegalEmbeddingsPreviewRoute =
+  ApiLegalEmbeddingsPreviewRouteImport.update({
+    id: '/api/legal-embeddings-preview',
+    path: '/api/legal-embeddings-preview',
+    getParentRoute: () => rootRouteImport,
   } as any)
-const AdminEinstellungenRoute = AdminEinstellungenRouteImport.update({
-  id: '/einstellungen',
-  path: '/einstellungen',
-  getParentRoute: () => AdminRoute,
+const ApiLegalEmbeddingsRetryRoute = ApiLegalEmbeddingsRetryRouteImport.update({
+  id: '/api/legal-embeddings-retry',
+  path: '/api/legal-embeddings-retry',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const AdminCopilotRoute = AdminCopilotRouteImport.update({
-  id: '/copilot',
-  path: '/copilot',
-  getParentRoute: () => AdminRoute,
+const ApiLegalEmbeddingsRunRoute = ApiLegalEmbeddingsRunRouteImport.update({
+  id: '/api/legal-embeddings-run',
+  path: '/api/legal-embeddings-run',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const AdminAenderungenRoute = AdminAenderungenRouteImport.update({
-  id: '/aenderungen',
-  path: '/aenderungen',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminLegalKnowledgeIndexRoute =
-  AdminLegalKnowledgeIndexRouteImport.update({
-    id: '/',
-    path: '/',
-    getParentRoute: () => AdminLegalKnowledgeRoute,
+const ApiLegalEmbeddingsStatusRoute =
+  ApiLegalEmbeddingsStatusRouteImport.update({
+    id: '/api/legal-embeddings-status',
+    path: '/api/legal-embeddings-status',
+    getParentRoute: () => rootRouteImport,
   } as any)
-const AdminKiEntwurfsmaschineIndexRoute =
-  AdminKiEntwurfsmaschineIndexRouteImport.update({
-    id: '/',
-    path: '/',
-    getParentRoute: () => AdminKiEntwurfsmaschineRoute,
+const ApiLegalEmbeddingsValidateRoute =
+  ApiLegalEmbeddingsValidateRouteImport.update({
+    id: '/api/legal-embeddings-validate',
+    path: '/api/legal-embeddings-validate',
+    getParentRoute: () => rootRouteImport,
   } as any)
-const AdminFaelleIndexRoute = AdminFaelleIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => AdminFaelleRoute,
+const ApiLegalRetrievalSearchRoute = ApiLegalRetrievalSearchRouteImport.update({
+  id: '/api/legal-retrieval-search',
+  path: '/api/legal-retrieval-search',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiLegalSourceCrawlRoute = ApiLegalSourceCrawlRouteImport.update({
+  id: '/api/legal-source-crawl',
+  path: '/api/legal-source-crawl',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiSearchEmbeddingsQueryRoute =
+  ApiSearchEmbeddingsQueryRouteImport.update({
+    id: '/api/search-embeddings-query',
+    path: '/api/search-embeddings-query',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiSearchEmbeddingsReindexRoute =
+  ApiSearchEmbeddingsReindexRouteImport.update({
+    id: '/api/search-embeddings-reindex',
+    path: '/api/search-embeddings-reindex',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiSearchEmbeddingsStatusRoute =
+  ApiSearchEmbeddingsStatusRouteImport.update({
+    id: '/api/search-embeddings-status',
+    path: '/api/search-embeddings-status',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiSearchTestsetOverridesRoute =
+  ApiSearchTestsetOverridesRouteImport.update({
+    id: '/api/search-testset-overrides',
+    path: '/api/search-testset-overrides',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiSendCaseDocumentEmailRoute =
+  ApiSendCaseDocumentEmailRouteImport.update({
+    id: '/api/send-case-document-email',
+    path: '/api/send-case-document-email',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiWorkflowSessionsRoute = ApiWorkflowSessionsRouteImport.update({
+  id: '/api/workflow-sessions',
+  path: '/api/workflow-sessions',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiWorkflowsRoute = ApiWorkflowsRouteImport.update({
+  id: '/api/workflows',
+  path: '/api/workflows',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FaelleIdRoute = FaelleIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => FaelleRoute,
+} as any)
+const FallIdRoute = FallIdRouteImport.update({
+  id: '/fall/$id',
+  path: '/fall/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RechtsgrundlagenIdRoute = RechtsgrundlagenIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => RechtsgrundlagenRoute,
+} as any)
+const WorkflowsIndexRoute = WorkflowsIndexRouteImport.update({
+  id: '/workflows/',
+  path: '/workflows/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const WorkflowsTemplateIdRoute = WorkflowsTemplateIdRouteImport.update({
+  id: '/workflows/$templateId',
+  path: '/workflows/$templateId',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AdminEditorialIndexRoute = AdminEditorialIndexRouteImport.update({
   id: '/editorial/',
   path: '/editorial/',
   getParentRoute: () => AdminRoute,
 } as any)
-const WorkflowsSessionSessionIdRoute =
-  WorkflowsSessionSessionIdRouteImport.update({
-    id: '/workflows/session/$sessionId',
-    path: '/workflows/session/$sessionId',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const FaelleIdDokumentRoute = FaelleIdDokumentRouteImport.update({
-  id: '/faelle_/$id/dokument',
-  path: '/faelle/$id/dokument',
-  getParentRoute: () => rootRouteImport,
+const AdminEditorialFaelleRoute = AdminEditorialFaelleRouteImport.update({
+  id: '/editorial/faelle',
+  path: '/editorial/faelle',
+  getParentRoute: () => AdminRoute,
 } as any)
-const ApiWorkflowsIdRoute = ApiWorkflowsIdRouteImport.update({
+const AdminEditorialLegalQualityRoute =
+  AdminEditorialLegalQualityRouteImport.update({
+    id: '/editorial/legal-quality',
+    path: '/editorial/legal-quality',
+    getParentRoute: () => AdminRoute,
+  } as any)
+const AdminEditorialPublishingRoute =
+  AdminEditorialPublishingRouteImport.update({
+    id: '/editorial/publishing',
+    path: '/editorial/publishing',
+    getParentRoute: () => AdminRoute,
+  } as any)
+const AdminEditorialQualitaetRoute = AdminEditorialQualitaetRouteImport.update({
+  id: '/editorial/qualitaet',
+  path: '/editorial/qualitaet',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminEditorialReviewsRoute = AdminEditorialReviewsRouteImport.update({
+  id: '/editorial/reviews',
+  path: '/editorial/reviews',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminFaelleIndexRoute = AdminFaelleIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminFaelleRoute,
+} as any)
+const AdminFaelleIdRoute = AdminFaelleIdRouteImport.update({
   id: '/$id',
   path: '/$id',
-  getParentRoute: () => ApiWorkflowsRoute,
+  getParentRoute: () => AdminFaelleRoute,
 } as any)
-const ApiWorkflowSessionsIdRoute = ApiWorkflowSessionsIdRouteImport.update({
+const AdminFaelleNeuRoute = AdminFaelleNeuRouteImport.update({
+  id: '/neu',
+  path: '/neu',
+  getParentRoute: () => AdminFaelleRoute,
+} as any)
+const AdminImportProtokollIdRoute = AdminImportProtokollIdRouteImport.update({
   id: '/$id',
   path: '/$id',
-  getParentRoute: () => ApiWorkflowSessionsRoute,
+  getParentRoute: () => AdminImportProtokollRoute,
 } as any)
-const AdminRechtsgrundlagenIdRoute = AdminRechtsgrundlagenIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => AdminRechtsgrundlagenRoute,
-} as any)
-const AdminLegalKnowledgeVersionsRoute =
-  AdminLegalKnowledgeVersionsRouteImport.update({
-    id: '/versions',
-    path: '/versions',
-    getParentRoute: () => AdminLegalKnowledgeRoute,
-  } as any)
-const AdminLegalKnowledgeVeraltetRoute =
-  AdminLegalKnowledgeVeraltetRouteImport.update({
-    id: '/veraltet',
-    path: '/veraltet',
-    getParentRoute: () => AdminLegalKnowledgeRoute,
-  } as any)
-const AdminLegalKnowledgeSucheRoute =
-  AdminLegalKnowledgeSucheRouteImport.update({
-    id: '/suche',
-    path: '/suche',
-    getParentRoute: () => AdminLegalKnowledgeRoute,
-  } as any)
-const AdminLegalKnowledgeSourcesRoute =
-  AdminLegalKnowledgeSourcesRouteImport.update({
-    id: '/sources',
-    path: '/sources',
-    getParentRoute: () => AdminLegalKnowledgeRoute,
-  } as any)
-const AdminLegalKnowledgeQuellenConnectorRoute =
-  AdminLegalKnowledgeQuellenConnectorRouteImport.update({
-    id: '/quellen-connector',
-    path: '/quellen-connector',
-    getParentRoute: () => AdminLegalKnowledgeRoute,
-  } as any)
-const AdminLegalKnowledgePruefbedarfRoute =
-  AdminLegalKnowledgePruefbedarfRouteImport.update({
-    id: '/pruefbedarf',
-    path: '/pruefbedarf',
-    getParentRoute: () => AdminLegalKnowledgeRoute,
-  } as any)
-const AdminLegalKnowledgeImportRoute =
-  AdminLegalKnowledgeImportRouteImport.update({
-    id: '/import',
-    path: '/import',
-    getParentRoute: () => AdminLegalKnowledgeRoute,
-  } as any)
-const AdminLegalKnowledgeHistoryRoute =
-  AdminLegalKnowledgeHistoryRouteImport.update({
-    id: '/history',
-    path: '/history',
-    getParentRoute: () => AdminLegalKnowledgeRoute,
-  } as any)
-const AdminKiEntwurfsmaschineReviewRoute =
-  AdminKiEntwurfsmaschineReviewRouteImport.update({
-    id: '/review',
-    path: '/review',
-    getParentRoute: () => AdminKiEntwurfsmaschineRoute,
-  } as any)
-const AdminKiEntwurfsmaschinePruefungRoute =
-  AdminKiEntwurfsmaschinePruefungRouteImport.update({
-    id: '/pruefung',
-    path: '/pruefung',
+const AdminKiEntwurfsmaschineIndexRoute =
+  AdminKiEntwurfsmaschineIndexRouteImport.update({
+    id: '/',
+    path: '/',
     getParentRoute: () => AdminKiEntwurfsmaschineRoute,
   } as any)
 const AdminKiEntwurfsmaschineExcelImportRoute =
@@ -639,47 +589,102 @@ const AdminKiEntwurfsmaschineExcelImportRoute =
     path: '/excel-import',
     getParentRoute: () => AdminKiEntwurfsmaschineRoute,
   } as any)
-const AdminImportProtokollIdRoute = AdminImportProtokollIdRouteImport.update({
+const AdminKiEntwurfsmaschinePruefungRoute =
+  AdminKiEntwurfsmaschinePruefungRouteImport.update({
+    id: '/pruefung',
+    path: '/pruefung',
+    getParentRoute: () => AdminKiEntwurfsmaschineRoute,
+  } as any)
+const AdminKiEntwurfsmaschineReviewRoute =
+  AdminKiEntwurfsmaschineReviewRouteImport.update({
+    id: '/review',
+    path: '/review',
+    getParentRoute: () => AdminKiEntwurfsmaschineRoute,
+  } as any)
+const AdminLegalKnowledgeIndexRoute =
+  AdminLegalKnowledgeIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AdminLegalKnowledgeRoute,
+  } as any)
+const AdminLegalKnowledgeHistoryRoute =
+  AdminLegalKnowledgeHistoryRouteImport.update({
+    id: '/history',
+    path: '/history',
+    getParentRoute: () => AdminLegalKnowledgeRoute,
+  } as any)
+const AdminLegalKnowledgeImportRoute =
+  AdminLegalKnowledgeImportRouteImport.update({
+    id: '/import',
+    path: '/import',
+    getParentRoute: () => AdminLegalKnowledgeRoute,
+  } as any)
+const AdminLegalKnowledgePruefbedarfRoute =
+  AdminLegalKnowledgePruefbedarfRouteImport.update({
+    id: '/pruefbedarf',
+    path: '/pruefbedarf',
+    getParentRoute: () => AdminLegalKnowledgeRoute,
+  } as any)
+const AdminLegalKnowledgeQuellenConnectorRoute =
+  AdminLegalKnowledgeQuellenConnectorRouteImport.update({
+    id: '/quellen-connector',
+    path: '/quellen-connector',
+    getParentRoute: () => AdminLegalKnowledgeRoute,
+  } as any)
+const AdminLegalKnowledgeSourcesRoute =
+  AdminLegalKnowledgeSourcesRouteImport.update({
+    id: '/sources',
+    path: '/sources',
+    getParentRoute: () => AdminLegalKnowledgeRoute,
+  } as any)
+const AdminLegalKnowledgeSucheRoute =
+  AdminLegalKnowledgeSucheRouteImport.update({
+    id: '/suche',
+    path: '/suche',
+    getParentRoute: () => AdminLegalKnowledgeRoute,
+  } as any)
+const AdminLegalKnowledgeVeraltetRoute =
+  AdminLegalKnowledgeVeraltetRouteImport.update({
+    id: '/veraltet',
+    path: '/veraltet',
+    getParentRoute: () => AdminLegalKnowledgeRoute,
+  } as any)
+const AdminLegalKnowledgeVersionsRoute =
+  AdminLegalKnowledgeVersionsRouteImport.update({
+    id: '/versions',
+    path: '/versions',
+    getParentRoute: () => AdminLegalKnowledgeRoute,
+  } as any)
+const AdminRechtsgrundlagenIdRoute = AdminRechtsgrundlagenIdRouteImport.update({
   id: '/$id',
   path: '/$id',
-  getParentRoute: () => AdminImportProtokollRoute,
+  getParentRoute: () => AdminRechtsgrundlagenRoute,
 } as any)
-const AdminFaelleNeuRoute = AdminFaelleNeuRouteImport.update({
-  id: '/neu',
-  path: '/neu',
-  getParentRoute: () => AdminFaelleRoute,
-} as any)
-const AdminFaelleIdRoute = AdminFaelleIdRouteImport.update({
+const ApiWorkflowSessionsIdRoute = ApiWorkflowSessionsIdRouteImport.update({
   id: '/$id',
   path: '/$id',
-  getParentRoute: () => AdminFaelleRoute,
+  getParentRoute: () => ApiWorkflowSessionsRoute,
 } as any)
-const AdminEditorialReviewsRoute = AdminEditorialReviewsRouteImport.update({
-  id: '/editorial/reviews',
-  path: '/editorial/reviews',
-  getParentRoute: () => AdminRoute,
+const ApiWorkflowsIdRoute = ApiWorkflowsIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => ApiWorkflowsRoute,
 } as any)
-const AdminEditorialQualitaetRoute = AdminEditorialQualitaetRouteImport.update({
-  id: '/editorial/qualitaet',
-  path: '/editorial/qualitaet',
-  getParentRoute: () => AdminRoute,
+const FaelleIdDokumentRoute = FaelleIdDokumentRouteImport.update({
+  id: '/faelle_/$id/dokument',
+  path: '/faelle/$id/dokument',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const AdminEditorialPublishingRoute =
-  AdminEditorialPublishingRouteImport.update({
-    id: '/editorial/publishing',
-    path: '/editorial/publishing',
-    getParentRoute: () => AdminRoute,
+const WorkflowsSessionSessionIdRoute =
+  WorkflowsSessionSessionIdRouteImport.update({
+    id: '/workflows/session/$sessionId',
+    path: '/workflows/session/$sessionId',
+    getParentRoute: () => rootRouteImport,
   } as any)
-const AdminEditorialLegalQualityRoute =
-  AdminEditorialLegalQualityRouteImport.update({
-    id: '/editorial/legal-quality',
-    path: '/editorial/legal-quality',
-    getParentRoute: () => AdminRoute,
-  } as any)
-const AdminEditorialFaelleRoute = AdminEditorialFaelleRouteImport.update({
-  id: '/editorial/faelle',
-  path: '/editorial/faelle',
-  getParentRoute: () => AdminRoute,
+const AdminEditorialFaelleIdRoute = AdminEditorialFaelleIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => AdminEditorialFaelleRoute,
 } as any)
 const AdminEditorialWorkflowsIndexRoute =
   AdminEditorialWorkflowsIndexRouteImport.update({
@@ -687,34 +692,22 @@ const AdminEditorialWorkflowsIndexRoute =
     path: '/editorial/workflows/',
     getParentRoute: () => AdminRoute,
   } as any)
-const ApiWorkflowSessionsIdTransitionsRoute =
-  ApiWorkflowSessionsIdTransitionsRouteImport.update({
-    id: '/transitions',
-    path: '/transitions',
-    getParentRoute: () => ApiWorkflowSessionsIdRoute,
+const AdminEditorialWorkflowsIdRoute =
+  AdminEditorialWorkflowsIdRouteImport.update({
+    id: '/editorial/workflows/$id',
+    path: '/editorial/workflows/$id',
+    getParentRoute: () => AdminRoute,
   } as any)
-const ApiWorkflowSessionsIdResumeRoute =
-  ApiWorkflowSessionsIdResumeRouteImport.update({
-    id: '/resume',
-    path: '/resume',
-    getParentRoute: () => ApiWorkflowSessionsIdRoute,
+const AdminLegalKnowledgeSourcesIdRoute =
+  AdminLegalKnowledgeSourcesIdRouteImport.update({
+    id: '/$id',
+    path: '/$id',
+    getParentRoute: () => AdminLegalKnowledgeSourcesRoute,
   } as any)
-const ApiWorkflowSessionsIdPauseRoute =
-  ApiWorkflowSessionsIdPauseRouteImport.update({
-    id: '/pause',
-    path: '/pause',
-    getParentRoute: () => ApiWorkflowSessionsIdRoute,
-  } as any)
-const ApiWorkflowSessionsIdEventsRoute =
-  ApiWorkflowSessionsIdEventsRouteImport.update({
-    id: '/events',
-    path: '/events',
-    getParentRoute: () => ApiWorkflowSessionsIdRoute,
-  } as any)
-const ApiWorkflowSessionsIdDocumentsRoute =
-  ApiWorkflowSessionsIdDocumentsRouteImport.update({
-    id: '/documents',
-    path: '/documents',
+const ApiWorkflowSessionsIdCancelRoute =
+  ApiWorkflowSessionsIdCancelRouteImport.update({
+    id: '/cancel',
+    path: '/cancel',
     getParentRoute: () => ApiWorkflowSessionsIdRoute,
   } as any)
 const ApiWorkflowSessionsIdChecklistsRoute =
@@ -723,29 +716,36 @@ const ApiWorkflowSessionsIdChecklistsRoute =
     path: '/checklists',
     getParentRoute: () => ApiWorkflowSessionsIdRoute,
   } as any)
-const ApiWorkflowSessionsIdCancelRoute =
-  ApiWorkflowSessionsIdCancelRouteImport.update({
-    id: '/cancel',
-    path: '/cancel',
+const ApiWorkflowSessionsIdDocumentsRoute =
+  ApiWorkflowSessionsIdDocumentsRouteImport.update({
+    id: '/documents',
+    path: '/documents',
     getParentRoute: () => ApiWorkflowSessionsIdRoute,
   } as any)
-const AdminLegalKnowledgeSourcesIdRoute =
-  AdminLegalKnowledgeSourcesIdRouteImport.update({
-    id: '/$id',
-    path: '/$id',
-    getParentRoute: () => AdminLegalKnowledgeSourcesRoute,
+const ApiWorkflowSessionsIdEventsRoute =
+  ApiWorkflowSessionsIdEventsRouteImport.update({
+    id: '/events',
+    path: '/events',
+    getParentRoute: () => ApiWorkflowSessionsIdRoute,
   } as any)
-const AdminEditorialWorkflowsIdRoute =
-  AdminEditorialWorkflowsIdRouteImport.update({
-    id: '/editorial/workflows/$id',
-    path: '/editorial/workflows/$id',
-    getParentRoute: () => AdminRoute,
+const ApiWorkflowSessionsIdPauseRoute =
+  ApiWorkflowSessionsIdPauseRouteImport.update({
+    id: '/pause',
+    path: '/pause',
+    getParentRoute: () => ApiWorkflowSessionsIdRoute,
   } as any)
-const AdminEditorialFaelleIdRoute = AdminEditorialFaelleIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => AdminEditorialFaelleRoute,
-} as any)
+const ApiWorkflowSessionsIdResumeRoute =
+  ApiWorkflowSessionsIdResumeRouteImport.update({
+    id: '/resume',
+    path: '/resume',
+    getParentRoute: () => ApiWorkflowSessionsIdRoute,
+  } as any)
+const ApiWorkflowSessionsIdTransitionsRoute =
+  ApiWorkflowSessionsIdTransitionsRouteImport.update({
+    id: '/transitions',
+    path: '/transitions',
+    getParentRoute: () => ApiWorkflowSessionsIdRoute,
+  } as any)
 const ApiWorkflowSessionsIdDocumentsDocIdRoute =
   ApiWorkflowSessionsIdDocumentsDocIdRouteImport.update({
     id: '/$docId',
@@ -1531,81 +1531,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/vorgaenge': {
-      id: '/vorgaenge'
-      path: '/vorgaenge'
-      fullPath: '/vorgaenge'
-      preLoaderRoute: typeof VorgaengeRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/rechtsgrundlagen': {
-      id: '/rechtsgrundlagen'
-      path: '/rechtsgrundlagen'
-      fullPath: '/rechtsgrundlagen'
-      preLoaderRoute: typeof RechtsgrundlagenRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/praesentation': {
-      id: '/praesentation'
-      path: '/praesentation'
-      fullPath: '/praesentation'
-      preLoaderRoute: typeof PraesentationRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/navigator': {
-      id: '/navigator'
-      path: '/navigator'
-      fullPath: '/navigator'
-      preLoaderRoute: typeof NavigatorRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/kollege': {
-      id: '/kollege'
-      path: '/kollege'
-      fullPath: '/kollege'
-      preLoaderRoute: typeof KollegeRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/faelle': {
-      id: '/faelle'
-      path: '/faelle'
-      fullPath: '/faelle'
-      preLoaderRoute: typeof FaelleRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/einstellungen': {
-      id: '/einstellungen'
-      path: '/einstellungen'
-      fullPath: '/einstellungen'
-      preLoaderRoute: typeof EinstellungenRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/dokumente': {
-      id: '/dokumente'
-      path: '/dokumente'
-      fullPath: '/dokumente'
-      preLoaderRoute: typeof DokumenteRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/dokumentation': {
-      id: '/dokumentation'
-      path: '/dokumentation'
-      fullPath: '/dokumentation'
-      preLoaderRoute: typeof DokumentationRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/debug': {
-      id: '/debug'
-      path: '/debug'
-      fullPath: '/debug'
-      preLoaderRoute: typeof DebugRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/assistent': {
-      id: '/assistent'
-      path: '/assistent'
-      fullPath: '/assistent'
-      preLoaderRoute: typeof AssistentRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin': {
@@ -1615,18 +1545,81 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/assistent': {
+      id: '/assistent'
+      path: '/assistent'
+      fullPath: '/assistent'
+      preLoaderRoute: typeof AssistentRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/workflows/': {
-      id: '/workflows/'
-      path: '/workflows'
-      fullPath: '/workflows/'
-      preLoaderRoute: typeof WorkflowsIndexRouteImport
+    '/debug': {
+      id: '/debug'
+      path: '/debug'
+      fullPath: '/debug'
+      preLoaderRoute: typeof DebugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dokumentation': {
+      id: '/dokumentation'
+      path: '/dokumentation'
+      fullPath: '/dokumentation'
+      preLoaderRoute: typeof DokumentationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dokumente': {
+      id: '/dokumente'
+      path: '/dokumente'
+      fullPath: '/dokumente'
+      preLoaderRoute: typeof DokumenteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/einstellungen': {
+      id: '/einstellungen'
+      path: '/einstellungen'
+      fullPath: '/einstellungen'
+      preLoaderRoute: typeof EinstellungenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/faelle': {
+      id: '/faelle'
+      path: '/faelle'
+      fullPath: '/faelle'
+      preLoaderRoute: typeof FaelleRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/kollege': {
+      id: '/kollege'
+      path: '/kollege'
+      fullPath: '/kollege'
+      preLoaderRoute: typeof KollegeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/navigator': {
+      id: '/navigator'
+      path: '/navigator'
+      fullPath: '/navigator'
+      preLoaderRoute: typeof NavigatorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/praesentation': {
+      id: '/praesentation'
+      path: '/praesentation'
+      fullPath: '/praesentation'
+      preLoaderRoute: typeof PraesentationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/rechtsgrundlagen': {
+      id: '/rechtsgrundlagen'
+      path: '/rechtsgrundlagen'
+      fullPath: '/rechtsgrundlagen'
+      preLoaderRoute: typeof RechtsgrundlagenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/vorgaenge': {
+      id: '/vorgaenge'
+      path: '/vorgaenge'
+      fullPath: '/vorgaenge'
+      preLoaderRoute: typeof VorgaengeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/': {
@@ -1636,424 +1629,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminIndexRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/workflows/$templateId': {
-      id: '/workflows/$templateId'
-      path: '/workflows/$templateId'
-      fullPath: '/workflows/$templateId'
-      preLoaderRoute: typeof WorkflowsTemplateIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/rechtsgrundlagen/$id': {
-      id: '/rechtsgrundlagen/$id'
-      path: '/$id'
-      fullPath: '/rechtsgrundlagen/$id'
-      preLoaderRoute: typeof RechtsgrundlagenIdRouteImport
-      parentRoute: typeof RechtsgrundlagenRoute
-    }
-    '/fall/$id': {
-      id: '/fall/$id'
-      path: '/fall/$id'
-      fullPath: '/fall/$id'
-      preLoaderRoute: typeof FallIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/faelle/$id': {
-      id: '/faelle/$id'
-      path: '/$id'
-      fullPath: '/faelle/$id'
-      preLoaderRoute: typeof FaelleIdRouteImport
-      parentRoute: typeof FaelleRoute
-    }
-    '/api/workflows': {
-      id: '/api/workflows'
-      path: '/api/workflows'
-      fullPath: '/api/workflows'
-      preLoaderRoute: typeof ApiWorkflowsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/workflow-sessions': {
-      id: '/api/workflow-sessions'
-      path: '/api/workflow-sessions'
-      fullPath: '/api/workflow-sessions'
-      preLoaderRoute: typeof ApiWorkflowSessionsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/send-case-document-email': {
-      id: '/api/send-case-document-email'
-      path: '/api/send-case-document-email'
-      fullPath: '/api/send-case-document-email'
-      preLoaderRoute: typeof ApiSendCaseDocumentEmailRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/search-testset-overrides': {
-      id: '/api/search-testset-overrides'
-      path: '/api/search-testset-overrides'
-      fullPath: '/api/search-testset-overrides'
-      preLoaderRoute: typeof ApiSearchTestsetOverridesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/search-embeddings-status': {
-      id: '/api/search-embeddings-status'
-      path: '/api/search-embeddings-status'
-      fullPath: '/api/search-embeddings-status'
-      preLoaderRoute: typeof ApiSearchEmbeddingsStatusRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/search-embeddings-reindex': {
-      id: '/api/search-embeddings-reindex'
-      path: '/api/search-embeddings-reindex'
-      fullPath: '/api/search-embeddings-reindex'
-      preLoaderRoute: typeof ApiSearchEmbeddingsReindexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/search-embeddings-query': {
-      id: '/api/search-embeddings-query'
-      path: '/api/search-embeddings-query'
-      fullPath: '/api/search-embeddings-query'
-      preLoaderRoute: typeof ApiSearchEmbeddingsQueryRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/legal-source-crawl': {
-      id: '/api/legal-source-crawl'
-      path: '/api/legal-source-crawl'
-      fullPath: '/api/legal-source-crawl'
-      preLoaderRoute: typeof ApiLegalSourceCrawlRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/legal-retrieval-search': {
-      id: '/api/legal-retrieval-search'
-      path: '/api/legal-retrieval-search'
-      fullPath: '/api/legal-retrieval-search'
-      preLoaderRoute: typeof ApiLegalRetrievalSearchRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/legal-embeddings-validate': {
-      id: '/api/legal-embeddings-validate'
-      path: '/api/legal-embeddings-validate'
-      fullPath: '/api/legal-embeddings-validate'
-      preLoaderRoute: typeof ApiLegalEmbeddingsValidateRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/legal-embeddings-status': {
-      id: '/api/legal-embeddings-status'
-      path: '/api/legal-embeddings-status'
-      fullPath: '/api/legal-embeddings-status'
-      preLoaderRoute: typeof ApiLegalEmbeddingsStatusRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/legal-embeddings-run': {
-      id: '/api/legal-embeddings-run'
-      path: '/api/legal-embeddings-run'
-      fullPath: '/api/legal-embeddings-run'
-      preLoaderRoute: typeof ApiLegalEmbeddingsRunRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/legal-embeddings-retry': {
-      id: '/api/legal-embeddings-retry'
-      path: '/api/legal-embeddings-retry'
-      fullPath: '/api/legal-embeddings-retry'
-      preLoaderRoute: typeof ApiLegalEmbeddingsRetryRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/legal-embeddings-preview': {
-      id: '/api/legal-embeddings-preview'
-      path: '/api/legal-embeddings-preview'
-      fullPath: '/api/legal-embeddings-preview'
-      preLoaderRoute: typeof ApiLegalEmbeddingsPreviewRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/legal-embeddings-cancel': {
-      id: '/api/legal-embeddings-cancel'
-      path: '/api/legal-embeddings-cancel'
-      fullPath: '/api/legal-embeddings-cancel'
-      preLoaderRoute: typeof ApiLegalEmbeddingsCancelRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/legal-copilot-ask': {
-      id: '/api/legal-copilot-ask'
-      path: '/api/legal-copilot-ask'
-      fullPath: '/api/legal-copilot-ask'
-      preLoaderRoute: typeof ApiLegalCopilotAskRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/legal-chunks-sync': {
-      id: '/api/legal-chunks-sync'
-      path: '/api/legal-chunks-sync'
-      fullPath: '/api/legal-chunks-sync'
-      preLoaderRoute: typeof ApiLegalChunksSyncRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/import-legal-source': {
-      id: '/api/import-legal-source'
-      path: '/api/import-legal-source'
-      fullPath: '/api/import-legal-source'
-      preLoaderRoute: typeof ApiImportLegalSourceRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/generate-case-document': {
-      id: '/api/generate-case-document'
-      path: '/api/generate-case-document'
-      fullPath: '/api/generate-case-document'
-      preLoaderRoute: typeof ApiGenerateCaseDocumentRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/enrich-legal-section': {
-      id: '/api/enrich-legal-section'
-      path: '/api/enrich-legal-section'
-      fullPath: '/api/enrich-legal-section'
-      preLoaderRoute: typeof ApiEnrichLegalSectionRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/crawl-legal-source': {
-      id: '/api/crawl-legal-source'
-      path: '/api/crawl-legal-source'
-      fullPath: '/api/crawl-legal-source'
-      preLoaderRoute: typeof ApiCrawlLegalSourceRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/copilot-track': {
-      id: '/api/copilot-track'
-      path: '/api/copilot-track'
-      fullPath: '/api/copilot-track'
-      preLoaderRoute: typeof ApiCopilotTrackRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/ai-refine-case-field': {
-      id: '/api/ai-refine-case-field'
-      path: '/api/ai-refine-case-field'
-      fullPath: '/api/ai-refine-case-field'
-      preLoaderRoute: typeof ApiAiRefineCaseFieldRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/ai-reevaluate-legal-links': {
-      id: '/api/ai-reevaluate-legal-links'
-      path: '/api/ai-reevaluate-legal-links'
-      fullPath: '/api/ai-reevaluate-legal-links'
-      preLoaderRoute: typeof ApiAiReevaluateLegalLinksRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/ai-match-templates': {
-      id: '/api/ai-match-templates'
-      path: '/api/ai-match-templates'
-      fullPath: '/api/ai-match-templates'
-      preLoaderRoute: typeof ApiAiMatchTemplatesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/ai-match-similar-cases': {
-      id: '/api/ai-match-similar-cases'
-      path: '/api/ai-match-similar-cases'
-      fullPath: '/api/ai-match-similar-cases'
-      preLoaderRoute: typeof ApiAiMatchSimilarCasesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/ai-match-legal-sections': {
-      id: '/api/ai-match-legal-sections'
-      path: '/api/ai-match-legal-sections'
-      fullPath: '/api/ai-match-legal-sections'
-      preLoaderRoute: typeof ApiAiMatchLegalSectionsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/ai-match-keywords': {
-      id: '/api/ai-match-keywords'
-      path: '/api/ai-match-keywords'
-      fullPath: '/api/ai-match-keywords'
-      preLoaderRoute: typeof ApiAiMatchKeywordsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/ai-editorial-suggest': {
-      id: '/api/ai-editorial-suggest'
-      path: '/api/ai-editorial-suggest'
-      fullPath: '/api/ai-editorial-suggest'
-      preLoaderRoute: typeof ApiAiEditorialSuggestRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/ai-draft-topics': {
-      id: '/api/ai-draft-topics'
-      path: '/api/ai-draft-topics'
-      fullPath: '/api/ai-draft-topics'
-      preLoaderRoute: typeof ApiAiDraftTopicsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/ai-draft-decision-tree': {
-      id: '/api/ai-draft-decision-tree'
-      path: '/api/ai-draft-decision-tree'
-      fullPath: '/api/ai-draft-decision-tree'
-      preLoaderRoute: typeof ApiAiDraftDecisionTreeRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/ai-draft-case': {
-      id: '/api/ai-draft-case'
-      path: '/api/ai-draft-case'
-      fullPath: '/api/ai-draft-case'
-      preLoaderRoute: typeof ApiAiDraftCaseRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/ai-draft-batch-item': {
-      id: '/api/ai-draft-batch-item'
-      path: '/api/ai-draft-batch-item'
-      fullPath: '/api/ai-draft-batch-item'
-      preLoaderRoute: typeof ApiAiDraftBatchItemRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/admin/vorlagen': {
-      id: '/admin/vorlagen'
-      path: '/vorlagen'
-      fullPath: '/admin/vorlagen'
-      preLoaderRoute: typeof AdminVorlagenRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/verknuepfungen': {
-      id: '/admin/verknuepfungen'
-      path: '/verknuepfungen'
-      fullPath: '/admin/verknuepfungen'
-      preLoaderRoute: typeof AdminVerknuepfungenRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/suchtest': {
-      id: '/admin/suchtest'
-      path: '/suchtest'
-      fullPath: '/admin/suchtest'
-      preLoaderRoute: typeof AdminSuchtestRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/suchindex': {
-      id: '/admin/suchindex'
-      path: '/suchindex'
-      fullPath: '/admin/suchindex'
-      preLoaderRoute: typeof AdminSuchindexRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/schlagwoerter': {
-      id: '/admin/schlagwoerter'
-      path: '/schlagwoerter'
-      fullPath: '/admin/schlagwoerter'
-      preLoaderRoute: typeof AdminSchlagwoerterRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/rechtsgrundlagen': {
-      id: '/admin/rechtsgrundlagen'
-      path: '/rechtsgrundlagen'
-      fullPath: '/admin/rechtsgrundlagen'
-      preLoaderRoute: typeof AdminRechtsgrundlagenRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/quellenwaechter': {
-      id: '/admin/quellenwaechter'
-      path: '/quellenwaechter'
-      fullPath: '/admin/quellenwaechter'
-      preLoaderRoute: typeof AdminQuellenwaechterRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/qualitaetsmanager': {
-      id: '/admin/qualitaetsmanager'
-      path: '/qualitaetsmanager'
-      fullPath: '/admin/qualitaetsmanager'
-      preLoaderRoute: typeof AdminQualitaetsmanagerRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/qualitaet': {
-      id: '/admin/qualitaet'
-      path: '/qualitaet'
-      fullPath: '/admin/qualitaet'
-      preLoaderRoute: typeof AdminQualitaetRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/praxisfall-matching': {
-      id: '/admin/praxisfall-matching'
-      path: '/praxisfall-matching'
-      fullPath: '/admin/praxisfall-matching'
-      preLoaderRoute: typeof AdminPraxisfallMatchingRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/legal-testmatrix': {
-      id: '/admin/legal-testmatrix'
-      path: '/legal-testmatrix'
-      fullPath: '/admin/legal-testmatrix'
-      preLoaderRoute: typeof AdminLegalTestmatrixRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/legal-knowledge': {
-      id: '/admin/legal-knowledge'
-      path: '/legal-knowledge'
-      fullPath: '/admin/legal-knowledge'
-      preLoaderRoute: typeof AdminLegalKnowledgeRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/knowledge-graph': {
-      id: '/admin/knowledge-graph'
-      path: '/knowledge-graph'
-      fullPath: '/admin/knowledge-graph'
-      preLoaderRoute: typeof AdminKnowledgeGraphRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/ki-entwurfsmaschine': {
-      id: '/admin/ki-entwurfsmaschine'
-      path: '/ki-entwurfsmaschine'
-      fullPath: '/admin/ki-entwurfsmaschine'
-      preLoaderRoute: typeof AdminKiEntwurfsmaschineRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/kategorien': {
-      id: '/admin/kategorien'
-      path: '/kategorien'
-      fullPath: '/admin/kategorien'
-      preLoaderRoute: typeof AdminKategorienRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/import-uebersicht': {
-      id: '/admin/import-uebersicht'
-      path: '/import-uebersicht'
-      fullPath: '/admin/import-uebersicht'
-      preLoaderRoute: typeof AdminImportUebersichtRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/import-protokoll': {
-      id: '/admin/import-protokoll'
-      path: '/import-protokoll'
-      fullPath: '/admin/import-protokoll'
-      preLoaderRoute: typeof AdminImportProtokollRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/import': {
-      id: '/admin/import'
-      path: '/import'
-      fullPath: '/admin/import'
-      preLoaderRoute: typeof AdminImportRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/fallmanager': {
-      id: '/admin/fallmanager'
-      path: '/fallmanager'
-      fullPath: '/admin/fallmanager'
-      preLoaderRoute: typeof AdminFallmanagerRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/faelle': {
-      id: '/admin/faelle'
-      path: '/faelle'
-      fullPath: '/admin/faelle'
-      preLoaderRoute: typeof AdminFaelleRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/entscheidungsbaeume': {
-      id: '/admin/entscheidungsbaeume'
-      path: '/entscheidungsbaeume'
-      fullPath: '/admin/entscheidungsbaeume'
-      preLoaderRoute: typeof AdminEntscheidungsbaeumeRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/entscheidungsassistenten-batch': {
-      id: '/admin/entscheidungsassistenten-batch'
-      path: '/entscheidungsassistenten-batch'
-      fullPath: '/admin/entscheidungsassistenten-batch'
-      preLoaderRoute: typeof AdminEntscheidungsassistentenBatchRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/einstellungen': {
-      id: '/admin/einstellungen'
-      path: '/einstellungen'
-      fullPath: '/admin/einstellungen'
-      preLoaderRoute: typeof AdminEinstellungenRouteImport
+    '/admin/aenderungen': {
+      id: '/admin/aenderungen'
+      path: '/aenderungen'
+      fullPath: '/admin/aenderungen'
+      preLoaderRoute: typeof AdminAenderungenRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/copilot': {
@@ -2063,200 +1643,438 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminCopilotRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/admin/aenderungen': {
-      id: '/admin/aenderungen'
-      path: '/aenderungen'
-      fullPath: '/admin/aenderungen'
-      preLoaderRoute: typeof AdminAenderungenRouteImport
+    '/admin/einstellungen': {
+      id: '/admin/einstellungen'
+      path: '/einstellungen'
+      fullPath: '/admin/einstellungen'
+      preLoaderRoute: typeof AdminEinstellungenRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/admin/legal-knowledge/': {
-      id: '/admin/legal-knowledge/'
-      path: '/'
-      fullPath: '/admin/legal-knowledge/'
-      preLoaderRoute: typeof AdminLegalKnowledgeIndexRouteImport
-      parentRoute: typeof AdminLegalKnowledgeRoute
+    '/admin/entscheidungsassistenten-batch': {
+      id: '/admin/entscheidungsassistenten-batch'
+      path: '/entscheidungsassistenten-batch'
+      fullPath: '/admin/entscheidungsassistenten-batch'
+      preLoaderRoute: typeof AdminEntscheidungsassistentenBatchRouteImport
+      parentRoute: typeof AdminRoute
     }
-    '/admin/ki-entwurfsmaschine/': {
-      id: '/admin/ki-entwurfsmaschine/'
-      path: '/'
-      fullPath: '/admin/ki-entwurfsmaschine/'
-      preLoaderRoute: typeof AdminKiEntwurfsmaschineIndexRouteImport
-      parentRoute: typeof AdminKiEntwurfsmaschineRoute
+    '/admin/entscheidungsbaeume': {
+      id: '/admin/entscheidungsbaeume'
+      path: '/entscheidungsbaeume'
+      fullPath: '/admin/entscheidungsbaeume'
+      preLoaderRoute: typeof AdminEntscheidungsbaeumeRouteImport
+      parentRoute: typeof AdminRoute
     }
-    '/admin/faelle/': {
-      id: '/admin/faelle/'
-      path: '/'
-      fullPath: '/admin/faelle/'
-      preLoaderRoute: typeof AdminFaelleIndexRouteImport
-      parentRoute: typeof AdminFaelleRoute
+    '/admin/faelle': {
+      id: '/admin/faelle'
+      path: '/faelle'
+      fullPath: '/admin/faelle'
+      preLoaderRoute: typeof AdminFaelleRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/fallmanager': {
+      id: '/admin/fallmanager'
+      path: '/fallmanager'
+      fullPath: '/admin/fallmanager'
+      preLoaderRoute: typeof AdminFallmanagerRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/import': {
+      id: '/admin/import'
+      path: '/import'
+      fullPath: '/admin/import'
+      preLoaderRoute: typeof AdminImportRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/import-protokoll': {
+      id: '/admin/import-protokoll'
+      path: '/import-protokoll'
+      fullPath: '/admin/import-protokoll'
+      preLoaderRoute: typeof AdminImportProtokollRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/import-uebersicht': {
+      id: '/admin/import-uebersicht'
+      path: '/import-uebersicht'
+      fullPath: '/admin/import-uebersicht'
+      preLoaderRoute: typeof AdminImportUebersichtRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/kategorien': {
+      id: '/admin/kategorien'
+      path: '/kategorien'
+      fullPath: '/admin/kategorien'
+      preLoaderRoute: typeof AdminKategorienRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/ki-entwurfsmaschine': {
+      id: '/admin/ki-entwurfsmaschine'
+      path: '/ki-entwurfsmaschine'
+      fullPath: '/admin/ki-entwurfsmaschine'
+      preLoaderRoute: typeof AdminKiEntwurfsmaschineRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/knowledge-graph': {
+      id: '/admin/knowledge-graph'
+      path: '/knowledge-graph'
+      fullPath: '/admin/knowledge-graph'
+      preLoaderRoute: typeof AdminKnowledgeGraphRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/legal-knowledge': {
+      id: '/admin/legal-knowledge'
+      path: '/legal-knowledge'
+      fullPath: '/admin/legal-knowledge'
+      preLoaderRoute: typeof AdminLegalKnowledgeRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/legal-testmatrix': {
+      id: '/admin/legal-testmatrix'
+      path: '/legal-testmatrix'
+      fullPath: '/admin/legal-testmatrix'
+      preLoaderRoute: typeof AdminLegalTestmatrixRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/praxisfall-matching': {
+      id: '/admin/praxisfall-matching'
+      path: '/praxisfall-matching'
+      fullPath: '/admin/praxisfall-matching'
+      preLoaderRoute: typeof AdminPraxisfallMatchingRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/qualitaet': {
+      id: '/admin/qualitaet'
+      path: '/qualitaet'
+      fullPath: '/admin/qualitaet'
+      preLoaderRoute: typeof AdminQualitaetRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/qualitaetsmanager': {
+      id: '/admin/qualitaetsmanager'
+      path: '/qualitaetsmanager'
+      fullPath: '/admin/qualitaetsmanager'
+      preLoaderRoute: typeof AdminQualitaetsmanagerRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/quellenwaechter': {
+      id: '/admin/quellenwaechter'
+      path: '/quellenwaechter'
+      fullPath: '/admin/quellenwaechter'
+      preLoaderRoute: typeof AdminQuellenwaechterRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/rechtsgrundlagen': {
+      id: '/admin/rechtsgrundlagen'
+      path: '/rechtsgrundlagen'
+      fullPath: '/admin/rechtsgrundlagen'
+      preLoaderRoute: typeof AdminRechtsgrundlagenRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/schlagwoerter': {
+      id: '/admin/schlagwoerter'
+      path: '/schlagwoerter'
+      fullPath: '/admin/schlagwoerter'
+      preLoaderRoute: typeof AdminSchlagwoerterRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/suchindex': {
+      id: '/admin/suchindex'
+      path: '/suchindex'
+      fullPath: '/admin/suchindex'
+      preLoaderRoute: typeof AdminSuchindexRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/suchtest': {
+      id: '/admin/suchtest'
+      path: '/suchtest'
+      fullPath: '/admin/suchtest'
+      preLoaderRoute: typeof AdminSuchtestRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/verknuepfungen': {
+      id: '/admin/verknuepfungen'
+      path: '/verknuepfungen'
+      fullPath: '/admin/verknuepfungen'
+      preLoaderRoute: typeof AdminVerknuepfungenRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/vorlagen': {
+      id: '/admin/vorlagen'
+      path: '/vorlagen'
+      fullPath: '/admin/vorlagen'
+      preLoaderRoute: typeof AdminVorlagenRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/api/ai-draft-batch-item': {
+      id: '/api/ai-draft-batch-item'
+      path: '/api/ai-draft-batch-item'
+      fullPath: '/api/ai-draft-batch-item'
+      preLoaderRoute: typeof ApiAiDraftBatchItemRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/ai-draft-case': {
+      id: '/api/ai-draft-case'
+      path: '/api/ai-draft-case'
+      fullPath: '/api/ai-draft-case'
+      preLoaderRoute: typeof ApiAiDraftCaseRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/ai-draft-decision-tree': {
+      id: '/api/ai-draft-decision-tree'
+      path: '/api/ai-draft-decision-tree'
+      fullPath: '/api/ai-draft-decision-tree'
+      preLoaderRoute: typeof ApiAiDraftDecisionTreeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/ai-draft-topics': {
+      id: '/api/ai-draft-topics'
+      path: '/api/ai-draft-topics'
+      fullPath: '/api/ai-draft-topics'
+      preLoaderRoute: typeof ApiAiDraftTopicsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/ai-editorial-suggest': {
+      id: '/api/ai-editorial-suggest'
+      path: '/api/ai-editorial-suggest'
+      fullPath: '/api/ai-editorial-suggest'
+      preLoaderRoute: typeof ApiAiEditorialSuggestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/ai-match-keywords': {
+      id: '/api/ai-match-keywords'
+      path: '/api/ai-match-keywords'
+      fullPath: '/api/ai-match-keywords'
+      preLoaderRoute: typeof ApiAiMatchKeywordsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/ai-match-legal-sections': {
+      id: '/api/ai-match-legal-sections'
+      path: '/api/ai-match-legal-sections'
+      fullPath: '/api/ai-match-legal-sections'
+      preLoaderRoute: typeof ApiAiMatchLegalSectionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/ai-match-similar-cases': {
+      id: '/api/ai-match-similar-cases'
+      path: '/api/ai-match-similar-cases'
+      fullPath: '/api/ai-match-similar-cases'
+      preLoaderRoute: typeof ApiAiMatchSimilarCasesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/ai-match-templates': {
+      id: '/api/ai-match-templates'
+      path: '/api/ai-match-templates'
+      fullPath: '/api/ai-match-templates'
+      preLoaderRoute: typeof ApiAiMatchTemplatesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/ai-reevaluate-legal-links': {
+      id: '/api/ai-reevaluate-legal-links'
+      path: '/api/ai-reevaluate-legal-links'
+      fullPath: '/api/ai-reevaluate-legal-links'
+      preLoaderRoute: typeof ApiAiReevaluateLegalLinksRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/ai-refine-case-field': {
+      id: '/api/ai-refine-case-field'
+      path: '/api/ai-refine-case-field'
+      fullPath: '/api/ai-refine-case-field'
+      preLoaderRoute: typeof ApiAiRefineCaseFieldRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/copilot-track': {
+      id: '/api/copilot-track'
+      path: '/api/copilot-track'
+      fullPath: '/api/copilot-track'
+      preLoaderRoute: typeof ApiCopilotTrackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/crawl-legal-source': {
+      id: '/api/crawl-legal-source'
+      path: '/api/crawl-legal-source'
+      fullPath: '/api/crawl-legal-source'
+      preLoaderRoute: typeof ApiCrawlLegalSourceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/enrich-legal-section': {
+      id: '/api/enrich-legal-section'
+      path: '/api/enrich-legal-section'
+      fullPath: '/api/enrich-legal-section'
+      preLoaderRoute: typeof ApiEnrichLegalSectionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/generate-case-document': {
+      id: '/api/generate-case-document'
+      path: '/api/generate-case-document'
+      fullPath: '/api/generate-case-document'
+      preLoaderRoute: typeof ApiGenerateCaseDocumentRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/import-legal-source': {
+      id: '/api/import-legal-source'
+      path: '/api/import-legal-source'
+      fullPath: '/api/import-legal-source'
+      preLoaderRoute: typeof ApiImportLegalSourceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/legal-chunks-sync': {
+      id: '/api/legal-chunks-sync'
+      path: '/api/legal-chunks-sync'
+      fullPath: '/api/legal-chunks-sync'
+      preLoaderRoute: typeof ApiLegalChunksSyncRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/legal-copilot-ask': {
+      id: '/api/legal-copilot-ask'
+      path: '/api/legal-copilot-ask'
+      fullPath: '/api/legal-copilot-ask'
+      preLoaderRoute: typeof ApiLegalCopilotAskRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/legal-embeddings-cancel': {
+      id: '/api/legal-embeddings-cancel'
+      path: '/api/legal-embeddings-cancel'
+      fullPath: '/api/legal-embeddings-cancel'
+      preLoaderRoute: typeof ApiLegalEmbeddingsCancelRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/legal-embeddings-preview': {
+      id: '/api/legal-embeddings-preview'
+      path: '/api/legal-embeddings-preview'
+      fullPath: '/api/legal-embeddings-preview'
+      preLoaderRoute: typeof ApiLegalEmbeddingsPreviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/legal-embeddings-retry': {
+      id: '/api/legal-embeddings-retry'
+      path: '/api/legal-embeddings-retry'
+      fullPath: '/api/legal-embeddings-retry'
+      preLoaderRoute: typeof ApiLegalEmbeddingsRetryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/legal-embeddings-run': {
+      id: '/api/legal-embeddings-run'
+      path: '/api/legal-embeddings-run'
+      fullPath: '/api/legal-embeddings-run'
+      preLoaderRoute: typeof ApiLegalEmbeddingsRunRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/legal-embeddings-status': {
+      id: '/api/legal-embeddings-status'
+      path: '/api/legal-embeddings-status'
+      fullPath: '/api/legal-embeddings-status'
+      preLoaderRoute: typeof ApiLegalEmbeddingsStatusRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/legal-embeddings-validate': {
+      id: '/api/legal-embeddings-validate'
+      path: '/api/legal-embeddings-validate'
+      fullPath: '/api/legal-embeddings-validate'
+      preLoaderRoute: typeof ApiLegalEmbeddingsValidateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/legal-retrieval-search': {
+      id: '/api/legal-retrieval-search'
+      path: '/api/legal-retrieval-search'
+      fullPath: '/api/legal-retrieval-search'
+      preLoaderRoute: typeof ApiLegalRetrievalSearchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/legal-source-crawl': {
+      id: '/api/legal-source-crawl'
+      path: '/api/legal-source-crawl'
+      fullPath: '/api/legal-source-crawl'
+      preLoaderRoute: typeof ApiLegalSourceCrawlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/search-embeddings-query': {
+      id: '/api/search-embeddings-query'
+      path: '/api/search-embeddings-query'
+      fullPath: '/api/search-embeddings-query'
+      preLoaderRoute: typeof ApiSearchEmbeddingsQueryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/search-embeddings-reindex': {
+      id: '/api/search-embeddings-reindex'
+      path: '/api/search-embeddings-reindex'
+      fullPath: '/api/search-embeddings-reindex'
+      preLoaderRoute: typeof ApiSearchEmbeddingsReindexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/search-embeddings-status': {
+      id: '/api/search-embeddings-status'
+      path: '/api/search-embeddings-status'
+      fullPath: '/api/search-embeddings-status'
+      preLoaderRoute: typeof ApiSearchEmbeddingsStatusRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/search-testset-overrides': {
+      id: '/api/search-testset-overrides'
+      path: '/api/search-testset-overrides'
+      fullPath: '/api/search-testset-overrides'
+      preLoaderRoute: typeof ApiSearchTestsetOverridesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/send-case-document-email': {
+      id: '/api/send-case-document-email'
+      path: '/api/send-case-document-email'
+      fullPath: '/api/send-case-document-email'
+      preLoaderRoute: typeof ApiSendCaseDocumentEmailRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/workflow-sessions': {
+      id: '/api/workflow-sessions'
+      path: '/api/workflow-sessions'
+      fullPath: '/api/workflow-sessions'
+      preLoaderRoute: typeof ApiWorkflowSessionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/workflows': {
+      id: '/api/workflows'
+      path: '/api/workflows'
+      fullPath: '/api/workflows'
+      preLoaderRoute: typeof ApiWorkflowsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/faelle/$id': {
+      id: '/faelle/$id'
+      path: '/$id'
+      fullPath: '/faelle/$id'
+      preLoaderRoute: typeof FaelleIdRouteImport
+      parentRoute: typeof FaelleRoute
+    }
+    '/fall/$id': {
+      id: '/fall/$id'
+      path: '/fall/$id'
+      fullPath: '/fall/$id'
+      preLoaderRoute: typeof FallIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/rechtsgrundlagen/$id': {
+      id: '/rechtsgrundlagen/$id'
+      path: '/$id'
+      fullPath: '/rechtsgrundlagen/$id'
+      preLoaderRoute: typeof RechtsgrundlagenIdRouteImport
+      parentRoute: typeof RechtsgrundlagenRoute
+    }
+    '/workflows/': {
+      id: '/workflows/'
+      path: '/workflows'
+      fullPath: '/workflows/'
+      preLoaderRoute: typeof WorkflowsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/workflows/$templateId': {
+      id: '/workflows/$templateId'
+      path: '/workflows/$templateId'
+      fullPath: '/workflows/$templateId'
+      preLoaderRoute: typeof WorkflowsTemplateIdRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/admin/editorial/': {
       id: '/admin/editorial/'
       path: '/editorial'
       fullPath: '/admin/editorial/'
       preLoaderRoute: typeof AdminEditorialIndexRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/workflows/session/$sessionId': {
-      id: '/workflows/session/$sessionId'
-      path: '/workflows/session/$sessionId'
-      fullPath: '/workflows/session/$sessionId'
-      preLoaderRoute: typeof WorkflowsSessionSessionIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/faelle_/$id/dokument': {
-      id: '/faelle_/$id/dokument'
-      path: '/faelle/$id/dokument'
-      fullPath: '/faelle/$id/dokument'
-      preLoaderRoute: typeof FaelleIdDokumentRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/workflows/$id': {
-      id: '/api/workflows/$id'
-      path: '/$id'
-      fullPath: '/api/workflows/$id'
-      preLoaderRoute: typeof ApiWorkflowsIdRouteImport
-      parentRoute: typeof ApiWorkflowsRoute
-    }
-    '/api/workflow-sessions/$id': {
-      id: '/api/workflow-sessions/$id'
-      path: '/$id'
-      fullPath: '/api/workflow-sessions/$id'
-      preLoaderRoute: typeof ApiWorkflowSessionsIdRouteImport
-      parentRoute: typeof ApiWorkflowSessionsRoute
-    }
-    '/admin/rechtsgrundlagen/$id': {
-      id: '/admin/rechtsgrundlagen/$id'
-      path: '/$id'
-      fullPath: '/admin/rechtsgrundlagen/$id'
-      preLoaderRoute: typeof AdminRechtsgrundlagenIdRouteImport
-      parentRoute: typeof AdminRechtsgrundlagenRoute
-    }
-    '/admin/legal-knowledge/versions': {
-      id: '/admin/legal-knowledge/versions'
-      path: '/versions'
-      fullPath: '/admin/legal-knowledge/versions'
-      preLoaderRoute: typeof AdminLegalKnowledgeVersionsRouteImport
-      parentRoute: typeof AdminLegalKnowledgeRoute
-    }
-    '/admin/legal-knowledge/veraltet': {
-      id: '/admin/legal-knowledge/veraltet'
-      path: '/veraltet'
-      fullPath: '/admin/legal-knowledge/veraltet'
-      preLoaderRoute: typeof AdminLegalKnowledgeVeraltetRouteImport
-      parentRoute: typeof AdminLegalKnowledgeRoute
-    }
-    '/admin/legal-knowledge/suche': {
-      id: '/admin/legal-knowledge/suche'
-      path: '/suche'
-      fullPath: '/admin/legal-knowledge/suche'
-      preLoaderRoute: typeof AdminLegalKnowledgeSucheRouteImport
-      parentRoute: typeof AdminLegalKnowledgeRoute
-    }
-    '/admin/legal-knowledge/sources': {
-      id: '/admin/legal-knowledge/sources'
-      path: '/sources'
-      fullPath: '/admin/legal-knowledge/sources'
-      preLoaderRoute: typeof AdminLegalKnowledgeSourcesRouteImport
-      parentRoute: typeof AdminLegalKnowledgeRoute
-    }
-    '/admin/legal-knowledge/quellen-connector': {
-      id: '/admin/legal-knowledge/quellen-connector'
-      path: '/quellen-connector'
-      fullPath: '/admin/legal-knowledge/quellen-connector'
-      preLoaderRoute: typeof AdminLegalKnowledgeQuellenConnectorRouteImport
-      parentRoute: typeof AdminLegalKnowledgeRoute
-    }
-    '/admin/legal-knowledge/pruefbedarf': {
-      id: '/admin/legal-knowledge/pruefbedarf'
-      path: '/pruefbedarf'
-      fullPath: '/admin/legal-knowledge/pruefbedarf'
-      preLoaderRoute: typeof AdminLegalKnowledgePruefbedarfRouteImport
-      parentRoute: typeof AdminLegalKnowledgeRoute
-    }
-    '/admin/legal-knowledge/import': {
-      id: '/admin/legal-knowledge/import'
-      path: '/import'
-      fullPath: '/admin/legal-knowledge/import'
-      preLoaderRoute: typeof AdminLegalKnowledgeImportRouteImport
-      parentRoute: typeof AdminLegalKnowledgeRoute
-    }
-    '/admin/legal-knowledge/history': {
-      id: '/admin/legal-knowledge/history'
-      path: '/history'
-      fullPath: '/admin/legal-knowledge/history'
-      preLoaderRoute: typeof AdminLegalKnowledgeHistoryRouteImport
-      parentRoute: typeof AdminLegalKnowledgeRoute
-    }
-    '/admin/ki-entwurfsmaschine/review': {
-      id: '/admin/ki-entwurfsmaschine/review'
-      path: '/review'
-      fullPath: '/admin/ki-entwurfsmaschine/review'
-      preLoaderRoute: typeof AdminKiEntwurfsmaschineReviewRouteImport
-      parentRoute: typeof AdminKiEntwurfsmaschineRoute
-    }
-    '/admin/ki-entwurfsmaschine/pruefung': {
-      id: '/admin/ki-entwurfsmaschine/pruefung'
-      path: '/pruefung'
-      fullPath: '/admin/ki-entwurfsmaschine/pruefung'
-      preLoaderRoute: typeof AdminKiEntwurfsmaschinePruefungRouteImport
-      parentRoute: typeof AdminKiEntwurfsmaschineRoute
-    }
-    '/admin/ki-entwurfsmaschine/excel-import': {
-      id: '/admin/ki-entwurfsmaschine/excel-import'
-      path: '/excel-import'
-      fullPath: '/admin/ki-entwurfsmaschine/excel-import'
-      preLoaderRoute: typeof AdminKiEntwurfsmaschineExcelImportRouteImport
-      parentRoute: typeof AdminKiEntwurfsmaschineRoute
-    }
-    '/admin/import-protokoll/$id': {
-      id: '/admin/import-protokoll/$id'
-      path: '/$id'
-      fullPath: '/admin/import-protokoll/$id'
-      preLoaderRoute: typeof AdminImportProtokollIdRouteImport
-      parentRoute: typeof AdminImportProtokollRoute
-    }
-    '/admin/faelle/neu': {
-      id: '/admin/faelle/neu'
-      path: '/neu'
-      fullPath: '/admin/faelle/neu'
-      preLoaderRoute: typeof AdminFaelleNeuRouteImport
-      parentRoute: typeof AdminFaelleRoute
-    }
-    '/admin/faelle/$id': {
-      id: '/admin/faelle/$id'
-      path: '/$id'
-      fullPath: '/admin/faelle/$id'
-      preLoaderRoute: typeof AdminFaelleIdRouteImport
-      parentRoute: typeof AdminFaelleRoute
-    }
-    '/admin/editorial/reviews': {
-      id: '/admin/editorial/reviews'
-      path: '/editorial/reviews'
-      fullPath: '/admin/editorial/reviews'
-      preLoaderRoute: typeof AdminEditorialReviewsRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/editorial/qualitaet': {
-      id: '/admin/editorial/qualitaet'
-      path: '/editorial/qualitaet'
-      fullPath: '/admin/editorial/qualitaet'
-      preLoaderRoute: typeof AdminEditorialQualitaetRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/editorial/publishing': {
-      id: '/admin/editorial/publishing'
-      path: '/editorial/publishing'
-      fullPath: '/admin/editorial/publishing'
-      preLoaderRoute: typeof AdminEditorialPublishingRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/editorial/legal-quality': {
-      id: '/admin/editorial/legal-quality'
-      path: '/editorial/legal-quality'
-      fullPath: '/admin/editorial/legal-quality'
-      preLoaderRoute: typeof AdminEditorialLegalQualityRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/editorial/faelle': {
@@ -2266,6 +2084,195 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminEditorialFaelleRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/editorial/legal-quality': {
+      id: '/admin/editorial/legal-quality'
+      path: '/editorial/legal-quality'
+      fullPath: '/admin/editorial/legal-quality'
+      preLoaderRoute: typeof AdminEditorialLegalQualityRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/editorial/publishing': {
+      id: '/admin/editorial/publishing'
+      path: '/editorial/publishing'
+      fullPath: '/admin/editorial/publishing'
+      preLoaderRoute: typeof AdminEditorialPublishingRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/editorial/qualitaet': {
+      id: '/admin/editorial/qualitaet'
+      path: '/editorial/qualitaet'
+      fullPath: '/admin/editorial/qualitaet'
+      preLoaderRoute: typeof AdminEditorialQualitaetRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/editorial/reviews': {
+      id: '/admin/editorial/reviews'
+      path: '/editorial/reviews'
+      fullPath: '/admin/editorial/reviews'
+      preLoaderRoute: typeof AdminEditorialReviewsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/faelle/': {
+      id: '/admin/faelle/'
+      path: '/'
+      fullPath: '/admin/faelle/'
+      preLoaderRoute: typeof AdminFaelleIndexRouteImport
+      parentRoute: typeof AdminFaelleRoute
+    }
+    '/admin/faelle/$id': {
+      id: '/admin/faelle/$id'
+      path: '/$id'
+      fullPath: '/admin/faelle/$id'
+      preLoaderRoute: typeof AdminFaelleIdRouteImport
+      parentRoute: typeof AdminFaelleRoute
+    }
+    '/admin/faelle/neu': {
+      id: '/admin/faelle/neu'
+      path: '/neu'
+      fullPath: '/admin/faelle/neu'
+      preLoaderRoute: typeof AdminFaelleNeuRouteImport
+      parentRoute: typeof AdminFaelleRoute
+    }
+    '/admin/import-protokoll/$id': {
+      id: '/admin/import-protokoll/$id'
+      path: '/$id'
+      fullPath: '/admin/import-protokoll/$id'
+      preLoaderRoute: typeof AdminImportProtokollIdRouteImport
+      parentRoute: typeof AdminImportProtokollRoute
+    }
+    '/admin/ki-entwurfsmaschine/': {
+      id: '/admin/ki-entwurfsmaschine/'
+      path: '/'
+      fullPath: '/admin/ki-entwurfsmaschine/'
+      preLoaderRoute: typeof AdminKiEntwurfsmaschineIndexRouteImport
+      parentRoute: typeof AdminKiEntwurfsmaschineRoute
+    }
+    '/admin/ki-entwurfsmaschine/excel-import': {
+      id: '/admin/ki-entwurfsmaschine/excel-import'
+      path: '/excel-import'
+      fullPath: '/admin/ki-entwurfsmaschine/excel-import'
+      preLoaderRoute: typeof AdminKiEntwurfsmaschineExcelImportRouteImport
+      parentRoute: typeof AdminKiEntwurfsmaschineRoute
+    }
+    '/admin/ki-entwurfsmaschine/pruefung': {
+      id: '/admin/ki-entwurfsmaschine/pruefung'
+      path: '/pruefung'
+      fullPath: '/admin/ki-entwurfsmaschine/pruefung'
+      preLoaderRoute: typeof AdminKiEntwurfsmaschinePruefungRouteImport
+      parentRoute: typeof AdminKiEntwurfsmaschineRoute
+    }
+    '/admin/ki-entwurfsmaschine/review': {
+      id: '/admin/ki-entwurfsmaschine/review'
+      path: '/review'
+      fullPath: '/admin/ki-entwurfsmaschine/review'
+      preLoaderRoute: typeof AdminKiEntwurfsmaschineReviewRouteImport
+      parentRoute: typeof AdminKiEntwurfsmaschineRoute
+    }
+    '/admin/legal-knowledge/': {
+      id: '/admin/legal-knowledge/'
+      path: '/'
+      fullPath: '/admin/legal-knowledge/'
+      preLoaderRoute: typeof AdminLegalKnowledgeIndexRouteImport
+      parentRoute: typeof AdminLegalKnowledgeRoute
+    }
+    '/admin/legal-knowledge/history': {
+      id: '/admin/legal-knowledge/history'
+      path: '/history'
+      fullPath: '/admin/legal-knowledge/history'
+      preLoaderRoute: typeof AdminLegalKnowledgeHistoryRouteImport
+      parentRoute: typeof AdminLegalKnowledgeRoute
+    }
+    '/admin/legal-knowledge/import': {
+      id: '/admin/legal-knowledge/import'
+      path: '/import'
+      fullPath: '/admin/legal-knowledge/import'
+      preLoaderRoute: typeof AdminLegalKnowledgeImportRouteImport
+      parentRoute: typeof AdminLegalKnowledgeRoute
+    }
+    '/admin/legal-knowledge/pruefbedarf': {
+      id: '/admin/legal-knowledge/pruefbedarf'
+      path: '/pruefbedarf'
+      fullPath: '/admin/legal-knowledge/pruefbedarf'
+      preLoaderRoute: typeof AdminLegalKnowledgePruefbedarfRouteImport
+      parentRoute: typeof AdminLegalKnowledgeRoute
+    }
+    '/admin/legal-knowledge/quellen-connector': {
+      id: '/admin/legal-knowledge/quellen-connector'
+      path: '/quellen-connector'
+      fullPath: '/admin/legal-knowledge/quellen-connector'
+      preLoaderRoute: typeof AdminLegalKnowledgeQuellenConnectorRouteImport
+      parentRoute: typeof AdminLegalKnowledgeRoute
+    }
+    '/admin/legal-knowledge/sources': {
+      id: '/admin/legal-knowledge/sources'
+      path: '/sources'
+      fullPath: '/admin/legal-knowledge/sources'
+      preLoaderRoute: typeof AdminLegalKnowledgeSourcesRouteImport
+      parentRoute: typeof AdminLegalKnowledgeRoute
+    }
+    '/admin/legal-knowledge/suche': {
+      id: '/admin/legal-knowledge/suche'
+      path: '/suche'
+      fullPath: '/admin/legal-knowledge/suche'
+      preLoaderRoute: typeof AdminLegalKnowledgeSucheRouteImport
+      parentRoute: typeof AdminLegalKnowledgeRoute
+    }
+    '/admin/legal-knowledge/veraltet': {
+      id: '/admin/legal-knowledge/veraltet'
+      path: '/veraltet'
+      fullPath: '/admin/legal-knowledge/veraltet'
+      preLoaderRoute: typeof AdminLegalKnowledgeVeraltetRouteImport
+      parentRoute: typeof AdminLegalKnowledgeRoute
+    }
+    '/admin/legal-knowledge/versions': {
+      id: '/admin/legal-knowledge/versions'
+      path: '/versions'
+      fullPath: '/admin/legal-knowledge/versions'
+      preLoaderRoute: typeof AdminLegalKnowledgeVersionsRouteImport
+      parentRoute: typeof AdminLegalKnowledgeRoute
+    }
+    '/admin/rechtsgrundlagen/$id': {
+      id: '/admin/rechtsgrundlagen/$id'
+      path: '/$id'
+      fullPath: '/admin/rechtsgrundlagen/$id'
+      preLoaderRoute: typeof AdminRechtsgrundlagenIdRouteImport
+      parentRoute: typeof AdminRechtsgrundlagenRoute
+    }
+    '/api/workflow-sessions/$id': {
+      id: '/api/workflow-sessions/$id'
+      path: '/$id'
+      fullPath: '/api/workflow-sessions/$id'
+      preLoaderRoute: typeof ApiWorkflowSessionsIdRouteImport
+      parentRoute: typeof ApiWorkflowSessionsRoute
+    }
+    '/api/workflows/$id': {
+      id: '/api/workflows/$id'
+      path: '/$id'
+      fullPath: '/api/workflows/$id'
+      preLoaderRoute: typeof ApiWorkflowsIdRouteImport
+      parentRoute: typeof ApiWorkflowsRoute
+    }
+    '/faelle_/$id/dokument': {
+      id: '/faelle_/$id/dokument'
+      path: '/faelle/$id/dokument'
+      fullPath: '/faelle/$id/dokument'
+      preLoaderRoute: typeof FaelleIdDokumentRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/workflows/session/$sessionId': {
+      id: '/workflows/session/$sessionId'
+      path: '/workflows/session/$sessionId'
+      fullPath: '/workflows/session/$sessionId'
+      preLoaderRoute: typeof WorkflowsSessionSessionIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/editorial/faelle/$id': {
+      id: '/admin/editorial/faelle/$id'
+      path: '/$id'
+      fullPath: '/admin/editorial/faelle/$id'
+      preLoaderRoute: typeof AdminEditorialFaelleIdRouteImport
+      parentRoute: typeof AdminEditorialFaelleRoute
+    }
     '/admin/editorial/workflows/': {
       id: '/admin/editorial/workflows/'
       path: '/editorial/workflows'
@@ -2273,39 +2280,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminEditorialWorkflowsIndexRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/api/workflow-sessions/$id/transitions': {
-      id: '/api/workflow-sessions/$id/transitions'
-      path: '/transitions'
-      fullPath: '/api/workflow-sessions/$id/transitions'
-      preLoaderRoute: typeof ApiWorkflowSessionsIdTransitionsRouteImport
-      parentRoute: typeof ApiWorkflowSessionsIdRoute
+    '/admin/editorial/workflows/$id': {
+      id: '/admin/editorial/workflows/$id'
+      path: '/editorial/workflows/$id'
+      fullPath: '/admin/editorial/workflows/$id'
+      preLoaderRoute: typeof AdminEditorialWorkflowsIdRouteImport
+      parentRoute: typeof AdminRoute
     }
-    '/api/workflow-sessions/$id/resume': {
-      id: '/api/workflow-sessions/$id/resume'
-      path: '/resume'
-      fullPath: '/api/workflow-sessions/$id/resume'
-      preLoaderRoute: typeof ApiWorkflowSessionsIdResumeRouteImport
-      parentRoute: typeof ApiWorkflowSessionsIdRoute
+    '/admin/legal-knowledge/sources/$id': {
+      id: '/admin/legal-knowledge/sources/$id'
+      path: '/$id'
+      fullPath: '/admin/legal-knowledge/sources/$id'
+      preLoaderRoute: typeof AdminLegalKnowledgeSourcesIdRouteImport
+      parentRoute: typeof AdminLegalKnowledgeSourcesRoute
     }
-    '/api/workflow-sessions/$id/pause': {
-      id: '/api/workflow-sessions/$id/pause'
-      path: '/pause'
-      fullPath: '/api/workflow-sessions/$id/pause'
-      preLoaderRoute: typeof ApiWorkflowSessionsIdPauseRouteImport
-      parentRoute: typeof ApiWorkflowSessionsIdRoute
-    }
-    '/api/workflow-sessions/$id/events': {
-      id: '/api/workflow-sessions/$id/events'
-      path: '/events'
-      fullPath: '/api/workflow-sessions/$id/events'
-      preLoaderRoute: typeof ApiWorkflowSessionsIdEventsRouteImport
-      parentRoute: typeof ApiWorkflowSessionsIdRoute
-    }
-    '/api/workflow-sessions/$id/documents': {
-      id: '/api/workflow-sessions/$id/documents'
-      path: '/documents'
-      fullPath: '/api/workflow-sessions/$id/documents'
-      preLoaderRoute: typeof ApiWorkflowSessionsIdDocumentsRouteImport
+    '/api/workflow-sessions/$id/cancel': {
+      id: '/api/workflow-sessions/$id/cancel'
+      path: '/cancel'
+      fullPath: '/api/workflow-sessions/$id/cancel'
+      preLoaderRoute: typeof ApiWorkflowSessionsIdCancelRouteImport
       parentRoute: typeof ApiWorkflowSessionsIdRoute
     }
     '/api/workflow-sessions/$id/checklists': {
@@ -2315,33 +2308,40 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiWorkflowSessionsIdChecklistsRouteImport
       parentRoute: typeof ApiWorkflowSessionsIdRoute
     }
-    '/api/workflow-sessions/$id/cancel': {
-      id: '/api/workflow-sessions/$id/cancel'
-      path: '/cancel'
-      fullPath: '/api/workflow-sessions/$id/cancel'
-      preLoaderRoute: typeof ApiWorkflowSessionsIdCancelRouteImport
+    '/api/workflow-sessions/$id/documents': {
+      id: '/api/workflow-sessions/$id/documents'
+      path: '/documents'
+      fullPath: '/api/workflow-sessions/$id/documents'
+      preLoaderRoute: typeof ApiWorkflowSessionsIdDocumentsRouteImport
       parentRoute: typeof ApiWorkflowSessionsIdRoute
     }
-    '/admin/legal-knowledge/sources/$id': {
-      id: '/admin/legal-knowledge/sources/$id'
-      path: '/$id'
-      fullPath: '/admin/legal-knowledge/sources/$id'
-      preLoaderRoute: typeof AdminLegalKnowledgeSourcesIdRouteImport
-      parentRoute: typeof AdminLegalKnowledgeSourcesRoute
+    '/api/workflow-sessions/$id/events': {
+      id: '/api/workflow-sessions/$id/events'
+      path: '/events'
+      fullPath: '/api/workflow-sessions/$id/events'
+      preLoaderRoute: typeof ApiWorkflowSessionsIdEventsRouteImport
+      parentRoute: typeof ApiWorkflowSessionsIdRoute
     }
-    '/admin/editorial/workflows/$id': {
-      id: '/admin/editorial/workflows/$id'
-      path: '/editorial/workflows/$id'
-      fullPath: '/admin/editorial/workflows/$id'
-      preLoaderRoute: typeof AdminEditorialWorkflowsIdRouteImport
-      parentRoute: typeof AdminRoute
+    '/api/workflow-sessions/$id/pause': {
+      id: '/api/workflow-sessions/$id/pause'
+      path: '/pause'
+      fullPath: '/api/workflow-sessions/$id/pause'
+      preLoaderRoute: typeof ApiWorkflowSessionsIdPauseRouteImport
+      parentRoute: typeof ApiWorkflowSessionsIdRoute
     }
-    '/admin/editorial/faelle/$id': {
-      id: '/admin/editorial/faelle/$id'
-      path: '/$id'
-      fullPath: '/admin/editorial/faelle/$id'
-      preLoaderRoute: typeof AdminEditorialFaelleIdRouteImport
-      parentRoute: typeof AdminEditorialFaelleRoute
+    '/api/workflow-sessions/$id/resume': {
+      id: '/api/workflow-sessions/$id/resume'
+      path: '/resume'
+      fullPath: '/api/workflow-sessions/$id/resume'
+      preLoaderRoute: typeof ApiWorkflowSessionsIdResumeRouteImport
+      parentRoute: typeof ApiWorkflowSessionsIdRoute
+    }
+    '/api/workflow-sessions/$id/transitions': {
+      id: '/api/workflow-sessions/$id/transitions'
+      path: '/transitions'
+      fullPath: '/api/workflow-sessions/$id/transitions'
+      preLoaderRoute: typeof ApiWorkflowSessionsIdTransitionsRouteImport
+      parentRoute: typeof ApiWorkflowSessionsIdRoute
     }
     '/api/workflow-sessions/$id/documents/$docId': {
       id: '/api/workflow-sessions/$id/documents/$docId'
@@ -2708,3 +2708,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

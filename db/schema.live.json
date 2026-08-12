@@ -34,7 +34,7 @@
       ],
       "policies": [
         {
-          "name": "Public read roles",
+          "name": "roles read all",
           "check": null,
           "roles": [
             "public"
@@ -126,20 +126,37 @@
         },
         {
           "udt": "text",
-          "name": "keyword",
+          "name": "name",
           "type": "text",
           "default": null,
-          "nullable": false
+          "nullable": true
         },
         {
           "udt": "timestamptz",
           "name": "created_at",
           "type": "timestamp with time zone",
           "default": "now()",
-          "nullable": true
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "keyword",
+          "type": "text",
+          "default": null,
+          "nullable": false
         }
       ],
       "policies": [
+        {
+          "name": "kw write pilot",
+          "check": "true",
+          "roles": [
+            "public"
+          ],
+          "using": "true",
+          "command": "ALL",
+          "permissive": "PERMISSIVE"
+        },
         {
           "name": "_role_select",
           "check": null,
@@ -169,6 +186,16 @@
           ],
           "using": "is_editor()",
           "command": "UPDATE",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "kw read all",
+          "check": null,
+          "roles": [
+            "public"
+          ],
+          "using": "true",
+          "command": "SELECT",
           "permissive": "PERMISSIVE"
         },
         {
@@ -441,7 +468,28 @@
           "nullable": false
         }
       ],
-      "policies": [],
+      "policies": [
+        {
+          "name": "case_events_no_client_write",
+          "check": "false",
+          "roles": [
+            "authenticated"
+          ],
+          "using": null,
+          "command": "INSERT",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "case_events_select_editor",
+          "check": null,
+          "roles": [
+            "authenticated"
+          ],
+          "using": "(is_editor() AND (EXISTS ( SELECT 1\n   FROM practice_cases pc\n  WHERE ((pc.id = case_events.case_id) AND (is_admin() OR (pc.workflow_status <> 'archived'::case_workflow_status))))))",
+          "command": "SELECT",
+          "permissive": "PERMISSIVE"
+        }
+      ],
       "primary_key": [
         "id"
       ],
@@ -454,28 +502,28 @@
           "referenced_column": "id"
         },
         {
-          "name": "case_events_case_version_fk",
-          "column": "case_version_id",
-          "referenced_table": "case_versions",
-          "referenced_column": "case_id"
-        },
-        {
-          "name": "case_events_case_version_fk",
-          "column": "case_id",
-          "referenced_table": "case_versions",
-          "referenced_column": "case_id"
-        },
-        {
-          "name": "case_events_case_version_fk",
-          "column": "case_version_id",
-          "referenced_table": "case_versions",
-          "referenced_column": "id"
-        },
-        {
           "name": "case_events_case_id_fkey",
           "column": "case_id",
           "referenced_table": "practice_cases",
           "referenced_column": "id"
+        },
+        {
+          "name": "case_events_case_version_fk",
+          "column": "case_version_id",
+          "referenced_table": "case_versions",
+          "referenced_column": "id"
+        },
+        {
+          "name": "case_events_case_version_fk",
+          "column": "case_version_id",
+          "referenced_table": "case_versions",
+          "referenced_column": "case_id"
+        },
+        {
+          "name": "case_events_case_version_fk",
+          "column": "case_id",
+          "referenced_table": "case_versions",
+          "referenced_column": "case_id"
         }
       ]
     },
@@ -534,16 +582,6 @@
       ],
       "policies": [
         {
-          "name": "Public read published faq entries",
-          "check": null,
-          "roles": [
-            "public"
-          ],
-          "using": "(status = 'published'::text)",
-          "command": "SELECT",
-          "permissive": "PERMISSIVE"
-        },
-        {
           "name": "_role_select",
           "check": null,
           "roles": [
@@ -564,13 +602,13 @@
           "permissive": "PERMISSIVE"
         },
         {
-          "name": "_role_insert_editor",
+          "name": "_role_update_editor",
           "check": "is_editor()",
           "roles": [
             "authenticated"
           ],
-          "using": null,
-          "command": "INSERT",
+          "using": "is_editor()",
+          "command": "UPDATE",
           "permissive": "PERMISSIVE"
         },
         {
@@ -585,13 +623,23 @@
           "permissive": "PERMISSIVE"
         },
         {
-          "name": "_role_update_editor",
+          "name": "_role_insert_editor",
           "check": "is_editor()",
           "roles": [
             "authenticated"
           ],
-          "using": "is_editor()",
-          "command": "UPDATE",
+          "using": null,
+          "command": "INSERT",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "Public read published faq entries",
+          "check": null,
+          "roles": [
+            "public"
+          ],
+          "using": "(status = 'published'::text)",
+          "command": "SELECT",
           "permissive": "PERMISSIVE"
         }
       ],
@@ -726,16 +774,6 @@
       ],
       "policies": [
         {
-          "name": "_role_select",
-          "check": null,
-          "roles": [
-            "authenticated"
-          ],
-          "using": "is_editor()",
-          "command": "SELECT",
-          "permissive": "PERMISSIVE"
-        },
-        {
           "name": "_role_delete_admin",
           "check": null,
           "roles": [
@@ -746,13 +784,13 @@
           "permissive": "PERMISSIVE"
         },
         {
-          "name": "_role_update_editor",
-          "check": "is_editor()",
+          "name": "_role_select",
+          "check": null,
           "roles": [
             "authenticated"
           ],
           "using": "is_editor()",
-          "command": "UPDATE",
+          "command": "SELECT",
           "permissive": "PERMISSIVE"
         },
         {
@@ -763,6 +801,16 @@
           ],
           "using": null,
           "command": "INSERT",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "_role_update_editor",
+          "check": "is_editor()",
+          "roles": [
+            "authenticated"
+          ],
+          "using": "is_editor()",
+          "command": "UPDATE",
           "permissive": "PERMISSIVE"
         }
       ],
@@ -853,41 +901,72 @@
           "nullable": false
         }
       ],
-      "policies": [],
+      "policies": [
+        {
+          "name": "case_reviews_select_participants",
+          "check": null,
+          "roles": [
+            "authenticated"
+          ],
+          "using": "(is_admin() OR (is_reviewer() AND ((assigned_to = auth.uid()) OR (assigned_to IS NULL))) OR (requested_by = auth.uid()) OR (assigned_to = auth.uid()))",
+          "command": "SELECT",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "case_reviews_no_client_update",
+          "check": "false",
+          "roles": [
+            "authenticated"
+          ],
+          "using": "false",
+          "command": "UPDATE",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "case_reviews_no_client_write",
+          "check": "false",
+          "roles": [
+            "authenticated"
+          ],
+          "using": null,
+          "command": "INSERT",
+          "permissive": "PERMISSIVE"
+        }
+      ],
       "primary_key": [
         "id"
       ],
       "rls_enabled": true,
       "foreign_keys": [
         {
-          "name": "case_reviews_case_version_fk",
-          "column": "case_id",
-          "referenced_table": "case_versions",
-          "referenced_column": "case_id"
-        },
-        {
-          "name": "case_reviews_case_version_fk",
-          "column": "case_version_id",
-          "referenced_table": "case_versions",
-          "referenced_column": "id"
-        },
-        {
-          "name": "case_reviews_case_version_fk",
-          "column": "case_version_id",
-          "referenced_table": "case_versions",
-          "referenced_column": "case_id"
-        },
-        {
-          "name": "case_reviews_case_version_fk",
-          "column": "case_id",
-          "referenced_table": "case_versions",
-          "referenced_column": "id"
-        },
-        {
           "name": "case_reviews_case_id_fkey",
           "column": "case_id",
           "referenced_table": "practice_cases",
           "referenced_column": "id"
+        },
+        {
+          "name": "case_reviews_case_version_fk",
+          "column": "case_version_id",
+          "referenced_table": "case_versions",
+          "referenced_column": "id"
+        },
+        {
+          "name": "case_reviews_case_version_fk",
+          "column": "case_version_id",
+          "referenced_table": "case_versions",
+          "referenced_column": "case_id"
+        },
+        {
+          "name": "case_reviews_case_version_fk",
+          "column": "case_id",
+          "referenced_table": "case_versions",
+          "referenced_column": "id"
+        },
+        {
+          "name": "case_reviews_case_version_fk",
+          "column": "case_id",
+          "referenced_table": "case_versions",
+          "referenced_column": "case_id"
         }
       ]
     },
@@ -1103,6 +1182,12 @@
       "rls_enabled": true,
       "foreign_keys": [
         {
+          "name": "legal_chunks_parent_chunk_id_fkey",
+          "column": "parent_chunk_id",
+          "referenced_table": "legal_chunks",
+          "referenced_column": "id"
+        },
+        {
           "name": "legal_chunks_source_id_fkey",
           "column": "source_id",
           "referenced_table": "legal_sources",
@@ -1113,12 +1198,6 @@
           "column": "primary_section_id",
           "referenced_table": "legal_sections",
           "referenced_column": "id"
-        },
-        {
-          "name": "legal_chunks_parent_chunk_id_fkey",
-          "column": "parent_chunk_id",
-          "referenced_table": "legal_chunks",
-          "referenced_column": "id"
         }
       ]
     },
@@ -1127,24 +1206,17 @@
       "columns": [
         {
           "udt": "uuid",
-          "name": "id",
-          "type": "uuid",
-          "default": "gen_random_uuid()",
-          "nullable": false
-        },
-        {
-          "udt": "uuid",
           "name": "case_id",
           "type": "uuid",
           "default": null,
-          "nullable": true
+          "nullable": false
         },
         {
           "udt": "uuid",
           "name": "keyword_id",
           "type": "uuid",
           "default": null,
-          "nullable": true
+          "nullable": false
         },
         {
           "udt": "timestamptz",
@@ -1152,9 +1224,26 @@
           "type": "timestamp with time zone",
           "default": "now()",
           "nullable": true
+        },
+        {
+          "udt": "uuid",
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "nullable": false
         }
       ],
       "policies": [
+        {
+          "name": "ck write pilot",
+          "check": "true",
+          "roles": [
+            "public"
+          ],
+          "using": "true",
+          "command": "ALL",
+          "permissive": "PERMISSIVE"
+        },
         {
           "name": "_role_insert_editor",
           "check": "is_editor()",
@@ -1166,13 +1255,14 @@
           "permissive": "PERMISSIVE"
         },
         {
-          "name": "_role_delete_admin",
+          "name": "_role_select",
           "check": null,
           "roles": [
+            "anon",
             "authenticated"
           ],
-          "using": "is_admin()",
-          "command": "DELETE",
+          "using": "true",
+          "command": "SELECT",
           "permissive": "PERMISSIVE"
         },
         {
@@ -1186,11 +1276,20 @@
           "permissive": "PERMISSIVE"
         },
         {
-          "name": "_role_select",
+          "name": "_role_delete_admin",
           "check": null,
           "roles": [
-            "anon",
             "authenticated"
+          ],
+          "using": "is_admin()",
+          "command": "DELETE",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "ck read all",
+          "check": null,
+          "roles": [
+            "public"
           ],
           "using": "true",
           "command": "SELECT",
@@ -1198,20 +1297,21 @@
         }
       ],
       "primary_key": [
-        "id"
+        "case_id",
+        "keyword_id"
       ],
       "rls_enabled": true,
       "foreign_keys": [
         {
-          "name": "case_keywords_case_id_fkey",
-          "column": "case_id",
-          "referenced_table": "practice_cases",
-          "referenced_column": "id"
-        },
-        {
           "name": "case_keywords_keyword_id_fkey",
           "column": "keyword_id",
           "referenced_table": "keywords",
+          "referenced_column": "id"
+        },
+        {
+          "name": "case_keywords_case_id_fkey",
+          "column": "case_id",
+          "referenced_table": "practice_cases",
           "referenced_column": "id"
         }
       ]
@@ -1262,7 +1362,28 @@
           "nullable": false
         }
       ],
-      "policies": [],
+      "policies": [
+        {
+          "name": "case_versions_no_client_write",
+          "check": "false",
+          "roles": [
+            "authenticated"
+          ],
+          "using": null,
+          "command": "INSERT",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "case_versions_select_editor",
+          "check": null,
+          "roles": [
+            "authenticated"
+          ],
+          "using": "(is_editor() AND (EXISTS ( SELECT 1\n   FROM practice_cases pc\n  WHERE ((pc.id = case_versions.case_id) AND (is_admin() OR (pc.workflow_status <> 'archived'::case_workflow_status))))))",
+          "command": "SELECT",
+          "permissive": "PERMISSIVE"
+        }
+      ],
       "primary_key": [
         "id"
       ],
@@ -1358,6 +1479,16 @@
           "permissive": "PERMISSIVE"
         },
         {
+          "name": "_role_update_editor",
+          "check": "is_editor()",
+          "roles": [
+            "authenticated"
+          ],
+          "using": "is_editor()",
+          "command": "UPDATE",
+          "permissive": "PERMISSIVE"
+        },
+        {
           "name": "_role_select",
           "check": null,
           "roles": [
@@ -1366,16 +1497,6 @@
           ],
           "using": "true",
           "command": "SELECT",
-          "permissive": "PERMISSIVE"
-        },
-        {
-          "name": "_role_update_editor",
-          "check": "is_editor()",
-          "roles": [
-            "authenticated"
-          ],
-          "using": "is_editor()",
-          "command": "UPDATE",
           "permissive": "PERMISSIVE"
         }
       ],
@@ -1404,56 +1525,21 @@
         },
         {
           "udt": "text",
-          "name": "name",
+          "name": "title",
           "type": "text",
           "default": null,
-          "nullable": false
-        },
-        {
-          "udt": "text",
-          "name": "source_type",
-          "type": "text",
-          "default": "'law'::text",
-          "nullable": true
-        },
-        {
-          "udt": "text",
-          "name": "jurisdiction",
-          "type": "text",
-          "default": null,
-          "nullable": true
-        },
-        {
-          "udt": "text",
-          "name": "official_url",
-          "type": "text",
-          "default": null,
-          "nullable": true
-        },
-        {
-          "udt": "text",
-          "name": "publisher",
-          "type": "text",
-          "default": null,
-          "nullable": true
-        },
-        {
-          "udt": "text",
-          "name": "status",
-          "type": "text",
-          "default": "'active'::text",
-          "nullable": true
-        },
-        {
-          "udt": "timestamptz",
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "default": "now()",
           "nullable": true
         },
         {
           "udt": "text",
           "name": "short_name",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "scope",
           "type": "text",
           "default": null,
           "nullable": true
@@ -1466,15 +1552,43 @@
           "nullable": true
         },
         {
+          "udt": "timestamptz",
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "nullable": false
+        },
+        {
           "udt": "text",
-          "name": "legal_area",
+          "name": "name",
+          "type": "text",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "publisher",
           "type": "text",
           "default": null,
           "nullable": true
         },
         {
           "udt": "text",
-          "name": "scope",
+          "name": "source_type",
+          "type": "text",
+          "default": "'law'::text",
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "status",
+          "type": "text",
+          "default": "'active'::text",
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "legal_area",
           "type": "text",
           "default": null,
           "nullable": true
@@ -1509,7 +1623,21 @@
         },
         {
           "udt": "text",
+          "name": "jurisdiction",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
           "name": "authority",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "official_url",
           "type": "text",
           "default": null,
           "nullable": true
@@ -1671,13 +1799,23 @@
       ],
       "policies": [
         {
-          "name": "_role_insert_editor",
-          "check": "is_editor()",
+          "name": "sources read all",
+          "check": null,
           "roles": [
-            "authenticated"
+            "public"
           ],
-          "using": null,
-          "command": "INSERT",
+          "using": "true",
+          "command": "SELECT",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "sources write pilot",
+          "check": "true",
+          "roles": [
+            "public"
+          ],
+          "using": "true",
+          "command": "ALL",
           "permissive": "PERMISSIVE"
         },
         {
@@ -1692,13 +1830,13 @@
           "permissive": "PERMISSIVE"
         },
         {
-          "name": "_role_delete_admin",
-          "check": null,
+          "name": "_role_insert_editor",
+          "check": "is_editor()",
           "roles": [
             "authenticated"
           ],
-          "using": "is_admin()",
-          "command": "DELETE",
+          "using": null,
+          "command": "INSERT",
           "permissive": "PERMISSIVE"
         },
         {
@@ -1710,6 +1848,16 @@
           "using": "is_editor()",
           "command": "UPDATE",
           "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "_role_delete_admin",
+          "check": null,
+          "roles": [
+            "authenticated"
+          ],
+          "using": "is_admin()",
+          "command": "DELETE",
+          "permissive": "PERMISSIVE"
         }
       ],
       "primary_key": [
@@ -1718,14 +1866,14 @@
       "rls_enabled": true,
       "foreign_keys": [
         {
-          "name": "legal_sources_replaced_by_source_id_fkey",
-          "column": "replaced_by_source_id",
+          "name": "legal_sources_supersedes_source_id_fkey",
+          "column": "supersedes_source_id",
           "referenced_table": "legal_sources",
           "referenced_column": "id"
         },
         {
-          "name": "legal_sources_supersedes_source_id_fkey",
-          "column": "supersedes_source_id",
+          "name": "legal_sources_replaced_by_source_id_fkey",
+          "column": "replaced_by_source_id",
           "referenced_table": "legal_sources",
           "referenced_column": "id"
         }
@@ -1786,16 +1934,6 @@
       ],
       "policies": [
         {
-          "name": "user_profiles: self select",
-          "check": null,
-          "roles": [
-            "authenticated"
-          ],
-          "using": "(auth.uid() = id)",
-          "command": "SELECT",
-          "permissive": "PERMISSIVE"
-        },
-        {
           "name": "user_profiles: admin read all",
           "check": null,
           "roles": [
@@ -1806,22 +1944,32 @@
           "permissive": "PERMISSIVE"
         },
         {
-          "name": "user_profiles: self update",
-          "check": "(auth.uid() = id)",
-          "roles": [
-            "authenticated"
-          ],
-          "using": "(auth.uid() = id)",
-          "command": "UPDATE",
-          "permissive": "PERMISSIVE"
-        },
-        {
           "name": "user_profiles: admin write all",
           "check": "(has_role(auth.uid(), 'admin'::app_role) OR has_role(auth.uid(), 'superadmin'::app_role))",
           "roles": [
             "authenticated"
           ],
           "using": "(has_role(auth.uid(), 'admin'::app_role) OR has_role(auth.uid(), 'superadmin'::app_role))",
+          "command": "UPDATE",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "user_profiles: self select",
+          "check": null,
+          "roles": [
+            "authenticated"
+          ],
+          "using": "(auth.uid() = id)",
+          "command": "SELECT",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "user_profiles: self update",
+          "check": "(auth.uid() = id)",
+          "roles": [
+            "authenticated"
+          ],
+          "using": "(auth.uid() = id)",
           "command": "UPDATE",
           "permissive": "PERMISSIVE"
         }
@@ -1922,16 +2070,6 @@
       ],
       "policies": [
         {
-          "name": "_role_insert_editor",
-          "check": "is_editor()",
-          "roles": [
-            "authenticated"
-          ],
-          "using": null,
-          "command": "INSERT",
-          "permissive": "PERMISSIVE"
-        },
-        {
           "name": "_role_delete_admin",
           "check": null,
           "roles": [
@@ -1942,13 +2080,13 @@
           "permissive": "PERMISSIVE"
         },
         {
-          "name": "_role_select",
-          "check": null,
+          "name": "_role_insert_editor",
+          "check": "is_editor()",
           "roles": [
             "authenticated"
           ],
-          "using": "is_editor()",
-          "command": "SELECT",
+          "using": null,
+          "command": "INSERT",
           "permissive": "PERMISSIVE"
         },
         {
@@ -1959,6 +2097,16 @@
           ],
           "using": "is_editor()",
           "command": "UPDATE",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "_role_select",
+          "check": null,
+          "roles": [
+            "authenticated"
+          ],
+          "using": "is_editor()",
+          "command": "SELECT",
           "permissive": "PERMISSIVE"
         }
       ],
@@ -2029,16 +2177,6 @@
       ],
       "policies": [
         {
-          "name": "_role_insert_editor",
-          "check": "is_editor()",
-          "roles": [
-            "authenticated"
-          ],
-          "using": null,
-          "command": "INSERT",
-          "permissive": "PERMISSIVE"
-        },
-        {
           "name": "_role_select",
           "check": null,
           "roles": [
@@ -2050,16 +2188,6 @@
           "permissive": "PERMISSIVE"
         },
         {
-          "name": "_role_update_editor",
-          "check": "is_editor()",
-          "roles": [
-            "authenticated"
-          ],
-          "using": "is_editor()",
-          "command": "UPDATE",
-          "permissive": "PERMISSIVE"
-        },
-        {
           "name": "_role_delete_admin",
           "check": null,
           "roles": [
@@ -2067,6 +2195,26 @@
           ],
           "using": "is_admin()",
           "command": "DELETE",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "_role_insert_editor",
+          "check": "is_editor()",
+          "roles": [
+            "authenticated"
+          ],
+          "using": null,
+          "command": "INSERT",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "_role_update_editor",
+          "check": "is_editor()",
+          "roles": [
+            "authenticated"
+          ],
+          "using": "is_editor()",
+          "command": "UPDATE",
           "permissive": "PERMISSIVE"
         }
       ],
@@ -2076,15 +2224,15 @@
       "rls_enabled": true,
       "foreign_keys": [
         {
-          "name": "case_templates_template_id_fkey",
-          "column": "template_id",
-          "referenced_table": "document_templates",
-          "referenced_column": "id"
-        },
-        {
           "name": "case_templates_case_id_fkey",
           "column": "case_id",
           "referenced_table": "practice_cases",
+          "referenced_column": "id"
+        },
+        {
+          "name": "case_templates_template_id_fkey",
+          "column": "template_id",
+          "referenced_table": "document_templates",
           "referenced_column": "id"
         }
       ]
@@ -2144,16 +2292,6 @@
       ],
       "policies": [
         {
-          "name": "_role_insert_editor",
-          "check": "is_editor()",
-          "roles": [
-            "authenticated"
-          ],
-          "using": null,
-          "command": "INSERT",
-          "permissive": "PERMISSIVE"
-        },
-        {
           "name": "_role_select",
           "check": null,
           "roles": [
@@ -2164,13 +2302,14 @@
           "permissive": "PERMISSIVE"
         },
         {
-          "name": "_role_delete_admin",
+          "name": "decision_trees_role_select",
           "check": null,
           "roles": [
+            "anon",
             "authenticated"
           ],
-          "using": "is_admin()",
-          "command": "DELETE",
+          "using": "((status = 'published'::text) OR is_editor())",
+          "command": "SELECT",
           "permissive": "PERMISSIVE"
         },
         {
@@ -2184,14 +2323,23 @@
           "permissive": "PERMISSIVE"
         },
         {
-          "name": "decision_trees_role_select",
-          "check": null,
+          "name": "_role_insert_editor",
+          "check": "is_editor()",
           "roles": [
-            "anon",
             "authenticated"
           ],
-          "using": "((status = 'published'::text) OR is_editor())",
-          "command": "SELECT",
+          "using": null,
+          "command": "INSERT",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "_role_delete_admin",
+          "check": null,
+          "roles": [
+            "authenticated"
+          ],
+          "using": "is_admin()",
+          "command": "DELETE",
           "permissive": "PERMISSIVE"
         }
       ],
@@ -2223,11 +2371,11 @@
           "name": "source_id",
           "type": "uuid",
           "default": null,
-          "nullable": true
+          "nullable": false
         },
         {
           "udt": "text",
-          "name": "section_number",
+          "name": "reference",
           "type": "text",
           "default": null,
           "nullable": true
@@ -2241,9 +2389,37 @@
         },
         {
           "udt": "text",
+          "name": "note",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "content",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "timestamptz",
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "nullable": false
+        },
+        {
+          "udt": "text",
           "name": "full_text",
           "type": "text",
           "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "jsonb",
+          "name": "metadata",
+          "type": "jsonb",
+          "default": "'{}'::jsonb",
           "nullable": false
         },
         {
@@ -2252,6 +2428,27 @@
           "type": "text",
           "default": null,
           "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "section_number",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "status",
+          "type": "text",
+          "default": "'draft'::text",
+          "nullable": true
+        },
+        {
+          "udt": "timestamptz",
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "nullable": false
         },
         {
           "udt": "date",
@@ -2272,20 +2469,6 @@
           "name": "version_label",
           "type": "text",
           "default": null,
-          "nullable": true
-        },
-        {
-          "udt": "text",
-          "name": "status",
-          "type": "text",
-          "default": "'draft'::text",
-          "nullable": true
-        },
-        {
-          "udt": "timestamptz",
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "default": "now()",
           "nullable": true
         },
         {
@@ -2462,44 +2645,9 @@
           "type": "numeric",
           "default": null,
           "nullable": true
-        },
-        {
-          "udt": "jsonb",
-          "name": "metadata",
-          "type": "jsonb",
-          "default": "'{}'::jsonb",
-          "nullable": false
-        },
-        {
-          "udt": "timestamptz",
-          "name": "updated_at",
-          "type": "timestamp with time zone",
-          "default": "now()",
-          "nullable": false
         }
       ],
       "policies": [
-        {
-          "name": "_role_insert_editor",
-          "check": "is_editor()",
-          "roles": [
-            "authenticated"
-          ],
-          "using": null,
-          "command": "INSERT",
-          "permissive": "PERMISSIVE"
-        },
-        {
-          "name": "_role_select",
-          "check": null,
-          "roles": [
-            "anon",
-            "authenticated"
-          ],
-          "using": "true",
-          "command": "SELECT",
-          "permissive": "PERMISSIVE"
-        },
         {
           "name": "_role_update_editor",
           "check": "is_editor()",
@@ -2519,6 +2667,47 @@
           "using": "is_admin()",
           "command": "DELETE",
           "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "sections write pilot",
+          "check": "true",
+          "roles": [
+            "public"
+          ],
+          "using": "true",
+          "command": "ALL",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "_role_select",
+          "check": null,
+          "roles": [
+            "anon",
+            "authenticated"
+          ],
+          "using": "true",
+          "command": "SELECT",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "sections read all",
+          "check": null,
+          "roles": [
+            "public"
+          ],
+          "using": "true",
+          "command": "SELECT",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "_role_insert_editor",
+          "check": "is_editor()",
+          "roles": [
+            "authenticated"
+          ],
+          "using": null,
+          "command": "INSERT",
+          "permissive": "PERMISSIVE"
         }
       ],
       "primary_key": [
@@ -2527,27 +2716,27 @@
       "rls_enabled": true,
       "foreign_keys": [
         {
-          "name": "legal_sections_parent_id_fkey",
-          "column": "parent_id",
-          "referenced_table": "legal_sections",
-          "referenced_column": "id"
-        },
-        {
           "name": "legal_sections_source_id_fkey",
           "column": "source_id",
           "referenced_table": "legal_sources",
           "referenced_column": "id"
         },
         {
-          "name": "legal_sections_import_manifest_id_fkey",
-          "column": "import_manifest_id",
-          "referenced_table": "legal_import_pages",
-          "referenced_column": "id"
-        },
-        {
           "name": "legal_sections_import_job_id_fkey",
           "column": "import_job_id",
           "referenced_table": "import_jobs",
+          "referenced_column": "id"
+        },
+        {
+          "name": "legal_sections_parent_id_fkey",
+          "column": "parent_id",
+          "referenced_table": "legal_sections",
+          "referenced_column": "id"
+        },
+        {
+          "name": "legal_sections_import_manifest_id_fkey",
+          "column": "import_manifest_id",
+          "referenced_table": "legal_import_pages",
           "referenced_column": "id"
         }
       ]
@@ -2571,6 +2760,13 @@
         },
         {
           "udt": "text",
+          "name": "short_description",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
           "name": "category",
           "type": "text",
           "default": null,
@@ -2584,73 +2780,24 @@
           "nullable": true
         },
         {
-          "udt": "text",
-          "name": "short_description",
-          "type": "text",
-          "default": null,
+          "udt": "ampel_status",
+          "name": "ampel",
+          "type": "USER-DEFINED",
+          "default": "'gruen'::ampel_status",
           "nullable": true
         },
         {
-          "udt": "text",
-          "name": "traffic_light",
-          "type": "text",
-          "default": null,
-          "nullable": true
+          "udt": "case_status",
+          "name": "status",
+          "type": "USER-DEFINED",
+          "default": "'draft'::case_status",
+          "nullable": false
         },
         {
           "udt": "text",
           "name": "short_answer",
           "type": "text",
           "default": null,
-          "nullable": true
-        },
-        {
-          "udt": "jsonb",
-          "name": "action_steps",
-          "type": "jsonb",
-          "default": null,
-          "nullable": true
-        },
-        {
-          "udt": "jsonb",
-          "name": "checklist",
-          "type": "jsonb",
-          "default": null,
-          "nullable": true
-        },
-        {
-          "udt": "text",
-          "name": "documentation_notes",
-          "type": "text",
-          "default": null,
-          "nullable": true
-        },
-        {
-          "udt": "jsonb",
-          "name": "responsible_roles",
-          "type": "jsonb",
-          "default": null,
-          "nullable": true
-        },
-        {
-          "udt": "text",
-          "name": "risk_notes",
-          "type": "text",
-          "default": null,
-          "nullable": true
-        },
-        {
-          "udt": "text",
-          "name": "status",
-          "type": "text",
-          "default": "'draft'::text",
-          "nullable": true
-        },
-        {
-          "udt": "timestamptz",
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "default": "now()",
           "nullable": true
         },
         {
@@ -2675,6 +2822,20 @@
           "nullable": true
         },
         {
+          "udt": "_text",
+          "name": "checklist",
+          "type": "ARRAY",
+          "default": "'{}'::text[]",
+          "nullable": false
+        },
+        {
+          "udt": "_text",
+          "name": "documentation",
+          "type": "ARRAY",
+          "default": "'{}'::text[]",
+          "nullable": false
+        },
+        {
           "udt": "text",
           "name": "responsibilities",
           "type": "text",
@@ -2682,17 +2843,10 @@
           "nullable": true
         },
         {
-          "udt": "text",
-          "name": "practice_tip",
-          "type": "text",
-          "default": null,
-          "nullable": true
-        },
-        {
-          "udt": "_text",
-          "name": "documentation",
-          "type": "ARRAY",
-          "default": "'{}'::text[]",
+          "udt": "jsonb",
+          "name": "faq",
+          "type": "jsonb",
+          "default": "'[]'::jsonb",
           "nullable": false
         },
         {
@@ -2703,18 +2857,11 @@
           "nullable": false
         },
         {
-          "udt": "_text",
-          "name": "related_cases",
-          "type": "ARRAY",
-          "default": "'{}'::text[]",
-          "nullable": false
-        },
-        {
-          "udt": "jsonb",
-          "name": "faq",
-          "type": "jsonb",
-          "default": "'[]'::jsonb",
-          "nullable": false
+          "udt": "text",
+          "name": "practice_tip",
+          "type": "text",
+          "default": null,
+          "nullable": true
         },
         {
           "udt": "jsonb",
@@ -2724,11 +2871,123 @@
           "nullable": false
         },
         {
+          "udt": "_text",
+          "name": "related_cases",
+          "type": "ARRAY",
+          "default": "'{}'::text[]",
+          "nullable": false
+        },
+        {
+          "udt": "timestamptz",
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "nullable": false
+        },
+        {
           "udt": "timestamptz",
           "name": "updated_at",
           "type": "timestamp with time zone",
           "default": "now()",
           "nullable": false
+        },
+        {
+          "udt": "jsonb",
+          "name": "action_steps",
+          "type": "jsonb",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "timestamptz",
+          "name": "approved_at",
+          "type": "timestamp with time zone",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "timestamptz",
+          "name": "archived_at",
+          "type": "timestamp with time zone",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "uuid",
+          "name": "created_by",
+          "type": "uuid",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "uuid",
+          "name": "current_version_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "documentation_notes",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "bool",
+          "name": "legal_update_required",
+          "type": "boolean",
+          "default": "false",
+          "nullable": false
+        },
+        {
+          "udt": "timestamptz",
+          "name": "published_at",
+          "type": "timestamp with time zone",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "quality_grade",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "jsonb",
+          "name": "responsible_roles",
+          "type": "jsonb",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "risk_notes",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "timestamptz",
+          "name": "submitted_at",
+          "type": "timestamp with time zone",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "traffic_light",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "uuid",
+          "name": "updated_by",
+          "type": "uuid",
+          "default": null,
+          "nullable": true
         },
         {
           "udt": "case_workflow_status",
@@ -2750,80 +3009,78 @@
           "type": "numeric",
           "default": null,
           "nullable": true
-        },
-        {
-          "udt": "text",
-          "name": "quality_grade",
-          "type": "text",
-          "default": null,
-          "nullable": true
-        },
-        {
-          "udt": "bool",
-          "name": "legal_update_required",
-          "type": "boolean",
-          "default": "false",
-          "nullable": false
-        },
-        {
-          "udt": "uuid",
-          "name": "created_by",
-          "type": "uuid",
-          "default": null,
-          "nullable": true
-        },
-        {
-          "udt": "uuid",
-          "name": "updated_by",
-          "type": "uuid",
-          "default": null,
-          "nullable": true
-        },
-        {
-          "udt": "timestamptz",
-          "name": "submitted_at",
-          "type": "timestamp with time zone",
-          "default": null,
-          "nullable": true
-        },
-        {
-          "udt": "timestamptz",
-          "name": "approved_at",
-          "type": "timestamp with time zone",
-          "default": null,
-          "nullable": true
-        },
-        {
-          "udt": "timestamptz",
-          "name": "published_at",
-          "type": "timestamp with time zone",
-          "default": null,
-          "nullable": true
-        },
-        {
-          "udt": "timestamptz",
-          "name": "archived_at",
-          "type": "timestamp with time zone",
-          "default": null,
-          "nullable": true
-        },
-        {
-          "udt": "uuid",
-          "name": "current_version_id",
-          "type": "uuid",
-          "default": null,
-          "nullable": true
         }
       ],
       "policies": [
         {
-          "name": "_role_insert_editor",
-          "check": "is_editor()",
+          "name": "practice_cases_insert_editor",
+          "check": "(is_editor() AND (workflow_status = 'draft'::case_workflow_status) AND (publication_tier = 'internal'::case_publication_tier) AND ((created_by IS NULL) OR (created_by = auth.uid())))",
           "roles": [
             "authenticated"
           ],
           "using": null,
           "command": "INSERT",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "practice_cases_select_public",
+          "check": null,
+          "roles": [
+            "anon",
+            "authenticated"
+          ],
+          "using": "((workflow_status = 'published'::case_workflow_status) AND (publication_tier = 'public'::case_publication_tier))",
+          "command": "SELECT",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "practice_cases_select_editor",
+          "check": null,
+          "roles": [
+            "authenticated"
+          ],
+          "using": "(is_editor() AND (workflow_status <> 'archived'::case_workflow_status))",
+          "command": "SELECT",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "practice_cases_select_admin",
+          "check": null,
+          "roles": [
+            "authenticated"
+          ],
+          "using": "is_admin()",
+          "command": "SELECT",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "practice_cases_update_editor",
+          "check": "is_editor()",
+          "roles": [
+            "authenticated"
+          ],
+          "using": "is_editor()",
+          "command": "UPDATE",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "practice_cases_delete_admin",
+          "check": null,
+          "roles": [
+            "authenticated"
+          ],
+          "using": "is_admin()",
+          "command": "DELETE",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "cases read all",
+          "check": null,
+          "roles": [
+            "public"
+          ],
+          "using": "true",
+          "command": "SELECT",
           "permissive": "PERMISSIVE"
         },
         {
@@ -2847,6 +3104,16 @@
           "permissive": "PERMISSIVE"
         },
         {
+          "name": "_role_insert_editor",
+          "check": "is_editor()",
+          "roles": [
+            "authenticated"
+          ],
+          "using": null,
+          "command": "INSERT",
+          "permissive": "PERMISSIVE"
+        },
+        {
           "name": "_role_select",
           "check": null,
           "roles": [
@@ -2855,6 +3122,16 @@
           ],
           "using": "true",
           "command": "SELECT",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "cases write pilot",
+          "check": "true",
+          "roles": [
+            "public"
+          ],
+          "using": "true",
+          "command": "ALL",
           "permissive": "PERMISSIVE"
         }
       ],
@@ -2867,7 +3144,7 @@
           "name": "practice_cases_current_version_fk",
           "column": "current_version_id",
           "referenced_table": "case_versions",
-          "referenced_column": "case_id"
+          "referenced_column": "id"
         },
         {
           "name": "practice_cases_current_version_fk",
@@ -2885,6 +3162,402 @@
           "name": "practice_cases_current_version_fk",
           "column": "current_version_id",
           "referenced_table": "case_versions",
+          "referenced_column": "case_id"
+        }
+      ]
+    },
+    "workflow_rules": {
+      "name": "workflow_rules",
+      "columns": [
+        {
+          "udt": "uuid",
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "nullable": false
+        },
+        {
+          "udt": "uuid",
+          "name": "template_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "when_type",
+          "type": "text",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "when_ref",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "then_action",
+          "type": "text",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "then_ref",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "int4",
+          "name": "priority",
+          "type": "integer",
+          "default": "100",
+          "nullable": false
+        }
+      ],
+      "policies": [
+        {
+          "name": "wf_rule_read",
+          "check": null,
+          "roles": [
+            "anon",
+            "authenticated"
+          ],
+          "using": "true",
+          "command": "SELECT",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "wf_rule_write",
+          "check": "is_editor()",
+          "roles": [
+            "authenticated"
+          ],
+          "using": "is_editor()",
+          "command": "ALL",
+          "permissive": "PERMISSIVE"
+        }
+      ],
+      "primary_key": [
+        "id"
+      ],
+      "rls_enabled": true,
+      "foreign_keys": [
+        {
+          "name": "workflow_rules_template_id_fkey",
+          "column": "template_id",
+          "referenced_table": "workflow_templates",
+          "referenced_column": "id"
+        }
+      ]
+    },
+    "workflow_steps": {
+      "name": "workflow_steps",
+      "columns": [
+        {
+          "udt": "uuid",
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "nullable": false
+        },
+        {
+          "udt": "uuid",
+          "name": "template_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "uuid",
+          "name": "phase_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "int4",
+          "name": "sort_order",
+          "type": "integer",
+          "default": "0",
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "title",
+          "type": "text",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "description",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "goal",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "workflow_step_type",
+          "name": "step_type",
+          "type": "USER-DEFINED",
+          "default": "'action'::workflow_step_type",
+          "nullable": false
+        },
+        {
+          "udt": "workflow_priority",
+          "name": "priority",
+          "type": "USER-DEFINED",
+          "default": "'normal'::workflow_priority",
+          "nullable": false
+        },
+        {
+          "udt": "bool",
+          "name": "is_required",
+          "type": "boolean",
+          "default": "true",
+          "nullable": false
+        },
+        {
+          "udt": "int4",
+          "name": "estimated_minutes",
+          "type": "integer",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "workflow_role",
+          "name": "primary_role",
+          "type": "USER-DEFINED",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "workflow_risk_level",
+          "name": "risk_level",
+          "type": "USER-DEFINED",
+          "default": "'low'::workflow_risk_level",
+          "nullable": false
+        }
+      ],
+      "policies": [
+        {
+          "name": "wf_step_read",
+          "check": null,
+          "roles": [
+            "anon",
+            "authenticated"
+          ],
+          "using": "(EXISTS ( SELECT 1\n   FROM workflow_templates t\n  WHERE ((t.id = workflow_steps.template_id) AND ((t.workflow_status = 'published'::workflow_template_status) OR is_editor()))))",
+          "command": "SELECT",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "wf_step_write",
+          "check": "is_editor()",
+          "roles": [
+            "authenticated"
+          ],
+          "using": "is_editor()",
+          "command": "ALL",
+          "permissive": "PERMISSIVE"
+        }
+      ],
+      "primary_key": [
+        "id"
+      ],
+      "rls_enabled": true,
+      "foreign_keys": [
+        {
+          "name": "workflow_steps_phase_id_fkey",
+          "column": "phase_id",
+          "referenced_table": "workflow_phases",
+          "referenced_column": "id"
+        },
+        {
+          "name": "workflow_steps_template_id_fkey",
+          "column": "template_id",
+          "referenced_table": "workflow_templates",
+          "referenced_column": "id"
+        }
+      ]
+    },
+    "workflow_events": {
+      "name": "workflow_events",
+      "columns": [
+        {
+          "udt": "uuid",
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "nullable": false
+        },
+        {
+          "udt": "uuid",
+          "name": "session_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "event_type",
+          "type": "text",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "uuid",
+          "name": "actor",
+          "type": "uuid",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "jsonb",
+          "name": "payload",
+          "type": "jsonb",
+          "default": "'{}'::jsonb",
+          "nullable": false
+        },
+        {
+          "udt": "timestamptz",
+          "name": "at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "nullable": false
+        }
+      ],
+      "policies": [
+        {
+          "name": "wf_event_read",
+          "check": null,
+          "roles": [
+            "authenticated"
+          ],
+          "using": "(EXISTS ( SELECT 1\n   FROM workflow_execution_sessions s\n  WHERE ((s.id = workflow_events.session_id) AND ((s.user_id = auth.uid()) OR is_admin()))))",
+          "command": "SELECT",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "wf_event_write",
+          "check": "(EXISTS ( SELECT 1\n   FROM workflow_execution_sessions s\n  WHERE ((s.id = workflow_events.session_id) AND (s.user_id = auth.uid()))))",
+          "roles": [
+            "authenticated"
+          ],
+          "using": null,
+          "command": "INSERT",
+          "permissive": "PERMISSIVE"
+        }
+      ],
+      "primary_key": [
+        "id"
+      ],
+      "rls_enabled": true,
+      "foreign_keys": [
+        {
+          "name": "workflow_events_session_id_fkey",
+          "column": "session_id",
+          "referenced_table": "workflow_execution_sessions",
+          "referenced_column": "id"
+        }
+      ]
+    },
+    "workflow_phases": {
+      "name": "workflow_phases",
+      "columns": [
+        {
+          "udt": "uuid",
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "nullable": false
+        },
+        {
+          "udt": "uuid",
+          "name": "template_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "int4",
+          "name": "sort_order",
+          "type": "integer",
+          "default": "0",
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "title",
+          "type": "text",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "description",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "bool",
+          "name": "is_required",
+          "type": "boolean",
+          "default": "true",
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "completion_condition",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        }
+      ],
+      "policies": [
+        {
+          "name": "wf_phase_read",
+          "check": null,
+          "roles": [
+            "anon",
+            "authenticated"
+          ],
+          "using": "(EXISTS ( SELECT 1\n   FROM workflow_templates t\n  WHERE ((t.id = workflow_phases.template_id) AND ((t.workflow_status = 'published'::workflow_template_status) OR is_editor()))))",
+          "command": "SELECT",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "wf_phase_write",
+          "check": "is_editor()",
+          "roles": [
+            "authenticated"
+          ],
+          "using": "is_editor()",
+          "command": "ALL",
+          "permissive": "PERMISSIVE"
+        }
+      ],
+      "primary_key": [
+        "id"
+      ],
+      "rls_enabled": true,
+      "foreign_keys": [
+        {
+          "name": "workflow_phases_template_id_fkey",
+          "column": "template_id",
+          "referenced_table": "workflow_templates",
           "referenced_column": "id"
         }
       ]
@@ -2904,6 +3577,34 @@
           "name": "case_id",
           "type": "uuid",
           "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "uuid",
+          "name": "section_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "note",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "timestamptz",
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "explanation",
+          "type": "text",
+          "default": null,
           "nullable": true
         },
         {
@@ -2919,43 +3620,9 @@
           "type": "text",
           "default": null,
           "nullable": true
-        },
-        {
-          "udt": "text",
-          "name": "explanation",
-          "type": "text",
-          "default": null,
-          "nullable": true
-        },
-        {
-          "udt": "timestamptz",
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "default": "now()",
-          "nullable": true
         }
       ],
       "policies": [
-        {
-          "name": "_role_insert_editor",
-          "check": "is_editor()",
-          "roles": [
-            "authenticated"
-          ],
-          "using": null,
-          "command": "INSERT",
-          "permissive": "PERMISSIVE"
-        },
-        {
-          "name": "_role_delete_admin",
-          "check": null,
-          "roles": [
-            "authenticated"
-          ],
-          "using": "is_admin()",
-          "command": "DELETE",
-          "permissive": "PERMISSIVE"
-        },
         {
           "name": "_role_update_editor",
           "check": "is_editor()",
@@ -2976,6 +3643,46 @@
           "using": "true",
           "command": "SELECT",
           "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "links read all",
+          "check": null,
+          "roles": [
+            "public"
+          ],
+          "using": "true",
+          "command": "SELECT",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "links write pilot",
+          "check": "true",
+          "roles": [
+            "public"
+          ],
+          "using": "true",
+          "command": "ALL",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "_role_delete_admin",
+          "check": null,
+          "roles": [
+            "authenticated"
+          ],
+          "using": "is_admin()",
+          "command": "DELETE",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "_role_insert_editor",
+          "check": "is_editor()",
+          "roles": [
+            "authenticated"
+          ],
+          "using": null,
+          "command": "INSERT",
+          "permissive": "PERMISSIVE"
         }
       ],
       "primary_key": [
@@ -2990,8 +3697,8 @@
           "referenced_column": "id"
         },
         {
-          "name": "case_legal_links_legal_section_id_fkey",
-          "column": "legal_section_id",
+          "name": "case_legal_links_section_id_fkey",
+          "column": "section_id",
           "referenced_table": "legal_sections",
           "referenced_column": "id"
         }
@@ -3076,16 +3783,6 @@
           "permissive": "PERMISSIVE"
         },
         {
-          "name": "_role_delete_admin",
-          "check": null,
-          "roles": [
-            "authenticated"
-          ],
-          "using": "is_admin()",
-          "command": "DELETE",
-          "permissive": "PERMISSIVE"
-        },
-        {
           "name": "_role_select",
           "check": null,
           "roles": [
@@ -3104,6 +3801,16 @@
           "using": null,
           "command": "INSERT",
           "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "_role_delete_admin",
+          "check": null,
+          "roles": [
+            "authenticated"
+          ],
+          "using": "is_admin()",
+          "command": "DELETE",
+          "permissive": "PERMISSIVE"
         }
       ],
       "primary_key": [
@@ -3112,15 +3819,15 @@
       "rls_enabled": true,
       "foreign_keys": [
         {
-          "name": "import_job_items_job_id_fkey",
-          "column": "job_id",
-          "referenced_table": "import_jobs",
-          "referenced_column": "id"
-        },
-        {
           "name": "import_job_items_section_id_fkey",
           "column": "section_id",
           "referenced_table": "legal_sections",
+          "referenced_column": "id"
+        },
+        {
+          "name": "import_job_items_job_id_fkey",
+          "column": "job_id",
+          "referenced_table": "import_jobs",
           "referenced_column": "id"
         }
       ]
@@ -3173,27 +3880,6 @@
       ],
       "policies": [
         {
-          "name": "_role_delete_admin",
-          "check": null,
-          "roles": [
-            "authenticated"
-          ],
-          "using": "is_admin()",
-          "command": "DELETE",
-          "permissive": "PERMISSIVE"
-        },
-        {
-          "name": "_role_select",
-          "check": null,
-          "roles": [
-            "anon",
-            "authenticated"
-          ],
-          "using": "true",
-          "command": "SELECT",
-          "permissive": "PERMISSIVE"
-        },
-        {
           "name": "_role_insert_editor",
           "check": "is_editor()",
           "roles": [
@@ -3212,6 +3898,27 @@
           "using": "is_editor()",
           "command": "UPDATE",
           "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "_role_select",
+          "check": null,
+          "roles": [
+            "anon",
+            "authenticated"
+          ],
+          "using": "true",
+          "command": "SELECT",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "_role_delete_admin",
+          "check": null,
+          "roles": [
+            "authenticated"
+          ],
+          "using": "is_admin()",
+          "command": "DELETE",
+          "permissive": "PERMISSIVE"
         }
       ],
       "primary_key": [
@@ -3220,14 +3927,14 @@
       "rls_enabled": true,
       "foreign_keys": [
         {
-          "name": "case_related_cases_related_case_id_fkey",
-          "column": "related_case_id",
+          "name": "case_related_cases_case_id_fkey",
+          "column": "case_id",
           "referenced_table": "practice_cases",
           "referenced_column": "id"
         },
         {
-          "name": "case_related_cases_case_id_fkey",
-          "column": "case_id",
+          "name": "case_related_cases_related_case_id_fkey",
+          "column": "related_case_id",
           "referenced_table": "practice_cases",
           "referenced_column": "id"
         }
@@ -3245,6 +3952,13 @@
         },
         {
           "udt": "text",
+          "name": "slug",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
           "name": "title",
           "type": "text",
           "default": null,
@@ -3252,14 +3966,7 @@
         },
         {
           "udt": "text",
-          "name": "template_type",
-          "type": "text",
-          "default": null,
-          "nullable": true
-        },
-        {
-          "udt": "text",
-          "name": "body",
+          "name": "description",
           "type": "text",
           "default": null,
           "nullable": true
@@ -3268,6 +3975,20 @@
           "udt": "jsonb",
           "name": "fields",
           "type": "jsonb",
+          "default": "'[]'::jsonb",
+          "nullable": false
+        },
+        {
+          "udt": "timestamptz",
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "body",
+          "type": "text",
           "default": null,
           "nullable": true
         },
@@ -3279,14 +4000,48 @@
           "nullable": true
         },
         {
-          "udt": "timestamptz",
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "default": "now()",
+          "udt": "text",
+          "name": "template_type",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "markdown_body",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "document_type",
+          "type": "text",
+          "default": null,
           "nullable": true
         }
       ],
       "policies": [
+        {
+          "name": "tpl read all",
+          "check": null,
+          "roles": [
+            "public"
+          ],
+          "using": "true",
+          "command": "SELECT",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "tpl write pilot",
+          "check": "true",
+          "roles": [
+            "public"
+          ],
+          "using": "true",
+          "command": "ALL",
+          "permissive": "PERMISSIVE"
+        },
         {
           "name": "_role_select",
           "check": null,
@@ -3538,13 +4293,13 @@
       ],
       "policies": [
         {
-          "name": "_role_delete_admin",
+          "name": "_role_select",
           "check": null,
           "roles": [
             "authenticated"
           ],
-          "using": "is_admin()",
-          "command": "DELETE",
+          "using": "is_editor()",
+          "command": "SELECT",
           "permissive": "PERMISSIVE"
         },
         {
@@ -3558,13 +4313,13 @@
           "permissive": "PERMISSIVE"
         },
         {
-          "name": "_role_select",
+          "name": "_role_delete_admin",
           "check": null,
           "roles": [
             "authenticated"
           ],
-          "using": "is_editor()",
-          "command": "SELECT",
+          "using": "is_admin()",
+          "command": "DELETE",
           "permissive": "PERMISSIVE"
         },
         {
@@ -3597,6 +4352,140 @@
         }
       ]
     },
+    "workflow_templates": {
+      "name": "workflow_templates",
+      "columns": [
+        {
+          "udt": "uuid",
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "nullable": false
+        },
+        {
+          "udt": "uuid",
+          "name": "category_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "slug",
+          "type": "text",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "title",
+          "type": "text",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "subtitle",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "description",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "workflow_template_status",
+          "name": "workflow_status",
+          "type": "USER-DEFINED",
+          "default": "'draft'::workflow_template_status",
+          "nullable": false
+        },
+        {
+          "udt": "workflow_publication_tier",
+          "name": "publication_tier",
+          "type": "USER-DEFINED",
+          "default": "'internal'::workflow_publication_tier",
+          "nullable": false
+        },
+        {
+          "udt": "uuid",
+          "name": "current_version_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "uuid",
+          "name": "created_by",
+          "type": "uuid",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "timestamptz",
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "nullable": false
+        },
+        {
+          "udt": "timestamptz",
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "nullable": false
+        }
+      ],
+      "policies": [
+        {
+          "name": "wf_tpl_write",
+          "check": "is_editor()",
+          "roles": [
+            "authenticated"
+          ],
+          "using": "is_editor()",
+          "command": "ALL",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "wf_tpl_read_pub",
+          "check": null,
+          "roles": [
+            "anon",
+            "authenticated"
+          ],
+          "using": "((workflow_status = 'published'::workflow_template_status) AND (publication_tier = 'public'::workflow_publication_tier))",
+          "command": "SELECT",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "wf_tpl_read_editor",
+          "check": null,
+          "roles": [
+            "authenticated"
+          ],
+          "using": "(is_editor() OR (workflow_status = 'published'::workflow_template_status))",
+          "command": "SELECT",
+          "permissive": "PERMISSIVE"
+        }
+      ],
+      "primary_key": [
+        "id"
+      ],
+      "rls_enabled": true,
+      "foreign_keys": [
+        {
+          "name": "workflow_templates_category_id_fkey",
+          "column": "category_id",
+          "referenced_table": "workflow_categories",
+          "referenced_column": "id"
+        }
+      ]
+    },
     "practice_categories": {
       "name": "practice_categories",
       "columns": [
@@ -3610,6 +4499,142 @@
         {
           "udt": "text",
           "name": "name",
+          "type": "text",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "uuid",
+          "name": "parent_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "int4",
+          "name": "sort_order",
+          "type": "integer",
+          "default": "0",
+          "nullable": true
+        },
+        {
+          "udt": "timestamptz",
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "description",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "icon",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        }
+      ],
+      "policies": [
+        {
+          "name": "cat write pilot",
+          "check": "true",
+          "roles": [
+            "public"
+          ],
+          "using": "true",
+          "command": "ALL",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "_role_update_editor",
+          "check": "is_editor()",
+          "roles": [
+            "authenticated"
+          ],
+          "using": "is_editor()",
+          "command": "UPDATE",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "cat read all",
+          "check": null,
+          "roles": [
+            "public"
+          ],
+          "using": "true",
+          "command": "SELECT",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "_role_delete_admin",
+          "check": null,
+          "roles": [
+            "authenticated"
+          ],
+          "using": "is_admin()",
+          "command": "DELETE",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "_role_select",
+          "check": null,
+          "roles": [
+            "anon",
+            "authenticated"
+          ],
+          "using": "true",
+          "command": "SELECT",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "_role_insert_editor",
+          "check": "is_editor()",
+          "roles": [
+            "authenticated"
+          ],
+          "using": null,
+          "command": "INSERT",
+          "permissive": "PERMISSIVE"
+        }
+      ],
+      "primary_key": [
+        "id"
+      ],
+      "rls_enabled": true,
+      "foreign_keys": [
+        {
+          "name": "practice_categories_parent_id_fkey",
+          "column": "parent_id",
+          "referenced_table": "practice_categories",
+          "referenced_column": "id"
+        }
+      ]
+    },
+    "workflow_categories": {
+      "name": "workflow_categories",
+      "columns": [
+        {
+          "udt": "uuid",
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "slug",
+          "type": "text",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "title",
           "type": "text",
           "default": null,
           "nullable": false
@@ -3633,19 +4658,19 @@
           "name": "sort_order",
           "type": "integer",
           "default": "0",
-          "nullable": true
+          "nullable": false
         },
         {
           "udt": "timestamptz",
           "name": "created_at",
           "type": "timestamp with time zone",
           "default": "now()",
-          "nullable": true
+          "nullable": false
         }
       ],
       "policies": [
         {
-          "name": "_role_select",
+          "name": "wf_cat_read",
           "check": null,
           "roles": [
             "anon",
@@ -3656,43 +4681,13 @@
           "permissive": "PERMISSIVE"
         },
         {
-          "name": "_role_insert_editor",
-          "check": "is_editor()",
-          "roles": [
-            "authenticated"
-          ],
-          "using": null,
-          "command": "INSERT",
-          "permissive": "PERMISSIVE"
-        },
-        {
-          "name": "Public read practice categories",
-          "check": null,
-          "roles": [
-            "public"
-          ],
-          "using": "true",
-          "command": "SELECT",
-          "permissive": "PERMISSIVE"
-        },
-        {
-          "name": "_role_update_editor",
+          "name": "wf_cat_write",
           "check": "is_editor()",
           "roles": [
             "authenticated"
           ],
           "using": "is_editor()",
-          "command": "UPDATE",
-          "permissive": "PERMISSIVE"
-        },
-        {
-          "name": "_role_delete_admin",
-          "check": null,
-          "roles": [
-            "authenticated"
-          ],
-          "using": "is_admin()",
-          "command": "DELETE",
+          "command": "ALL",
           "permissive": "PERMISSIVE"
         }
       ],
@@ -3701,6 +4696,81 @@
       ],
       "rls_enabled": true,
       "foreign_keys": []
+    },
+    "workflow_step_roles": {
+      "name": "workflow_step_roles",
+      "columns": [
+        {
+          "udt": "uuid",
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "nullable": false
+        },
+        {
+          "udt": "uuid",
+          "name": "step_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "workflow_role",
+          "name": "role",
+          "type": "USER-DEFINED",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "bool",
+          "name": "can_edit",
+          "type": "boolean",
+          "default": "true",
+          "nullable": false
+        },
+        {
+          "udt": "bool",
+          "name": "can_complete",
+          "type": "boolean",
+          "default": "true",
+          "nullable": false
+        }
+      ],
+      "policies": [
+        {
+          "name": "wf_role_read",
+          "check": null,
+          "roles": [
+            "anon",
+            "authenticated"
+          ],
+          "using": "true",
+          "command": "SELECT",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "wf_role_write",
+          "check": "is_editor()",
+          "roles": [
+            "authenticated"
+          ],
+          "using": "is_editor()",
+          "command": "ALL",
+          "permissive": "PERMISSIVE"
+        }
+      ],
+      "primary_key": [
+        "id"
+      ],
+      "rls_enabled": true,
+      "foreign_keys": [
+        {
+          "name": "workflow_step_roles_step_id_fkey",
+          "column": "step_id",
+          "referenced_table": "workflow_steps",
+          "referenced_column": "id"
+        }
+      ]
     },
     "legal_embedding_jobs": {
       "name": "legal_embedding_jobs",
@@ -4084,6 +5154,258 @@
         }
       ]
     },
+    "case_feedback_reports": {
+      "name": "case_feedback_reports",
+      "columns": [
+        {
+          "udt": "uuid",
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "nullable": false
+        },
+        {
+          "udt": "uuid",
+          "name": "case_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "case_title",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "uuid",
+          "name": "user_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "report_type",
+          "type": "text",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "message",
+          "type": "text",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "urgency",
+          "type": "text",
+          "default": "'medium'::text",
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "route",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "reported_area",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "status",
+          "type": "text",
+          "default": "'open'::text",
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "admin_notes",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "quality_task_reference",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "timestamptz",
+          "name": "resolved_at",
+          "type": "timestamp with time zone",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "uuid",
+          "name": "resolved_by",
+          "type": "uuid",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "timestamptz",
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "nullable": false
+        },
+        {
+          "udt": "timestamptz",
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "nullable": false
+        }
+      ],
+      "policies": [
+        {
+          "name": "_role_update_editor",
+          "check": "is_editor()",
+          "roles": [
+            "authenticated"
+          ],
+          "using": "is_editor()",
+          "command": "UPDATE",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "_role_delete_admin",
+          "check": null,
+          "roles": [
+            "authenticated"
+          ],
+          "using": "is_admin()",
+          "command": "DELETE",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "_role_select",
+          "check": null,
+          "roles": [
+            "authenticated"
+          ],
+          "using": "is_editor()",
+          "command": "SELECT",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "_role_insert_editor",
+          "check": "is_editor()",
+          "roles": [
+            "authenticated"
+          ],
+          "using": null,
+          "command": "INSERT",
+          "permissive": "PERMISSIVE"
+        }
+      ],
+      "primary_key": [
+        "id"
+      ],
+      "rls_enabled": true,
+      "foreign_keys": [
+        {
+          "name": "case_feedback_reports_case_id_fkey",
+          "column": "case_id",
+          "referenced_table": "practice_cases",
+          "referenced_column": "id"
+        }
+      ]
+    },
+    "workflow_step_sources": {
+      "name": "workflow_step_sources",
+      "columns": [
+        {
+          "udt": "uuid",
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "nullable": false
+        },
+        {
+          "udt": "uuid",
+          "name": "step_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "uuid",
+          "name": "legal_section_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "citation_hint",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "note",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        }
+      ],
+      "policies": [
+        {
+          "name": "wf_src_read",
+          "check": null,
+          "roles": [
+            "anon",
+            "authenticated"
+          ],
+          "using": "true",
+          "command": "SELECT",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "wf_src_write",
+          "check": "is_editor()",
+          "roles": [
+            "authenticated"
+          ],
+          "using": "is_editor()",
+          "command": "ALL",
+          "permissive": "PERMISSIVE"
+        }
+      ],
+      "primary_key": [
+        "id"
+      ],
+      "rls_enabled": true,
+      "foreign_keys": [
+        {
+          "name": "workflow_step_sources_legal_section_id_fkey",
+          "column": "legal_section_id",
+          "referenced_table": "legal_sections",
+          "referenced_column": "id"
+        },
+        {
+          "name": "workflow_step_sources_step_id_fkey",
+          "column": "step_id",
+          "referenced_table": "workflow_steps",
+          "referenced_column": "id"
+        }
+      ]
+    },
     "legal_chunk_embeddings": {
       "name": "legal_chunk_embeddings",
       "columns": [
@@ -4346,24 +5668,13 @@
           "permissive": "PERMISSIVE"
         },
         {
-          "name": "_role_select",
+          "name": "Public read practice subcategories",
           "check": null,
           "roles": [
-            "anon",
-            "authenticated"
+            "public"
           ],
           "using": "true",
           "command": "SELECT",
-          "permissive": "PERMISSIVE"
-        },
-        {
-          "name": "_role_delete_admin",
-          "check": null,
-          "roles": [
-            "authenticated"
-          ],
-          "using": "is_admin()",
-          "command": "DELETE",
           "permissive": "PERMISSIVE"
         },
         {
@@ -4377,10 +5688,21 @@
           "permissive": "PERMISSIVE"
         },
         {
-          "name": "Public read practice subcategories",
+          "name": "_role_delete_admin",
           "check": null,
           "roles": [
-            "public"
+            "authenticated"
+          ],
+          "using": "is_admin()",
+          "command": "DELETE",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "_role_select",
+          "check": null,
+          "roles": [
+            "anon",
+            "authenticated"
           ],
           "using": "true",
           "command": "SELECT",
@@ -4453,22 +5775,138 @@
           "nullable": true
         }
       ],
-      "policies": [],
+      "policies": [
+        {
+          "name": "clrf_update_reviewer",
+          "check": "is_reviewer()",
+          "roles": [
+            "authenticated"
+          ],
+          "using": "is_reviewer()",
+          "command": "UPDATE",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "clrf_insert_reviewer",
+          "check": "is_reviewer()",
+          "roles": [
+            "authenticated"
+          ],
+          "using": null,
+          "command": "INSERT",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "clrf_select_editor",
+          "check": null,
+          "roles": [
+            "authenticated"
+          ],
+          "using": "(is_editor() AND (EXISTS ( SELECT 1\n   FROM practice_cases pc\n  WHERE ((pc.id = case_legal_review_flags.case_id) AND (pc.workflow_status <> 'archived'::case_workflow_status)))))",
+          "command": "SELECT",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "clrf_select_reviewer",
+          "check": null,
+          "roles": [
+            "authenticated"
+          ],
+          "using": "is_reviewer()",
+          "command": "SELECT",
+          "permissive": "PERMISSIVE"
+        }
+      ],
       "primary_key": [
         "id"
       ],
       "rls_enabled": true,
       "foreign_keys": [
         {
+          "name": "case_legal_review_flags_case_id_fkey",
+          "column": "case_id",
+          "referenced_table": "practice_cases",
+          "referenced_column": "id"
+        },
+        {
           "name": "case_legal_review_flags_legal_section_id_fkey",
           "column": "legal_section_id",
           "referenced_table": "legal_sections",
           "referenced_column": "id"
+        }
+      ]
+    },
+    "workflow_step_documents": {
+      "name": "workflow_step_documents",
+      "columns": [
+        {
+          "udt": "uuid",
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "nullable": false
         },
         {
-          "name": "case_legal_review_flags_case_id_fkey",
-          "column": "case_id",
-          "referenced_table": "practice_cases",
+          "udt": "uuid",
+          "name": "step_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "template_slug",
+          "type": "text",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "title",
+          "type": "text",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "note",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        }
+      ],
+      "policies": [
+        {
+          "name": "wf_doc_read",
+          "check": null,
+          "roles": [
+            "anon",
+            "authenticated"
+          ],
+          "using": "true",
+          "command": "SELECT",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "wf_doc_write",
+          "check": "is_editor()",
+          "roles": [
+            "authenticated"
+          ],
+          "using": "is_editor()",
+          "command": "ALL",
+          "permissive": "PERMISSIVE"
+        }
+      ],
+      "primary_key": [
+        "id"
+      ],
+      "rls_enabled": true,
+      "foreign_keys": [
+        {
+          "name": "workflow_step_documents_step_id_fkey",
+          "column": "step_id",
+          "referenced_table": "workflow_steps",
           "referenced_column": "id"
         }
       ]
@@ -4559,6 +5997,17 @@
           "permissive": "PERMISSIVE"
         },
         {
+          "name": "_role_select",
+          "check": null,
+          "roles": [
+            "anon",
+            "authenticated"
+          ],
+          "using": "true",
+          "command": "SELECT",
+          "permissive": "PERMISSIVE"
+        },
+        {
           "name": "_role_insert_editor",
           "check": "is_editor()",
           "roles": [
@@ -4577,17 +6026,6 @@
           "using": "is_editor()",
           "command": "UPDATE",
           "permissive": "PERMISSIVE"
-        },
-        {
-          "name": "_role_select",
-          "check": null,
-          "roles": [
-            "anon",
-            "authenticated"
-          ],
-          "using": "true",
-          "command": "SELECT",
-          "permissive": "PERMISSIVE"
         }
       ],
       "primary_key": [
@@ -4596,14 +6034,14 @@
       "rls_enabled": true,
       "foreign_keys": [
         {
-          "name": "legal_section_references_resolved_section_id_fkey",
-          "column": "resolved_section_id",
+          "name": "legal_section_references_section_id_fkey",
+          "column": "section_id",
           "referenced_table": "legal_sections",
           "referenced_column": "id"
         },
         {
-          "name": "legal_section_references_section_id_fkey",
-          "column": "section_id",
+          "name": "legal_section_references_resolved_section_id_fkey",
+          "column": "resolved_section_id",
           "referenced_table": "legal_sections",
           "referenced_column": "id"
         }
@@ -4664,26 +6102,6 @@
       ],
       "policies": [
         {
-          "name": "_role_insert_editor",
-          "check": "is_editor()",
-          "roles": [
-            "authenticated"
-          ],
-          "using": null,
-          "command": "INSERT",
-          "permissive": "PERMISSIVE"
-        },
-        {
-          "name": "_role_update_editor",
-          "check": "is_editor()",
-          "roles": [
-            "authenticated"
-          ],
-          "using": "is_editor()",
-          "command": "UPDATE",
-          "permissive": "PERMISSIVE"
-        },
-        {
           "name": "_role_delete_admin",
           "check": null,
           "roles": [
@@ -4703,6 +6121,26 @@
           "using": "true",
           "command": "SELECT",
           "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "_role_update_editor",
+          "check": "is_editor()",
+          "roles": [
+            "authenticated"
+          ],
+          "using": "is_editor()",
+          "command": "UPDATE",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "_role_insert_editor",
+          "check": "is_editor()",
+          "roles": [
+            "authenticated"
+          ],
+          "using": null,
+          "command": "INSERT",
+          "permissive": "PERMISSIVE"
         }
       ],
       "primary_key": [
@@ -4710,6 +6148,179 @@
       ],
       "rls_enabled": true,
       "foreign_keys": []
+    },
+    "workflow_execution_steps": {
+      "name": "workflow_execution_steps",
+      "columns": [
+        {
+          "udt": "uuid",
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "nullable": false
+        },
+        {
+          "udt": "uuid",
+          "name": "session_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "uuid",
+          "name": "step_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "workflow_step_status",
+          "name": "step_status",
+          "type": "USER-DEFINED",
+          "default": "'open'::workflow_step_status",
+          "nullable": false
+        },
+        {
+          "udt": "jsonb",
+          "name": "checklist_state",
+          "type": "jsonb",
+          "default": "'[]'::jsonb",
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "note",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "timestamptz",
+          "name": "started_at",
+          "type": "timestamp with time zone",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "timestamptz",
+          "name": "completed_at",
+          "type": "timestamp with time zone",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "timestamptz",
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "nullable": false
+        }
+      ],
+      "policies": [
+        {
+          "name": "wf_exec_step_owner",
+          "check": "(EXISTS ( SELECT 1\n   FROM workflow_execution_sessions s\n  WHERE ((s.id = workflow_execution_steps.session_id) AND ((s.user_id = auth.uid()) OR is_admin()))))",
+          "roles": [
+            "authenticated"
+          ],
+          "using": "(EXISTS ( SELECT 1\n   FROM workflow_execution_sessions s\n  WHERE ((s.id = workflow_execution_steps.session_id) AND ((s.user_id = auth.uid()) OR is_admin()))))",
+          "command": "ALL",
+          "permissive": "PERMISSIVE"
+        }
+      ],
+      "primary_key": [
+        "id"
+      ],
+      "rls_enabled": true,
+      "foreign_keys": [
+        {
+          "name": "workflow_execution_steps_session_id_fkey",
+          "column": "session_id",
+          "referenced_table": "workflow_execution_sessions",
+          "referenced_column": "id"
+        },
+        {
+          "name": "workflow_execution_steps_step_id_fkey",
+          "column": "step_id",
+          "referenced_table": "workflow_steps",
+          "referenced_column": "id"
+        }
+      ]
+    },
+    "workflow_step_checklists": {
+      "name": "workflow_step_checklists",
+      "columns": [
+        {
+          "udt": "uuid",
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "nullable": false
+        },
+        {
+          "udt": "uuid",
+          "name": "step_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "int4",
+          "name": "sort_order",
+          "type": "integer",
+          "default": "0",
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "title",
+          "type": "text",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "bool",
+          "name": "is_required",
+          "type": "boolean",
+          "default": "false",
+          "nullable": false
+        }
+      ],
+      "policies": [
+        {
+          "name": "wf_check_read",
+          "check": null,
+          "roles": [
+            "anon",
+            "authenticated"
+          ],
+          "using": "true",
+          "command": "SELECT",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "wf_check_write",
+          "check": "is_editor()",
+          "roles": [
+            "authenticated"
+          ],
+          "using": "is_editor()",
+          "command": "ALL",
+          "permissive": "PERMISSIVE"
+        }
+      ],
+      "primary_key": [
+        "id"
+      ],
+      "rls_enabled": true,
+      "foreign_keys": [
+        {
+          "name": "workflow_step_checklists_step_id_fkey",
+          "column": "step_id",
+          "referenced_table": "workflow_steps",
+          "referenced_column": "id"
+        }
+      ]
     },
     "legal_embedding_job_items": {
       "name": "legal_embedding_job_items",
@@ -4860,15 +6471,15 @@
       "rls_enabled": true,
       "foreign_keys": [
         {
-          "name": "legal_embedding_job_items_job_id_fkey",
-          "column": "job_id",
-          "referenced_table": "legal_embedding_jobs",
-          "referenced_column": "id"
-        },
-        {
           "name": "legal_embedding_job_items_chunk_id_fkey",
           "column": "chunk_id",
           "referenced_table": "legal_chunks",
+          "referenced_column": "id"
+        },
+        {
+          "name": "legal_embedding_job_items_job_id_fkey",
+          "column": "job_id",
+          "referenced_table": "legal_embedding_jobs",
           "referenced_column": "id"
         }
       ]
@@ -4952,6 +6563,433 @@
         }
       ]
     },
+    "workflow_session_documents": {
+      "name": "workflow_session_documents",
+      "columns": [
+        {
+          "udt": "uuid",
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "nullable": false
+        },
+        {
+          "udt": "uuid",
+          "name": "session_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "uuid",
+          "name": "template_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "template_slug",
+          "type": "text",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "step_id",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "title",
+          "type": "text",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "markdown",
+          "type": "text",
+          "default": "''::text",
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "status",
+          "type": "text",
+          "default": "'draft'::text",
+          "nullable": false
+        },
+        {
+          "udt": "uuid",
+          "name": "workflow_version_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "jsonb",
+          "name": "used_context",
+          "type": "jsonb",
+          "default": "'{}'::jsonb",
+          "nullable": false
+        },
+        {
+          "udt": "jsonb",
+          "name": "missing_placeholders",
+          "type": "jsonb",
+          "default": "'[]'::jsonb",
+          "nullable": false
+        },
+        {
+          "udt": "jsonb",
+          "name": "generation_metadata",
+          "type": "jsonb",
+          "default": "'{}'::jsonb",
+          "nullable": false
+        },
+        {
+          "udt": "uuid",
+          "name": "created_by",
+          "type": "uuid",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "timestamptz",
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "nullable": false
+        },
+        {
+          "udt": "timestamptz",
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "nullable": false
+        }
+      ],
+      "policies": [
+        {
+          "name": "Session owner reads documents",
+          "check": null,
+          "roles": [
+            "authenticated"
+          ],
+          "using": "(EXISTS ( SELECT 1\n   FROM workflow_execution_sessions s\n  WHERE ((s.id = workflow_session_documents.session_id) AND (s.user_id = auth.uid()))))",
+          "command": "SELECT",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "Session owner writes documents",
+          "check": "(EXISTS ( SELECT 1\n   FROM workflow_execution_sessions s\n  WHERE ((s.id = workflow_session_documents.session_id) AND (s.user_id = auth.uid()))))",
+          "roles": [
+            "authenticated"
+          ],
+          "using": "(EXISTS ( SELECT 1\n   FROM workflow_execution_sessions s\n  WHERE ((s.id = workflow_session_documents.session_id) AND (s.user_id = auth.uid()))))",
+          "command": "ALL",
+          "permissive": "PERMISSIVE"
+        }
+      ],
+      "primary_key": [
+        "id"
+      ],
+      "rls_enabled": true,
+      "foreign_keys": [
+        {
+          "name": "workflow_session_documents_template_id_fkey",
+          "column": "template_id",
+          "referenced_table": "document_templates",
+          "referenced_column": "id"
+        },
+        {
+          "name": "workflow_session_documents_session_id_fkey",
+          "column": "session_id",
+          "referenced_table": "workflow_execution_sessions",
+          "referenced_column": "id"
+        }
+      ]
+    },
+    "workflow_step_dependencies": {
+      "name": "workflow_step_dependencies",
+      "columns": [
+        {
+          "udt": "uuid",
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "nullable": false
+        },
+        {
+          "udt": "uuid",
+          "name": "step_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "uuid",
+          "name": "depends_on_step_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": false
+        }
+      ],
+      "policies": [
+        {
+          "name": "wf_dep_read",
+          "check": null,
+          "roles": [
+            "anon",
+            "authenticated"
+          ],
+          "using": "true",
+          "command": "SELECT",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "wf_dep_write",
+          "check": "is_editor()",
+          "roles": [
+            "authenticated"
+          ],
+          "using": "is_editor()",
+          "command": "ALL",
+          "permissive": "PERMISSIVE"
+        }
+      ],
+      "primary_key": [
+        "id"
+      ],
+      "rls_enabled": true,
+      "foreign_keys": [
+        {
+          "name": "workflow_step_dependencies_step_id_fkey",
+          "column": "step_id",
+          "referenced_table": "workflow_steps",
+          "referenced_column": "id"
+        },
+        {
+          "name": "workflow_step_dependencies_depends_on_step_id_fkey",
+          "column": "depends_on_step_id",
+          "referenced_table": "workflow_steps",
+          "referenced_column": "id"
+        }
+      ]
+    },
+    "workflow_template_versions": {
+      "name": "workflow_template_versions",
+      "columns": [
+        {
+          "udt": "uuid",
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "nullable": false
+        },
+        {
+          "udt": "uuid",
+          "name": "template_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "int4",
+          "name": "version",
+          "type": "integer",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "jsonb",
+          "name": "snapshot",
+          "type": "jsonb",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "uuid",
+          "name": "created_by",
+          "type": "uuid",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "timestamptz",
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "nullable": false
+        }
+      ],
+      "policies": [
+        {
+          "name": "wf_ver_read_anon",
+          "check": null,
+          "roles": [
+            "anon"
+          ],
+          "using": "(EXISTS ( SELECT 1\n   FROM workflow_templates t\n  WHERE ((t.id = workflow_template_versions.template_id) AND (t.workflow_status = 'published'::workflow_template_status) AND (t.publication_tier = 'public'::workflow_publication_tier))))",
+          "command": "SELECT",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "wf_ver_write",
+          "check": "is_editor()",
+          "roles": [
+            "authenticated"
+          ],
+          "using": null,
+          "command": "INSERT",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "wf_ver_read",
+          "check": null,
+          "roles": [
+            "authenticated"
+          ],
+          "using": "(is_editor() OR (EXISTS ( SELECT 1\n   FROM workflow_templates t\n  WHERE ((t.id = workflow_template_versions.template_id) AND (t.workflow_status = 'published'::workflow_template_status)))))",
+          "command": "SELECT",
+          "permissive": "PERMISSIVE"
+        }
+      ],
+      "primary_key": [
+        "id"
+      ],
+      "rls_enabled": true,
+      "foreign_keys": [
+        {
+          "name": "workflow_template_versions_template_id_fkey",
+          "column": "template_id",
+          "referenced_table": "workflow_templates",
+          "referenced_column": "id"
+        }
+      ]
+    },
+    "workflow_execution_sessions": {
+      "name": "workflow_execution_sessions",
+      "columns": [
+        {
+          "udt": "uuid",
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "nullable": false
+        },
+        {
+          "udt": "uuid",
+          "name": "template_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "uuid",
+          "name": "template_version_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "uuid",
+          "name": "user_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "workflow_session_status",
+          "name": "session_status",
+          "type": "USER-DEFINED",
+          "default": "'ready'::workflow_session_status",
+          "nullable": false
+        },
+        {
+          "udt": "jsonb",
+          "name": "context",
+          "type": "jsonb",
+          "default": "'{}'::jsonb",
+          "nullable": false
+        },
+        {
+          "udt": "timestamptz",
+          "name": "started_at",
+          "type": "timestamp with time zone",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "timestamptz",
+          "name": "paused_at",
+          "type": "timestamp with time zone",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "timestamptz",
+          "name": "completed_at",
+          "type": "timestamp with time zone",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "timestamptz",
+          "name": "cancelled_at",
+          "type": "timestamp with time zone",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "timestamptz",
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "nullable": false
+        },
+        {
+          "udt": "timestamptz",
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "nullable": false
+        }
+      ],
+      "policies": [
+        {
+          "name": "wf_sess_owner",
+          "check": "((user_id = auth.uid()) OR is_admin())",
+          "roles": [
+            "authenticated"
+          ],
+          "using": "((user_id = auth.uid()) OR is_admin())",
+          "command": "ALL",
+          "permissive": "PERMISSIVE"
+        }
+      ],
+      "primary_key": [
+        "id"
+      ],
+      "rls_enabled": true,
+      "foreign_keys": [
+        {
+          "name": "workflow_execution_sessions_template_id_fkey",
+          "column": "template_id",
+          "referenced_table": "workflow_templates",
+          "referenced_column": "id"
+        },
+        {
+          "name": "workflow_execution_sessions_template_version_id_fkey",
+          "column": "template_version_id",
+          "referenced_table": "workflow_template_versions",
+          "referenced_column": "id"
+        }
+      ]
+    },
     "practice_case_search_embeddings": {
       "name": "practice_case_search_embeddings",
       "columns": [
@@ -5007,13 +7045,14 @@
       ],
       "policies": [
         {
-          "name": "_role_insert_editor",
-          "check": "is_editor()",
+          "name": "_role_select",
+          "check": null,
           "roles": [
+            "anon",
             "authenticated"
           ],
-          "using": null,
-          "command": "INSERT",
+          "using": "true",
+          "command": "SELECT",
           "permissive": "PERMISSIVE"
         },
         {
@@ -5037,14 +7076,13 @@
           "permissive": "PERMISSIVE"
         },
         {
-          "name": "_role_select",
-          "check": null,
+          "name": "_role_insert_editor",
+          "check": "is_editor()",
           "roles": [
-            "anon",
             "authenticated"
           ],
-          "using": "true",
-          "command": "SELECT",
+          "using": null,
+          "command": "INSERT",
           "permissive": "PERMISSIVE"
         }
       ],
@@ -5062,5 +7100,5 @@
       ]
     }
   },
-  "generated_at": "2026-07-24T05:38:04.395743+00:00"
+  "generated_at": "2026-08-12T21:40:49.273447+00:00"
 }

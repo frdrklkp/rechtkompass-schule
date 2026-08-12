@@ -1,0 +1,234 @@
+/**
+ * Zentrale Hybrid-Ranking-Gewichtungen und Score-Kombination.
+ * Nicht in UI-Komponenten duplizieren.
+ *
+ * Neue Signale: Intent / Beteiligte / Situation / Handlung
+ * (via searchSignals) plus negativeMismatchPenalty für fachlich
+ * falsche semantische Treffer.
+ */
+
+import type { CaseData } from "@/data/cases";
+import type { SearchResult } from "@/lib/intelligentSearch";
+import {
+  extractCaseSignals,
+  extractQuerySignals,
+  computeSignalScores,
+  type SignalScores,
+  type CaseSignals,
+} from "@/lib/searchSignals";
+
+export type HybridWeights = {
+  semantic: number;
+  structured: number;
+  topics: number;
+  signals: number; // Intent/Situation/Action/Participant
+  legal: number;
+  quality: number;
+};
+
+/**
+ * Referenz-Gewichtung (Variante A). Weitere Varianten werden im
+ * Sweep über /admin/suchtest getestet.
+ */
+export const HYBRID_WEIGHTS: HybridWeights = {
+  semantic: 0.5,
+  structured: 0.2,
+  topics: 0.1,
+  signals: 0.0,
+  legal: 0.1,
+  quality: 0.1,
+};
+
+/** Vordefinierte Gewichtungsvarianten für den Sweep. */
+export const HYBRID_WEIGHT_VARIANTS: Array<{ id: string; label: string; weights: HybridWeights }> = [
+  { id: "A", label: "A – bisherige Referenz", weights: { semantic: 0.50, structured: 0.20, topics: 0.10, signals: 0.00, legal: 0.10, quality: 0.10 } },
+  { id: "B", label: "B – Signale + reduziert",  weights: { semantic: 0.40, structured: 0.20, topics: 0.15, signals: 0.20, legal: 0.05, quality: 0.00 } },
+  { id: "C", label: "C – signalstark",           weights: { semantic: 0.35, structured: 0.20, topics: 0.20, signals: 0.25, legal: 0.00, quality: 0.00 } },
+  { id: "D", label: "D – ausgewogen",            weights: { semantic: 0.40, structured: 0.15, topics: 0.15, signals: 0.25, legal: 0.00, quality: 0.05 } },
+  { id: "E", label: "E – signalmaximiert",       weights: { semantic: 0.30, structured: 0.20, topics: 0.20, signals: 0.30, legal: 0.00, quality: 0.00 } },
+];
+
+export type SemanticHit = { caseId: string; similarity: number };
+
+export type HybridCandidate = {
+  case: CaseData;
+  semantic: number;      // 0..1
+  structured: number;    // 0..1
+  topics: number;        // 0..1
+  legal: number;         // 0..1
+  quality: number;       // 0..1
+  intentScore: number;
+  participantScore: number;
+  situationScore: number;
+  actionScore: number;
+  signalScore: number;
+  negativeMismatchPenalty: number;
+  baseScore: number;     // gewichteter Score vor Penalty (0..1)
+  finalScore: number;    // 0..1
+  matchedTerms: string[];
+  matchedTopics: string[];
+  matchReasons: string[];
+  penaltyReasons: string[];
+  confidenceLabel: SearchResult["confidenceLabel"];
+};
+
+function clamp01(x: number): number {
+  return Math.max(0, Math.min(1, x));
+}
+
+function normalizeStructuredScore(score: number): number {
+  return clamp01(score / 40);
+}
+
+function normalizeTopic(s: string): string {
+  return s
+    .toLowerCase()
+    .replace(/ß/g, "ss")
+    .replace(/[äáàâ]/g, "a")
+    .replace(/[öóòô]/g, "o")
+    .replace(/[üúùû]/g, "u")
+    .trim();
+}
+
+/**
+ * Themenscore basiert auf der Anzahl erkannter Themen und einem
+ * allgemeingültigen Kategorie-Alignment-Bonus: Wenn die Kategorie des
+ * Falls einem der in der Query erkannten Themen entspricht, ist der Fall
+ * thematisch stärker gebunden. Bewusst klein gehalten (keine
+ * Query-/Test-spezifischen Regeln, keine Gewichtsänderung).
+ */
+function topicsScore(r: SearchResult, c: CaseData): number {
+  if (r.matchedTopics.length === 0) return 0;
+  const base = 0.3 + 0.15 * Math.min(3, r.matchedTopics.length);
+  const catN = normalizeTopic(c.category ?? "");
+  const aligned =
+    !!catN &&
+    r.matchedTopics.some((t) => {
+      const tn = normalizeTopic(t);
+      return tn && (catN === tn || catN.includes(tn) || tn.includes(catN));
+    });
+  return clamp01(base + (aligned ? 0.35 : 0));
+}
+
+function legalContextScore(c: CaseData): number {
+  const n = (c.legalSections ?? []).length + (c.legalBasis ?? []).length;
+  if (n <= 0) return 0.2;
+  if (n === 1) return 0.55;
+  if (n === 2) return 0.8;
+  return 1;
+}
+
+function qualityScore(c: CaseData): number {
+  let s = 0.4;
+  if (c.shortAnswer) s += 0.15;
+  if (c.recommendation) s += 0.1;
+  if (c.checklist && c.checklist.length >= 3) s += 0.15;
+  if (c.documentation && c.documentation.length >= 2) s += 0.1;
+  if ((c.legalSections ?? []).length > 0) s += 0.1;
+  return clamp01(s);
+}
+
+function labelFromScore(final: number): SearchResult["confidenceLabel"] {
+  if (final >= 0.72) return "sehr-hoch";
+  if (final >= 0.5) return "hoch";
+  return "moeglich";
+}
+
+export type CombineOptions = {
+  weights?: HybridWeights;
+  /** Nutzerfrage — für Signal-Extraktion. Bei "" werden Signal-Scores 0. */
+  query?: string;
+  /** Wenn true, negativeMismatchPenalty vom Basisscore abziehen. */
+  applyNegativePenalty?: boolean;
+};
+
+export function combineHybrid(
+  structuredResults: SearchResult[],
+  semanticHits: SemanticHit[],
+  allCases: CaseData[],
+  options?: CombineOptions,
+): HybridCandidate[] {
+  const weights = options?.weights ?? HYBRID_WEIGHTS;
+  const applyNeg = options?.applyNegativePenalty !== false; // default true
+  const query = (options?.query ?? "").trim();
+  const querySignals: CaseSignals | null = query ? extractQuerySignals(query) : null;
+
+  const byId = new Map<string, CaseData>();
+  for (const c of allCases) byId.set(c.id, c);
+
+  const semById = new Map<string, number>();
+  for (const h of semanticHits) semById.set(h.caseId, clamp01(h.similarity));
+
+  const structById = new Map<string, SearchResult>();
+  for (const r of structuredResults) structById.set(r.case.id, r);
+
+  const ids = new Set<string>([...structById.keys(), ...semById.keys()]);
+  const out: HybridCandidate[] = [];
+
+  for (const id of ids) {
+    const c = byId.get(id);
+    if (!c) continue;
+
+    const r = structById.get(id);
+    const semantic = semById.get(id) ?? 0;
+    const structured = r ? normalizeStructuredScore(r.relevanceScore) : 0;
+    const topics = r ? topicsScore(r, c) : 0;
+    const legal = legalContextScore(c);
+    const quality = qualityScore(c);
+
+    let sig: SignalScores = {
+      intentScore: 0, participantScore: 0, situationScore: 0, actionScore: 0,
+      signalScore: 0, negativeMismatchPenalty: 0,
+      matchedIntents: [], matchedSituations: [], matchedActions: [], matchedParticipants: [],
+      penaltyReasons: [],
+    };
+    if (querySignals) {
+      sig = computeSignalScores(querySignals, extractCaseSignals(c));
+    }
+
+    const baseScore = clamp01(
+      weights.semantic * semantic +
+        weights.structured * structured +
+        weights.topics * topics +
+        weights.signals * sig.signalScore +
+        weights.legal * legal +
+        weights.quality * quality,
+    );
+
+    const penalty = applyNeg ? sig.negativeMismatchPenalty : 0;
+    const finalScore = clamp01(baseScore - penalty);
+
+    const reasons: string[] = [];
+    if (semantic >= 0.6) reasons.push("Semantische Nähe zur Formulierung");
+    else if (semantic >= 0.35) reasons.push("Themennähe zur Formulierung");
+    if (sig.matchedSituations.length) reasons.push(`Situation passt: ${sig.matchedSituations.join(", ")}`);
+    if (sig.matchedActions.length) reasons.push(`Handlung passt: ${sig.matchedActions.join(", ")}`);
+    if (r?.matchReasons?.length) reasons.push(...r.matchReasons.slice(0, 2));
+    if (legal >= 0.8 && weights.legal > 0) reasons.push("Mehrere passende Rechtsgrundlagen hinterlegt");
+
+    out.push({
+      case: c,
+      semantic,
+      structured,
+      topics,
+      legal,
+      quality,
+      intentScore: sig.intentScore,
+      participantScore: sig.participantScore,
+      situationScore: sig.situationScore,
+      actionScore: sig.actionScore,
+      signalScore: sig.signalScore,
+      negativeMismatchPenalty: penalty,
+      baseScore,
+      finalScore,
+      matchedTerms: r?.matchedTerms ?? [],
+      matchedTopics: r?.matchedTopics ?? [],
+      matchReasons: reasons.length ? reasons : ["Bester verfügbarer Treffer aus der Wissensbasis"],
+      penaltyReasons: sig.penaltyReasons,
+      confidenceLabel: labelFromScore(finalScore),
+    });
+  }
+
+  out.sort((a, b) => b.finalScore - a.finalScore);
+  return out;
+}

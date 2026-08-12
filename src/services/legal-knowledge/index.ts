@@ -1,0 +1,13 @@
+export * from "./registry/LegalSourceRegistryTypes";
+export * from "./ingestion/LegalIngestionTypes";
+export * from "./runtime/ingestionErrors";
+export { legalKnowledgeFlags } from "./runtime/ingestionFeatureFlags";
+export { LegalSourceRegistryService } from "./registry/LegalSourceRegistryService";
+export type { CreateLegalSourceInput } from "./registry/LegalSourceRegistryService";
+export { LegalIngestionService } from "./ingestion/LegalIngestionService";
+export { normalizeLegalContent, computeContentStats, computeChecksum } from "./ingestion/LegalContentNormalizer";
+export { extractLegalMetadata } from "./ingestion/LegalMetadataExtractor";
+export { validateIngestion } from "./ingestion/LegalIngestionValidator";
+export { detectDuplicates } from "./ingestion/LegalDuplicateDetector";
+export * as DocumentStructure from "./document";
+export * as Chunks from "./chunks";

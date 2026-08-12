@@ -1,0 +1,5066 @@
+{
+  "tables": {
+    "roles": {
+      "name": "roles",
+      "columns": [
+        {
+          "udt": "uuid",
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "name",
+          "type": "text",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "description",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "timestamptz",
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "nullable": true
+        }
+      ],
+      "policies": [
+        {
+          "name": "Public read roles",
+          "check": null,
+          "roles": [
+            "public"
+          ],
+          "using": "true",
+          "command": "SELECT",
+          "permissive": "PERMISSIVE"
+        }
+      ],
+      "primary_key": [
+        "id"
+      ],
+      "rls_enabled": true,
+      "foreign_keys": []
+    },
+    "schools": {
+      "name": "schools",
+      "columns": [
+        {
+          "udt": "uuid",
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "name",
+          "type": "text",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "short_name",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "city",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "status",
+          "type": "text",
+          "default": "'active'::text",
+          "nullable": true
+        },
+        {
+          "udt": "timestamptz",
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "nullable": true
+        }
+      ],
+      "policies": [
+        {
+          "name": "Public read schools",
+          "check": null,
+          "roles": [
+            "public"
+          ],
+          "using": "(status = 'active'::text)",
+          "command": "SELECT",
+          "permissive": "PERMISSIVE"
+        }
+      ],
+      "primary_key": [
+        "id"
+      ],
+      "rls_enabled": true,
+      "foreign_keys": []
+    },
+    "keywords": {
+      "name": "keywords",
+      "columns": [
+        {
+          "udt": "uuid",
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "keyword",
+          "type": "text",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "timestamptz",
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "nullable": true
+        }
+      ],
+      "policies": [
+        {
+          "name": "_role_select",
+          "check": null,
+          "roles": [
+            "anon",
+            "authenticated"
+          ],
+          "using": "true",
+          "command": "SELECT",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "_role_insert_editor",
+          "check": "is_editor()",
+          "roles": [
+            "authenticated"
+          ],
+          "using": null,
+          "command": "INSERT",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "_role_update_editor",
+          "check": "is_editor()",
+          "roles": [
+            "authenticated"
+          ],
+          "using": "is_editor()",
+          "command": "UPDATE",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "_role_delete_admin",
+          "check": null,
+          "roles": [
+            "authenticated"
+          ],
+          "using": "is_admin()",
+          "command": "DELETE",
+          "permissive": "PERMISSIVE"
+        }
+      ],
+      "primary_key": [
+        "id"
+      ],
+      "rls_enabled": true,
+      "foreign_keys": []
+    },
+    "favorites": {
+      "name": "favorites",
+      "columns": [
+        {
+          "udt": "uuid",
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "nullable": false
+        },
+        {
+          "udt": "uuid",
+          "name": "user_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "uuid",
+          "name": "case_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "timestamptz",
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "nullable": true
+        }
+      ],
+      "policies": [],
+      "primary_key": [
+        "id"
+      ],
+      "rls_enabled": true,
+      "foreign_keys": [
+        {
+          "name": "favorites_case_id_fkey",
+          "column": "case_id",
+          "referenced_table": "practice_cases",
+          "referenced_column": "id"
+        }
+      ]
+    },
+    "audit_logs": {
+      "name": "audit_logs",
+      "columns": [
+        {
+          "udt": "uuid",
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "nullable": false
+        },
+        {
+          "udt": "uuid",
+          "name": "user_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "action",
+          "type": "text",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "table_name",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "uuid",
+          "name": "record_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "jsonb",
+          "name": "details",
+          "type": "jsonb",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "timestamptz",
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "nullable": true
+        }
+      ],
+      "policies": [],
+      "primary_key": [
+        "id"
+      ],
+      "rls_enabled": true,
+      "foreign_keys": []
+    },
+    "case_roles": {
+      "name": "case_roles",
+      "columns": [
+        {
+          "udt": "uuid",
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "nullable": false
+        },
+        {
+          "udt": "uuid",
+          "name": "case_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "uuid",
+          "name": "role_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "responsibility",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "int4",
+          "name": "priority",
+          "type": "integer",
+          "default": "0",
+          "nullable": true
+        },
+        {
+          "udt": "timestamptz",
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "nullable": true
+        }
+      ],
+      "policies": [],
+      "primary_key": [
+        "id"
+      ],
+      "rls_enabled": true,
+      "foreign_keys": [
+        {
+          "name": "case_roles_role_id_fkey",
+          "column": "role_id",
+          "referenced_table": "roles",
+          "referenced_column": "id"
+        },
+        {
+          "name": "case_roles_case_id_fkey",
+          "column": "case_id",
+          "referenced_table": "practice_cases",
+          "referenced_column": "id"
+        }
+      ]
+    },
+    "case_events": {
+      "name": "case_events",
+      "columns": [
+        {
+          "udt": "uuid",
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "nullable": false
+        },
+        {
+          "udt": "uuid",
+          "name": "case_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "uuid",
+          "name": "case_version_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "event_type",
+          "type": "text",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "uuid",
+          "name": "actor_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "actor_role",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "actor_type",
+          "type": "text",
+          "default": "'user'::text",
+          "nullable": false
+        },
+        {
+          "udt": "int4",
+          "name": "aggregate_version",
+          "type": "integer",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "uuid",
+          "name": "correlation_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "jsonb",
+          "name": "payload",
+          "type": "jsonb",
+          "default": "'{}'::jsonb",
+          "nullable": false
+        },
+        {
+          "udt": "timestamptz",
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "nullable": false
+        }
+      ],
+      "policies": [],
+      "primary_key": [
+        "id"
+      ],
+      "rls_enabled": true,
+      "foreign_keys": [
+        {
+          "name": "case_events_case_version_fk",
+          "column": "case_id",
+          "referenced_table": "case_versions",
+          "referenced_column": "id"
+        },
+        {
+          "name": "case_events_case_version_fk",
+          "column": "case_version_id",
+          "referenced_table": "case_versions",
+          "referenced_column": "case_id"
+        },
+        {
+          "name": "case_events_case_version_fk",
+          "column": "case_id",
+          "referenced_table": "case_versions",
+          "referenced_column": "case_id"
+        },
+        {
+          "name": "case_events_case_version_fk",
+          "column": "case_version_id",
+          "referenced_table": "case_versions",
+          "referenced_column": "id"
+        },
+        {
+          "name": "case_events_case_id_fkey",
+          "column": "case_id",
+          "referenced_table": "practice_cases",
+          "referenced_column": "id"
+        }
+      ]
+    },
+    "faq_entries": {
+      "name": "faq_entries",
+      "columns": [
+        {
+          "udt": "uuid",
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "nullable": false
+        },
+        {
+          "udt": "uuid",
+          "name": "case_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "question",
+          "type": "text",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "answer",
+          "type": "text",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "int4",
+          "name": "sort_order",
+          "type": "integer",
+          "default": "0",
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "status",
+          "type": "text",
+          "default": "'published'::text",
+          "nullable": true
+        },
+        {
+          "udt": "timestamptz",
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "nullable": true
+        }
+      ],
+      "policies": [
+        {
+          "name": "Public read published faq entries",
+          "check": null,
+          "roles": [
+            "public"
+          ],
+          "using": "(status = 'published'::text)",
+          "command": "SELECT",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "_role_select",
+          "check": null,
+          "roles": [
+            "authenticated"
+          ],
+          "using": "is_editor()",
+          "command": "SELECT",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "_role_delete_admin",
+          "check": null,
+          "roles": [
+            "authenticated"
+          ],
+          "using": "is_admin()",
+          "command": "DELETE",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "_role_insert_editor",
+          "check": "is_editor()",
+          "roles": [
+            "authenticated"
+          ],
+          "using": null,
+          "command": "INSERT",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "faq_entries_role_select",
+          "check": null,
+          "roles": [
+            "anon",
+            "authenticated"
+          ],
+          "using": "((status = 'published'::text) OR is_editor())",
+          "command": "SELECT",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "_role_update_editor",
+          "check": "is_editor()",
+          "roles": [
+            "authenticated"
+          ],
+          "using": "is_editor()",
+          "command": "UPDATE",
+          "permissive": "PERMISSIVE"
+        }
+      ],
+      "primary_key": [
+        "id"
+      ],
+      "rls_enabled": true,
+      "foreign_keys": [
+        {
+          "name": "faq_entries_case_id_fkey",
+          "column": "case_id",
+          "referenced_table": "practice_cases",
+          "referenced_column": "id"
+        }
+      ]
+    },
+    "import_jobs": {
+      "name": "import_jobs",
+      "columns": [
+        {
+          "udt": "uuid",
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "nullable": false
+        },
+        {
+          "udt": "uuid",
+          "name": "source_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "source_url",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "status",
+          "type": "text",
+          "default": "'running'::text",
+          "nullable": false
+        },
+        {
+          "udt": "timestamptz",
+          "name": "started_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "nullable": false
+        },
+        {
+          "udt": "timestamptz",
+          "name": "finished_at",
+          "type": "timestamp with time zone",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "int4",
+          "name": "duration_ms",
+          "type": "integer",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "int4",
+          "name": "detected_count",
+          "type": "integer",
+          "default": "0",
+          "nullable": false
+        },
+        {
+          "udt": "int4",
+          "name": "imported_count",
+          "type": "integer",
+          "default": "0",
+          "nullable": false
+        },
+        {
+          "udt": "int4",
+          "name": "updated_count",
+          "type": "integer",
+          "default": "0",
+          "nullable": false
+        },
+        {
+          "udt": "int4",
+          "name": "skipped_count",
+          "type": "integer",
+          "default": "0",
+          "nullable": false
+        },
+        {
+          "udt": "int4",
+          "name": "enriched_count",
+          "type": "integer",
+          "default": "0",
+          "nullable": false
+        },
+        {
+          "udt": "int4",
+          "name": "error_count",
+          "type": "integer",
+          "default": "0",
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "notes",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "uuid",
+          "name": "created_by",
+          "type": "uuid",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "timestamptz",
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "nullable": false
+        }
+      ],
+      "policies": [
+        {
+          "name": "_role_select",
+          "check": null,
+          "roles": [
+            "authenticated"
+          ],
+          "using": "is_editor()",
+          "command": "SELECT",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "_role_delete_admin",
+          "check": null,
+          "roles": [
+            "authenticated"
+          ],
+          "using": "is_admin()",
+          "command": "DELETE",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "_role_update_editor",
+          "check": "is_editor()",
+          "roles": [
+            "authenticated"
+          ],
+          "using": "is_editor()",
+          "command": "UPDATE",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "_role_insert_editor",
+          "check": "is_editor()",
+          "roles": [
+            "authenticated"
+          ],
+          "using": null,
+          "command": "INSERT",
+          "permissive": "PERMISSIVE"
+        }
+      ],
+      "primary_key": [
+        "id"
+      ],
+      "rls_enabled": true,
+      "foreign_keys": [
+        {
+          "name": "import_jobs_source_id_fkey",
+          "column": "source_id",
+          "referenced_table": "legal_sources",
+          "referenced_column": "id"
+        }
+      ]
+    },
+    "case_reviews": {
+      "name": "case_reviews",
+      "columns": [
+        {
+          "udt": "uuid",
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "nullable": false
+        },
+        {
+          "udt": "uuid",
+          "name": "case_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "uuid",
+          "name": "case_version_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "review_status",
+          "name": "status",
+          "type": "USER-DEFINED",
+          "default": "'pending'::review_status",
+          "nullable": false
+        },
+        {
+          "udt": "uuid",
+          "name": "requested_by",
+          "type": "uuid",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "uuid",
+          "name": "assigned_to",
+          "type": "uuid",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "comment",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "uuid",
+          "name": "decided_by",
+          "type": "uuid",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "timestamptz",
+          "name": "decided_at",
+          "type": "timestamp with time zone",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "timestamptz",
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "nullable": false
+        }
+      ],
+      "policies": [],
+      "primary_key": [
+        "id"
+      ],
+      "rls_enabled": true,
+      "foreign_keys": [
+        {
+          "name": "case_reviews_case_version_fk",
+          "column": "case_id",
+          "referenced_table": "case_versions",
+          "referenced_column": "case_id"
+        },
+        {
+          "name": "case_reviews_case_version_fk",
+          "column": "case_version_id",
+          "referenced_table": "case_versions",
+          "referenced_column": "id"
+        },
+        {
+          "name": "case_reviews_case_version_fk",
+          "column": "case_version_id",
+          "referenced_table": "case_versions",
+          "referenced_column": "case_id"
+        },
+        {
+          "name": "case_reviews_case_version_fk",
+          "column": "case_id",
+          "referenced_table": "case_versions",
+          "referenced_column": "id"
+        },
+        {
+          "name": "case_reviews_case_id_fkey",
+          "column": "case_id",
+          "referenced_table": "practice_cases",
+          "referenced_column": "id"
+        }
+      ]
+    },
+    "legal_chunks": {
+      "name": "legal_chunks",
+      "columns": [
+        {
+          "udt": "uuid",
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "nullable": false
+        },
+        {
+          "udt": "uuid",
+          "name": "source_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "uuid",
+          "name": "primary_section_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "chunk_id",
+          "type": "text",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "stable_hash",
+          "type": "text",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "content_hash",
+          "type": "text",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "path",
+          "type": "text",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "display_path",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "jsonb",
+          "name": "breadcrumb",
+          "type": "jsonb",
+          "default": "'[]'::jsonb",
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "chunk_type",
+          "type": "text",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "title",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "content",
+          "type": "text",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "normalized_content",
+          "type": "text",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "jsonb",
+          "name": "section_ids",
+          "type": "jsonb",
+          "default": "'[]'::jsonb",
+          "nullable": false
+        },
+        {
+          "udt": "jsonb",
+          "name": "metadata",
+          "type": "jsonb",
+          "default": "'{}'::jsonb",
+          "nullable": false
+        },
+        {
+          "udt": "jsonb",
+          "name": "references",
+          "type": "jsonb",
+          "default": "'[]'::jsonb",
+          "nullable": false
+        },
+        {
+          "udt": "int4",
+          "name": "token_estimate",
+          "type": "integer",
+          "default": "0",
+          "nullable": false
+        },
+        {
+          "udt": "int4",
+          "name": "character_count",
+          "type": "integer",
+          "default": "0",
+          "nullable": false
+        },
+        {
+          "udt": "int4",
+          "name": "word_count",
+          "type": "integer",
+          "default": "0",
+          "nullable": false
+        },
+        {
+          "udt": "int4",
+          "name": "sentence_count",
+          "type": "integer",
+          "default": "0",
+          "nullable": false
+        },
+        {
+          "udt": "int4",
+          "name": "order_index",
+          "type": "integer",
+          "default": "0",
+          "nullable": false
+        },
+        {
+          "udt": "uuid",
+          "name": "parent_chunk_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "numeric",
+          "name": "confidence",
+          "type": "numeric",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "int4",
+          "name": "chunk_version",
+          "type": "integer",
+          "default": "1",
+          "nullable": false
+        },
+        {
+          "udt": "bool",
+          "name": "active",
+          "type": "boolean",
+          "default": "true",
+          "nullable": false
+        },
+        {
+          "udt": "timestamptz",
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "nullable": false
+        },
+        {
+          "udt": "timestamptz",
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "nullable": false
+        }
+      ],
+      "policies": [
+        {
+          "name": "legal_chunks pilot all",
+          "check": "true",
+          "roles": [
+            "anon",
+            "authenticated"
+          ],
+          "using": "true",
+          "command": "ALL",
+          "permissive": "PERMISSIVE"
+        }
+      ],
+      "primary_key": [
+        "id"
+      ],
+      "rls_enabled": true,
+      "foreign_keys": [
+        {
+          "name": "legal_chunks_source_id_fkey",
+          "column": "source_id",
+          "referenced_table": "legal_sources",
+          "referenced_column": "id"
+        },
+        {
+          "name": "legal_chunks_primary_section_id_fkey",
+          "column": "primary_section_id",
+          "referenced_table": "legal_sections",
+          "referenced_column": "id"
+        },
+        {
+          "name": "legal_chunks_parent_chunk_id_fkey",
+          "column": "parent_chunk_id",
+          "referenced_table": "legal_chunks",
+          "referenced_column": "id"
+        }
+      ]
+    },
+    "case_keywords": {
+      "name": "case_keywords",
+      "columns": [
+        {
+          "udt": "uuid",
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "nullable": false
+        },
+        {
+          "udt": "uuid",
+          "name": "case_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "uuid",
+          "name": "keyword_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "timestamptz",
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "nullable": true
+        }
+      ],
+      "policies": [
+        {
+          "name": "_role_insert_editor",
+          "check": "is_editor()",
+          "roles": [
+            "authenticated"
+          ],
+          "using": null,
+          "command": "INSERT",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "_role_delete_admin",
+          "check": null,
+          "roles": [
+            "authenticated"
+          ],
+          "using": "is_admin()",
+          "command": "DELETE",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "_role_update_editor",
+          "check": "is_editor()",
+          "roles": [
+            "authenticated"
+          ],
+          "using": "is_editor()",
+          "command": "UPDATE",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "_role_select",
+          "check": null,
+          "roles": [
+            "anon",
+            "authenticated"
+          ],
+          "using": "true",
+          "command": "SELECT",
+          "permissive": "PERMISSIVE"
+        }
+      ],
+      "primary_key": [
+        "id"
+      ],
+      "rls_enabled": true,
+      "foreign_keys": [
+        {
+          "name": "case_keywords_case_id_fkey",
+          "column": "case_id",
+          "referenced_table": "practice_cases",
+          "referenced_column": "id"
+        },
+        {
+          "name": "case_keywords_keyword_id_fkey",
+          "column": "keyword_id",
+          "referenced_table": "keywords",
+          "referenced_column": "id"
+        }
+      ]
+    },
+    "case_versions": {
+      "name": "case_versions",
+      "columns": [
+        {
+          "udt": "uuid",
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "nullable": false
+        },
+        {
+          "udt": "uuid",
+          "name": "case_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "int4",
+          "name": "version_no",
+          "type": "integer",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "jsonb",
+          "name": "payload",
+          "type": "jsonb",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "uuid",
+          "name": "created_by",
+          "type": "uuid",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "timestamptz",
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "nullable": false
+        }
+      ],
+      "policies": [],
+      "primary_key": [
+        "id"
+      ],
+      "rls_enabled": true,
+      "foreign_keys": [
+        {
+          "name": "case_versions_case_id_fkey",
+          "column": "case_id",
+          "referenced_table": "practice_cases",
+          "referenced_column": "id"
+        }
+      ]
+    },
+    "legal_changes": {
+      "name": "legal_changes",
+      "columns": [
+        {
+          "udt": "uuid",
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "nullable": false
+        },
+        {
+          "udt": "uuid",
+          "name": "legal_section_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "change_type",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "old_text",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "new_text",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "change_note",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "timestamptz",
+          "name": "detected_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "status",
+          "type": "text",
+          "default": "'needs_review'::text",
+          "nullable": true
+        }
+      ],
+      "policies": [
+        {
+          "name": "_role_delete_admin",
+          "check": null,
+          "roles": [
+            "authenticated"
+          ],
+          "using": "is_admin()",
+          "command": "DELETE",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "_role_insert_editor",
+          "check": "is_editor()",
+          "roles": [
+            "authenticated"
+          ],
+          "using": null,
+          "command": "INSERT",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "_role_select",
+          "check": null,
+          "roles": [
+            "anon",
+            "authenticated"
+          ],
+          "using": "true",
+          "command": "SELECT",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "_role_update_editor",
+          "check": "is_editor()",
+          "roles": [
+            "authenticated"
+          ],
+          "using": "is_editor()",
+          "command": "UPDATE",
+          "permissive": "PERMISSIVE"
+        }
+      ],
+      "primary_key": [
+        "id"
+      ],
+      "rls_enabled": true,
+      "foreign_keys": [
+        {
+          "name": "legal_changes_legal_section_id_fkey",
+          "column": "legal_section_id",
+          "referenced_table": "legal_sections",
+          "referenced_column": "id"
+        }
+      ]
+    },
+    "legal_sources": {
+      "name": "legal_sources",
+      "columns": [
+        {
+          "udt": "uuid",
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "name",
+          "type": "text",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "source_type",
+          "type": "text",
+          "default": "'law'::text",
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "jurisdiction",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "official_url",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "publisher",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "status",
+          "type": "text",
+          "default": "'active'::text",
+          "nullable": true
+        },
+        {
+          "udt": "timestamptz",
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "short_name",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "description",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "legal_area",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "scope",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "date",
+          "name": "valid_from",
+          "type": "date",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "date",
+          "name": "valid_to",
+          "type": "date",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "date",
+          "name": "last_reviewed_at",
+          "type": "date",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "legal_source_type",
+          "name": "source_type_v2",
+          "type": "USER-DEFINED",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "authority",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "federal_state",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "school_type",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "educational_area",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "legal_domain",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "version_label",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "date",
+          "name": "published_at",
+          "type": "date",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "timestamptz",
+          "name": "last_verified_at",
+          "type": "timestamp with time zone",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "uuid",
+          "name": "supersedes_source_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "uuid",
+          "name": "replaced_by_source_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "bool",
+          "name": "official_source",
+          "type": "boolean",
+          "default": "false",
+          "nullable": true
+        },
+        {
+          "udt": "bool",
+          "name": "authority_verified",
+          "type": "boolean",
+          "default": "false",
+          "nullable": true
+        },
+        {
+          "udt": "bool",
+          "name": "editorial_verified",
+          "type": "boolean",
+          "default": "false",
+          "nullable": true
+        },
+        {
+          "udt": "legal_source_verification",
+          "name": "verification_status",
+          "type": "USER-DEFINED",
+          "default": "'unverified'::legal_source_verification",
+          "nullable": true
+        },
+        {
+          "udt": "legal_source_lifecycle",
+          "name": "lifecycle_status",
+          "type": "USER-DEFINED",
+          "default": "'draft'::legal_source_lifecycle",
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "source_format",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "source_language",
+          "type": "text",
+          "default": "'de'::text",
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "checksum",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "legal_ingestion_status",
+          "name": "ingestion_status",
+          "type": "USER-DEFINED",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "timestamptz",
+          "name": "last_ingested_at",
+          "type": "timestamp with time zone",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "original_content",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "normalized_content",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "timestamptz",
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "nullable": true
+        }
+      ],
+      "policies": [
+        {
+          "name": "_role_insert_editor",
+          "check": "is_editor()",
+          "roles": [
+            "authenticated"
+          ],
+          "using": null,
+          "command": "INSERT",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "_role_select",
+          "check": null,
+          "roles": [
+            "anon",
+            "authenticated"
+          ],
+          "using": "true",
+          "command": "SELECT",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "_role_delete_admin",
+          "check": null,
+          "roles": [
+            "authenticated"
+          ],
+          "using": "is_admin()",
+          "command": "DELETE",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "_role_update_editor",
+          "check": "is_editor()",
+          "roles": [
+            "authenticated"
+          ],
+          "using": "is_editor()",
+          "command": "UPDATE",
+          "permissive": "PERMISSIVE"
+        }
+      ],
+      "primary_key": [
+        "id"
+      ],
+      "rls_enabled": true,
+      "foreign_keys": [
+        {
+          "name": "legal_sources_replaced_by_source_id_fkey",
+          "column": "replaced_by_source_id",
+          "referenced_table": "legal_sources",
+          "referenced_column": "id"
+        },
+        {
+          "name": "legal_sources_supersedes_source_id_fkey",
+          "column": "supersedes_source_id",
+          "referenced_table": "legal_sources",
+          "referenced_column": "id"
+        }
+      ]
+    },
+    "user_profiles": {
+      "name": "user_profiles",
+      "columns": [
+        {
+          "udt": "uuid",
+          "name": "id",
+          "type": "uuid",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "display_name",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "email",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "app_role",
+          "name": "role",
+          "type": "USER-DEFINED",
+          "default": "'teacher'::app_role",
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "organization",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "timestamptz",
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "nullable": false
+        },
+        {
+          "udt": "timestamptz",
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "nullable": false
+        }
+      ],
+      "policies": [
+        {
+          "name": "user_profiles: self select",
+          "check": null,
+          "roles": [
+            "authenticated"
+          ],
+          "using": "(auth.uid() = id)",
+          "command": "SELECT",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "user_profiles: admin read all",
+          "check": null,
+          "roles": [
+            "authenticated"
+          ],
+          "using": "(has_role(auth.uid(), 'admin'::app_role) OR has_role(auth.uid(), 'superadmin'::app_role))",
+          "command": "SELECT",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "user_profiles: self update",
+          "check": "(auth.uid() = id)",
+          "roles": [
+            "authenticated"
+          ],
+          "using": "(auth.uid() = id)",
+          "command": "UPDATE",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "user_profiles: admin write all",
+          "check": "(has_role(auth.uid(), 'admin'::app_role) OR has_role(auth.uid(), 'superadmin'::app_role))",
+          "roles": [
+            "authenticated"
+          ],
+          "using": "(has_role(auth.uid(), 'admin'::app_role) OR has_role(auth.uid(), 'superadmin'::app_role))",
+          "command": "UPDATE",
+          "permissive": "PERMISSIVE"
+        }
+      ],
+      "primary_key": [
+        "id"
+      ],
+      "rls_enabled": true,
+      "foreign_keys": []
+    },
+    "case_documents": {
+      "name": "case_documents",
+      "columns": [
+        {
+          "udt": "uuid",
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "nullable": false
+        },
+        {
+          "udt": "uuid",
+          "name": "case_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "uuid",
+          "name": "template_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "title",
+          "type": "text",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "content",
+          "type": "text",
+          "default": "''::text",
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "status",
+          "type": "text",
+          "default": "'draft'::text",
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "quality",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "jsonb",
+          "name": "open_issues",
+          "type": "jsonb",
+          "default": "'[]'::jsonb",
+          "nullable": false
+        },
+        {
+          "udt": "jsonb",
+          "name": "used_sources",
+          "type": "jsonb",
+          "default": "'{}'::jsonb",
+          "nullable": false
+        },
+        {
+          "udt": "jsonb",
+          "name": "generation_metadata",
+          "type": "jsonb",
+          "default": "'{}'::jsonb",
+          "nullable": false
+        },
+        {
+          "udt": "timestamptz",
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "nullable": false
+        },
+        {
+          "udt": "timestamptz",
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "nullable": false
+        }
+      ],
+      "policies": [
+        {
+          "name": "_role_insert_editor",
+          "check": "is_editor()",
+          "roles": [
+            "authenticated"
+          ],
+          "using": null,
+          "command": "INSERT",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "_role_delete_admin",
+          "check": null,
+          "roles": [
+            "authenticated"
+          ],
+          "using": "is_admin()",
+          "command": "DELETE",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "_role_select",
+          "check": null,
+          "roles": [
+            "authenticated"
+          ],
+          "using": "is_editor()",
+          "command": "SELECT",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "_role_update_editor",
+          "check": "is_editor()",
+          "roles": [
+            "authenticated"
+          ],
+          "using": "is_editor()",
+          "command": "UPDATE",
+          "permissive": "PERMISSIVE"
+        }
+      ],
+      "primary_key": [
+        "id"
+      ],
+      "rls_enabled": true,
+      "foreign_keys": [
+        {
+          "name": "case_documents_case_id_fkey",
+          "column": "case_id",
+          "referenced_table": "practice_cases",
+          "referenced_column": "id"
+        },
+        {
+          "name": "case_documents_template_id_fkey",
+          "column": "template_id",
+          "referenced_table": "document_templates",
+          "referenced_column": "id"
+        }
+      ]
+    },
+    "case_templates": {
+      "name": "case_templates",
+      "columns": [
+        {
+          "udt": "uuid",
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "nullable": false
+        },
+        {
+          "udt": "uuid",
+          "name": "case_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "uuid",
+          "name": "template_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "relevance",
+          "type": "text",
+          "default": "'mittel'::text",
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "explanation",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "timestamptz",
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "nullable": true
+        }
+      ],
+      "policies": [
+        {
+          "name": "_role_insert_editor",
+          "check": "is_editor()",
+          "roles": [
+            "authenticated"
+          ],
+          "using": null,
+          "command": "INSERT",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "_role_select",
+          "check": null,
+          "roles": [
+            "anon",
+            "authenticated"
+          ],
+          "using": "true",
+          "command": "SELECT",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "_role_update_editor",
+          "check": "is_editor()",
+          "roles": [
+            "authenticated"
+          ],
+          "using": "is_editor()",
+          "command": "UPDATE",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "_role_delete_admin",
+          "check": null,
+          "roles": [
+            "authenticated"
+          ],
+          "using": "is_admin()",
+          "command": "DELETE",
+          "permissive": "PERMISSIVE"
+        }
+      ],
+      "primary_key": [
+        "id"
+      ],
+      "rls_enabled": true,
+      "foreign_keys": [
+        {
+          "name": "case_templates_template_id_fkey",
+          "column": "template_id",
+          "referenced_table": "document_templates",
+          "referenced_column": "id"
+        },
+        {
+          "name": "case_templates_case_id_fkey",
+          "column": "case_id",
+          "referenced_table": "practice_cases",
+          "referenced_column": "id"
+        }
+      ]
+    },
+    "decision_trees": {
+      "name": "decision_trees",
+      "columns": [
+        {
+          "udt": "uuid",
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "nullable": false
+        },
+        {
+          "udt": "uuid",
+          "name": "case_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "title",
+          "type": "text",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "description",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "jsonb",
+          "name": "tree_data",
+          "type": "jsonb",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "status",
+          "type": "text",
+          "default": "'draft'::text",
+          "nullable": true
+        },
+        {
+          "udt": "timestamptz",
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "nullable": true
+        }
+      ],
+      "policies": [
+        {
+          "name": "_role_insert_editor",
+          "check": "is_editor()",
+          "roles": [
+            "authenticated"
+          ],
+          "using": null,
+          "command": "INSERT",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "_role_select",
+          "check": null,
+          "roles": [
+            "authenticated"
+          ],
+          "using": "is_editor()",
+          "command": "SELECT",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "_role_delete_admin",
+          "check": null,
+          "roles": [
+            "authenticated"
+          ],
+          "using": "is_admin()",
+          "command": "DELETE",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "_role_update_editor",
+          "check": "is_editor()",
+          "roles": [
+            "authenticated"
+          ],
+          "using": "is_editor()",
+          "command": "UPDATE",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "decision_trees_role_select",
+          "check": null,
+          "roles": [
+            "anon",
+            "authenticated"
+          ],
+          "using": "((status = 'published'::text) OR is_editor())",
+          "command": "SELECT",
+          "permissive": "PERMISSIVE"
+        }
+      ],
+      "primary_key": [
+        "id"
+      ],
+      "rls_enabled": true,
+      "foreign_keys": [
+        {
+          "name": "decision_trees_case_id_fkey",
+          "column": "case_id",
+          "referenced_table": "practice_cases",
+          "referenced_column": "id"
+        }
+      ]
+    },
+    "legal_sections": {
+      "name": "legal_sections",
+      "columns": [
+        {
+          "udt": "uuid",
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "nullable": false
+        },
+        {
+          "udt": "uuid",
+          "name": "source_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "section_number",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "title",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "full_text",
+          "type": "text",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "official_url",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "date",
+          "name": "valid_from",
+          "type": "date",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "date",
+          "name": "valid_to",
+          "type": "date",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "version_label",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "status",
+          "type": "text",
+          "default": "'draft'::text",
+          "nullable": true
+        },
+        {
+          "udt": "timestamptz",
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "summary",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "practice_relevance",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "recommendation",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "common_mistakes",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "_uuid",
+          "name": "related_section_ids",
+          "type": "ARRAY",
+          "default": "'{}'::uuid[]",
+          "nullable": false
+        },
+        {
+          "udt": "date",
+          "name": "last_reviewed_at",
+          "type": "date",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "import_url",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "timestamptz",
+          "name": "imported_at",
+          "type": "timestamp with time zone",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "source_hash",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "uuid",
+          "name": "import_job_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "uuid",
+          "name": "import_manifest_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "uuid",
+          "name": "parent_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "legal_section_type",
+          "name": "section_type",
+          "type": "USER-DEFINED",
+          "default": "'unknown'::legal_section_type",
+          "nullable": false
+        },
+        {
+          "udt": "int4",
+          "name": "depth",
+          "type": "integer",
+          "default": "0",
+          "nullable": false
+        },
+        {
+          "udt": "int4",
+          "name": "order_index",
+          "type": "integer",
+          "default": "0",
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "path",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "display_path",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "label",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "original_text",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "normalized_text",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "int4",
+          "name": "start_offset",
+          "type": "integer",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "int4",
+          "name": "end_offset",
+          "type": "integer",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "stable_hash",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "parser_method",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "numeric",
+          "name": "parser_confidence",
+          "type": "numeric",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "jsonb",
+          "name": "metadata",
+          "type": "jsonb",
+          "default": "'{}'::jsonb",
+          "nullable": false
+        },
+        {
+          "udt": "timestamptz",
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "nullable": false
+        }
+      ],
+      "policies": [
+        {
+          "name": "_role_insert_editor",
+          "check": "is_editor()",
+          "roles": [
+            "authenticated"
+          ],
+          "using": null,
+          "command": "INSERT",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "_role_select",
+          "check": null,
+          "roles": [
+            "anon",
+            "authenticated"
+          ],
+          "using": "true",
+          "command": "SELECT",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "_role_update_editor",
+          "check": "is_editor()",
+          "roles": [
+            "authenticated"
+          ],
+          "using": "is_editor()",
+          "command": "UPDATE",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "_role_delete_admin",
+          "check": null,
+          "roles": [
+            "authenticated"
+          ],
+          "using": "is_admin()",
+          "command": "DELETE",
+          "permissive": "PERMISSIVE"
+        }
+      ],
+      "primary_key": [
+        "id"
+      ],
+      "rls_enabled": true,
+      "foreign_keys": [
+        {
+          "name": "legal_sections_parent_id_fkey",
+          "column": "parent_id",
+          "referenced_table": "legal_sections",
+          "referenced_column": "id"
+        },
+        {
+          "name": "legal_sections_source_id_fkey",
+          "column": "source_id",
+          "referenced_table": "legal_sources",
+          "referenced_column": "id"
+        },
+        {
+          "name": "legal_sections_import_manifest_id_fkey",
+          "column": "import_manifest_id",
+          "referenced_table": "legal_import_pages",
+          "referenced_column": "id"
+        },
+        {
+          "name": "legal_sections_import_job_id_fkey",
+          "column": "import_job_id",
+          "referenced_table": "import_jobs",
+          "referenced_column": "id"
+        }
+      ]
+    },
+    "practice_cases": {
+      "name": "practice_cases",
+      "columns": [
+        {
+          "udt": "uuid",
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "title",
+          "type": "text",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "category",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "subcategory",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "short_description",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "traffic_light",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "short_answer",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "jsonb",
+          "name": "action_steps",
+          "type": "jsonb",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "jsonb",
+          "name": "checklist",
+          "type": "jsonb",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "documentation_notes",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "jsonb",
+          "name": "responsible_roles",
+          "type": "jsonb",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "risk_notes",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "status",
+          "type": "text",
+          "default": "'draft'::text",
+          "nullable": true
+        },
+        {
+          "udt": "timestamptz",
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "immediate_actions",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "recommendation",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "legal_explanation",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "responsibilities",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "practice_tip",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "_text",
+          "name": "documentation",
+          "type": "ARRAY",
+          "default": "'{}'::text[]",
+          "nullable": false
+        },
+        {
+          "udt": "_text",
+          "name": "common_mistakes",
+          "type": "ARRAY",
+          "default": "'{}'::text[]",
+          "nullable": false
+        },
+        {
+          "udt": "_text",
+          "name": "related_cases",
+          "type": "ARRAY",
+          "default": "'{}'::text[]",
+          "nullable": false
+        },
+        {
+          "udt": "jsonb",
+          "name": "faq",
+          "type": "jsonb",
+          "default": "'[]'::jsonb",
+          "nullable": false
+        },
+        {
+          "udt": "jsonb",
+          "name": "decision_tree",
+          "type": "jsonb",
+          "default": "'{}'::jsonb",
+          "nullable": false
+        },
+        {
+          "udt": "timestamptz",
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "nullable": false
+        },
+        {
+          "udt": "case_workflow_status",
+          "name": "workflow_status",
+          "type": "USER-DEFINED",
+          "default": "'draft'::case_workflow_status",
+          "nullable": false
+        },
+        {
+          "udt": "case_publication_tier",
+          "name": "publication_tier",
+          "type": "USER-DEFINED",
+          "default": "'internal'::case_publication_tier",
+          "nullable": false
+        },
+        {
+          "udt": "numeric",
+          "name": "quality_score",
+          "type": "numeric",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "quality_grade",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "bool",
+          "name": "legal_update_required",
+          "type": "boolean",
+          "default": "false",
+          "nullable": false
+        },
+        {
+          "udt": "uuid",
+          "name": "created_by",
+          "type": "uuid",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "uuid",
+          "name": "updated_by",
+          "type": "uuid",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "timestamptz",
+          "name": "submitted_at",
+          "type": "timestamp with time zone",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "timestamptz",
+          "name": "approved_at",
+          "type": "timestamp with time zone",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "timestamptz",
+          "name": "published_at",
+          "type": "timestamp with time zone",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "timestamptz",
+          "name": "archived_at",
+          "type": "timestamp with time zone",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "uuid",
+          "name": "current_version_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": true
+        }
+      ],
+      "policies": [
+        {
+          "name": "_role_insert_editor",
+          "check": "is_editor()",
+          "roles": [
+            "authenticated"
+          ],
+          "using": null,
+          "command": "INSERT",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "_role_delete_admin",
+          "check": null,
+          "roles": [
+            "authenticated"
+          ],
+          "using": "is_admin()",
+          "command": "DELETE",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "_role_update_editor",
+          "check": "is_editor()",
+          "roles": [
+            "authenticated"
+          ],
+          "using": "is_editor()",
+          "command": "UPDATE",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "_role_select",
+          "check": null,
+          "roles": [
+            "anon",
+            "authenticated"
+          ],
+          "using": "true",
+          "command": "SELECT",
+          "permissive": "PERMISSIVE"
+        }
+      ],
+      "primary_key": [
+        "id"
+      ],
+      "rls_enabled": true,
+      "foreign_keys": [
+        {
+          "name": "practice_cases_current_version_fk",
+          "column": "current_version_id",
+          "referenced_table": "case_versions",
+          "referenced_column": "case_id"
+        },
+        {
+          "name": "practice_cases_current_version_fk",
+          "column": "id",
+          "referenced_table": "case_versions",
+          "referenced_column": "case_id"
+        },
+        {
+          "name": "practice_cases_current_version_fk",
+          "column": "id",
+          "referenced_table": "case_versions",
+          "referenced_column": "id"
+        },
+        {
+          "name": "practice_cases_current_version_fk",
+          "column": "current_version_id",
+          "referenced_table": "case_versions",
+          "referenced_column": "id"
+        }
+      ]
+    },
+    "case_legal_links": {
+      "name": "case_legal_links",
+      "columns": [
+        {
+          "udt": "uuid",
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "nullable": false
+        },
+        {
+          "udt": "uuid",
+          "name": "case_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "uuid",
+          "name": "legal_section_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "relevance",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "explanation",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "timestamptz",
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "nullable": true
+        }
+      ],
+      "policies": [
+        {
+          "name": "_role_insert_editor",
+          "check": "is_editor()",
+          "roles": [
+            "authenticated"
+          ],
+          "using": null,
+          "command": "INSERT",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "_role_delete_admin",
+          "check": null,
+          "roles": [
+            "authenticated"
+          ],
+          "using": "is_admin()",
+          "command": "DELETE",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "_role_update_editor",
+          "check": "is_editor()",
+          "roles": [
+            "authenticated"
+          ],
+          "using": "is_editor()",
+          "command": "UPDATE",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "_role_select",
+          "check": null,
+          "roles": [
+            "anon",
+            "authenticated"
+          ],
+          "using": "true",
+          "command": "SELECT",
+          "permissive": "PERMISSIVE"
+        }
+      ],
+      "primary_key": [
+        "id"
+      ],
+      "rls_enabled": true,
+      "foreign_keys": [
+        {
+          "name": "case_legal_links_case_id_fkey",
+          "column": "case_id",
+          "referenced_table": "practice_cases",
+          "referenced_column": "id"
+        },
+        {
+          "name": "case_legal_links_legal_section_id_fkey",
+          "column": "legal_section_id",
+          "referenced_table": "legal_sections",
+          "referenced_column": "id"
+        }
+      ]
+    },
+    "import_job_items": {
+      "name": "import_job_items",
+      "columns": [
+        {
+          "udt": "uuid",
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "nullable": false
+        },
+        {
+          "udt": "uuid",
+          "name": "job_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "section_number",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "title",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "uuid",
+          "name": "section_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "action",
+          "type": "text",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "error",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "source_hash",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "timestamptz",
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "nullable": false
+        }
+      ],
+      "policies": [
+        {
+          "name": "_role_update_editor",
+          "check": "is_editor()",
+          "roles": [
+            "authenticated"
+          ],
+          "using": "is_editor()",
+          "command": "UPDATE",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "_role_delete_admin",
+          "check": null,
+          "roles": [
+            "authenticated"
+          ],
+          "using": "is_admin()",
+          "command": "DELETE",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "_role_select",
+          "check": null,
+          "roles": [
+            "authenticated"
+          ],
+          "using": "is_editor()",
+          "command": "SELECT",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "_role_insert_editor",
+          "check": "is_editor()",
+          "roles": [
+            "authenticated"
+          ],
+          "using": null,
+          "command": "INSERT",
+          "permissive": "PERMISSIVE"
+        }
+      ],
+      "primary_key": [
+        "id"
+      ],
+      "rls_enabled": true,
+      "foreign_keys": [
+        {
+          "name": "import_job_items_job_id_fkey",
+          "column": "job_id",
+          "referenced_table": "import_jobs",
+          "referenced_column": "id"
+        },
+        {
+          "name": "import_job_items_section_id_fkey",
+          "column": "section_id",
+          "referenced_table": "legal_sections",
+          "referenced_column": "id"
+        }
+      ]
+    },
+    "case_related_cases": {
+      "name": "case_related_cases",
+      "columns": [
+        {
+          "udt": "uuid",
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "nullable": false
+        },
+        {
+          "udt": "uuid",
+          "name": "case_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "uuid",
+          "name": "related_case_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "relation_type",
+          "type": "text",
+          "default": "'verwandt'::text",
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "explanation",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "timestamptz",
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "nullable": true
+        }
+      ],
+      "policies": [
+        {
+          "name": "_role_delete_admin",
+          "check": null,
+          "roles": [
+            "authenticated"
+          ],
+          "using": "is_admin()",
+          "command": "DELETE",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "_role_select",
+          "check": null,
+          "roles": [
+            "anon",
+            "authenticated"
+          ],
+          "using": "true",
+          "command": "SELECT",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "_role_insert_editor",
+          "check": "is_editor()",
+          "roles": [
+            "authenticated"
+          ],
+          "using": null,
+          "command": "INSERT",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "_role_update_editor",
+          "check": "is_editor()",
+          "roles": [
+            "authenticated"
+          ],
+          "using": "is_editor()",
+          "command": "UPDATE",
+          "permissive": "PERMISSIVE"
+        }
+      ],
+      "primary_key": [
+        "id"
+      ],
+      "rls_enabled": true,
+      "foreign_keys": [
+        {
+          "name": "case_related_cases_related_case_id_fkey",
+          "column": "related_case_id",
+          "referenced_table": "practice_cases",
+          "referenced_column": "id"
+        },
+        {
+          "name": "case_related_cases_case_id_fkey",
+          "column": "case_id",
+          "referenced_table": "practice_cases",
+          "referenced_column": "id"
+        }
+      ]
+    },
+    "document_templates": {
+      "name": "document_templates",
+      "columns": [
+        {
+          "udt": "uuid",
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "title",
+          "type": "text",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "template_type",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "body",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "jsonb",
+          "name": "fields",
+          "type": "jsonb",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "status",
+          "type": "text",
+          "default": "'draft'::text",
+          "nullable": true
+        },
+        {
+          "udt": "timestamptz",
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "nullable": true
+        }
+      ],
+      "policies": [
+        {
+          "name": "_role_select",
+          "check": null,
+          "roles": [
+            "anon",
+            "authenticated"
+          ],
+          "using": "true",
+          "command": "SELECT",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "_role_insert_editor",
+          "check": "is_editor()",
+          "roles": [
+            "authenticated"
+          ],
+          "using": null,
+          "command": "INSERT",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "_role_update_editor",
+          "check": "is_editor()",
+          "roles": [
+            "authenticated"
+          ],
+          "using": "is_editor()",
+          "command": "UPDATE",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "_role_delete_admin",
+          "check": null,
+          "roles": [
+            "authenticated"
+          ],
+          "using": "is_admin()",
+          "command": "DELETE",
+          "permissive": "PERMISSIVE"
+        }
+      ],
+      "primary_key": [
+        "id"
+      ],
+      "rls_enabled": true,
+      "foreign_keys": []
+    },
+    "education_programs": {
+      "name": "education_programs",
+      "columns": [
+        {
+          "udt": "uuid",
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "nullable": false
+        },
+        {
+          "udt": "uuid",
+          "name": "school_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "name",
+          "type": "text",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "description",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "status",
+          "type": "text",
+          "default": "'active'::text",
+          "nullable": true
+        },
+        {
+          "udt": "timestamptz",
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "nullable": true
+        }
+      ],
+      "policies": [
+        {
+          "name": "Public read education programs",
+          "check": null,
+          "roles": [
+            "public"
+          ],
+          "using": "(status = 'active'::text)",
+          "command": "SELECT",
+          "permissive": "PERMISSIVE"
+        }
+      ],
+      "primary_key": [
+        "id"
+      ],
+      "rls_enabled": true,
+      "foreign_keys": [
+        {
+          "name": "education_programs_school_id_fkey",
+          "column": "school_id",
+          "referenced_table": "schools",
+          "referenced_column": "id"
+        }
+      ]
+    },
+    "legal_import_pages": {
+      "name": "legal_import_pages",
+      "columns": [
+        {
+          "udt": "uuid",
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "nullable": false
+        },
+        {
+          "udt": "uuid",
+          "name": "source_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "uuid",
+          "name": "import_job_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "url",
+          "type": "text",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "normalized_url",
+          "type": "text",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "title",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "bass_number",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "int4",
+          "name": "crawl_depth",
+          "type": "integer",
+          "default": "0",
+          "nullable": false
+        },
+        {
+          "udt": "legal_import_page_status",
+          "name": "status",
+          "type": "USER-DEFINED",
+          "default": "'discovered'::legal_import_page_status",
+          "nullable": false
+        },
+        {
+          "udt": "int4",
+          "name": "section_count",
+          "type": "integer",
+          "default": "0",
+          "nullable": false
+        },
+        {
+          "udt": "int4",
+          "name": "imported_section_count",
+          "type": "integer",
+          "default": "0",
+          "nullable": false
+        },
+        {
+          "udt": "int4",
+          "name": "knowledge_card_count",
+          "type": "integer",
+          "default": "0",
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "source_hash",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "timestamptz",
+          "name": "last_seen_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "nullable": false
+        },
+        {
+          "udt": "timestamptz",
+          "name": "last_imported_at",
+          "type": "timestamp with time zone",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "error_message",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "timestamptz",
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "nullable": false
+        },
+        {
+          "udt": "timestamptz",
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "nullable": false
+        }
+      ],
+      "policies": [
+        {
+          "name": "_role_delete_admin",
+          "check": null,
+          "roles": [
+            "authenticated"
+          ],
+          "using": "is_admin()",
+          "command": "DELETE",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "_role_update_editor",
+          "check": "is_editor()",
+          "roles": [
+            "authenticated"
+          ],
+          "using": "is_editor()",
+          "command": "UPDATE",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "_role_select",
+          "check": null,
+          "roles": [
+            "authenticated"
+          ],
+          "using": "is_editor()",
+          "command": "SELECT",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "_role_insert_editor",
+          "check": "is_editor()",
+          "roles": [
+            "authenticated"
+          ],
+          "using": null,
+          "command": "INSERT",
+          "permissive": "PERMISSIVE"
+        }
+      ],
+      "primary_key": [
+        "id"
+      ],
+      "rls_enabled": true,
+      "foreign_keys": [
+        {
+          "name": "legal_import_pages_import_job_id_fkey",
+          "column": "import_job_id",
+          "referenced_table": "import_jobs",
+          "referenced_column": "id"
+        },
+        {
+          "name": "legal_import_pages_source_id_fkey",
+          "column": "source_id",
+          "referenced_table": "legal_sources",
+          "referenced_column": "id"
+        }
+      ]
+    },
+    "practice_categories": {
+      "name": "practice_categories",
+      "columns": [
+        {
+          "udt": "uuid",
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "name",
+          "type": "text",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "description",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "icon",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "int4",
+          "name": "sort_order",
+          "type": "integer",
+          "default": "0",
+          "nullable": true
+        },
+        {
+          "udt": "timestamptz",
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "nullable": true
+        }
+      ],
+      "policies": [
+        {
+          "name": "_role_select",
+          "check": null,
+          "roles": [
+            "anon",
+            "authenticated"
+          ],
+          "using": "true",
+          "command": "SELECT",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "_role_insert_editor",
+          "check": "is_editor()",
+          "roles": [
+            "authenticated"
+          ],
+          "using": null,
+          "command": "INSERT",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "Public read practice categories",
+          "check": null,
+          "roles": [
+            "public"
+          ],
+          "using": "true",
+          "command": "SELECT",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "_role_update_editor",
+          "check": "is_editor()",
+          "roles": [
+            "authenticated"
+          ],
+          "using": "is_editor()",
+          "command": "UPDATE",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "_role_delete_admin",
+          "check": null,
+          "roles": [
+            "authenticated"
+          ],
+          "using": "is_admin()",
+          "command": "DELETE",
+          "permissive": "PERMISSIVE"
+        }
+      ],
+      "primary_key": [
+        "id"
+      ],
+      "rls_enabled": true,
+      "foreign_keys": []
+    },
+    "legal_embedding_jobs": {
+      "name": "legal_embedding_jobs",
+      "columns": [
+        {
+          "udt": "uuid",
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "nullable": false
+        },
+        {
+          "udt": "uuid",
+          "name": "source_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "provider_id",
+          "type": "text",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "model_id",
+          "type": "text",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "model_version",
+          "type": "text",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "int4",
+          "name": "input_format_version",
+          "type": "integer",
+          "default": "1",
+          "nullable": false
+        },
+        {
+          "udt": "legal_embedding_job_status",
+          "name": "status",
+          "type": "USER-DEFINED",
+          "default": "'queued'::legal_embedding_job_status",
+          "nullable": false
+        },
+        {
+          "udt": "uuid",
+          "name": "requested_by",
+          "type": "uuid",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "legal_embedding_job_trigger",
+          "name": "trigger_type",
+          "type": "USER-DEFINED",
+          "default": "'manual'::legal_embedding_job_trigger",
+          "nullable": false
+        },
+        {
+          "udt": "int4",
+          "name": "total_chunks",
+          "type": "integer",
+          "default": "0",
+          "nullable": false
+        },
+        {
+          "udt": "int4",
+          "name": "pending_chunks",
+          "type": "integer",
+          "default": "0",
+          "nullable": false
+        },
+        {
+          "udt": "int4",
+          "name": "processed_chunks",
+          "type": "integer",
+          "default": "0",
+          "nullable": false
+        },
+        {
+          "udt": "int4",
+          "name": "successful_chunks",
+          "type": "integer",
+          "default": "0",
+          "nullable": false
+        },
+        {
+          "udt": "int4",
+          "name": "failed_chunks",
+          "type": "integer",
+          "default": "0",
+          "nullable": false
+        },
+        {
+          "udt": "int4",
+          "name": "skipped_chunks",
+          "type": "integer",
+          "default": "0",
+          "nullable": false
+        },
+        {
+          "udt": "int4",
+          "name": "estimated_tokens",
+          "type": "integer",
+          "default": "0",
+          "nullable": false
+        },
+        {
+          "udt": "int4",
+          "name": "actual_tokens",
+          "type": "integer",
+          "default": "0",
+          "nullable": false
+        },
+        {
+          "udt": "numeric",
+          "name": "estimated_cost",
+          "type": "numeric",
+          "default": "0",
+          "nullable": false
+        },
+        {
+          "udt": "numeric",
+          "name": "actual_cost",
+          "type": "numeric",
+          "default": "0",
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "cost_source",
+          "type": "text",
+          "default": "'estimated'::text",
+          "nullable": false
+        },
+        {
+          "udt": "timestamptz",
+          "name": "started_at",
+          "type": "timestamp with time zone",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "timestamptz",
+          "name": "completed_at",
+          "type": "timestamp with time zone",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "timestamptz",
+          "name": "cancelled_at",
+          "type": "timestamp with time zone",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "jsonb",
+          "name": "error_summary",
+          "type": "jsonb",
+          "default": "'{}'::jsonb",
+          "nullable": false
+        },
+        {
+          "udt": "jsonb",
+          "name": "metadata",
+          "type": "jsonb",
+          "default": "'{}'::jsonb",
+          "nullable": false
+        },
+        {
+          "udt": "timestamptz",
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "nullable": false
+        },
+        {
+          "udt": "timestamptz",
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "nullable": false
+        }
+      ],
+      "policies": [
+        {
+          "name": "legal_embedding_jobs pilot all",
+          "check": "true",
+          "roles": [
+            "anon",
+            "authenticated"
+          ],
+          "using": "true",
+          "command": "ALL",
+          "permissive": "PERMISSIVE"
+        }
+      ],
+      "primary_key": [
+        "id"
+      ],
+      "rls_enabled": true,
+      "foreign_keys": [
+        {
+          "name": "legal_embedding_jobs_source_id_fkey",
+          "column": "source_id",
+          "referenced_table": "legal_sources",
+          "referenced_column": "id"
+        }
+      ]
+    },
+    "legal_ingestion_jobs": {
+      "name": "legal_ingestion_jobs",
+      "columns": [
+        {
+          "udt": "uuid",
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "nullable": false
+        },
+        {
+          "udt": "uuid",
+          "name": "source_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "legal_ingestion_input",
+          "name": "input_type",
+          "type": "USER-DEFINED",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "input_location",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "legal_ingestion_status",
+          "name": "status",
+          "type": "USER-DEFINED",
+          "default": "'pending'::legal_ingestion_status",
+          "nullable": false
+        },
+        {
+          "udt": "timestamptz",
+          "name": "started_at",
+          "type": "timestamp with time zone",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "timestamptz",
+          "name": "completed_at",
+          "type": "timestamp with time zone",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "timestamptz",
+          "name": "cancelled_at",
+          "type": "timestamp with time zone",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "uuid",
+          "name": "created_by",
+          "type": "uuid",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "error_code",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "error_message",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "jsonb",
+          "name": "warnings",
+          "type": "jsonb",
+          "default": "'[]'::jsonb",
+          "nullable": false
+        },
+        {
+          "udt": "jsonb",
+          "name": "extracted_metadata",
+          "type": "jsonb",
+          "default": "'{}'::jsonb",
+          "nullable": false
+        },
+        {
+          "udt": "jsonb",
+          "name": "content_stats",
+          "type": "jsonb",
+          "default": "'{}'::jsonb",
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "checksum",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "raw_input",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "normalized_output",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "timestamptz",
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "nullable": false
+        },
+        {
+          "udt": "timestamptz",
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "nullable": false
+        }
+      ],
+      "policies": [
+        {
+          "name": "legal_ingestion_jobs pilot all",
+          "check": "true",
+          "roles": [
+            "anon",
+            "authenticated"
+          ],
+          "using": "true",
+          "command": "ALL",
+          "permissive": "PERMISSIVE"
+        }
+      ],
+      "primary_key": [
+        "id"
+      ],
+      "rls_enabled": true,
+      "foreign_keys": [
+        {
+          "name": "legal_ingestion_jobs_source_id_fkey",
+          "column": "source_id",
+          "referenced_table": "legal_sources",
+          "referenced_column": "id"
+        }
+      ]
+    },
+    "legal_chunk_embeddings": {
+      "name": "legal_chunk_embeddings",
+      "columns": [
+        {
+          "udt": "uuid",
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "nullable": false
+        },
+        {
+          "udt": "uuid",
+          "name": "source_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "uuid",
+          "name": "chunk_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "chunk_stable_hash",
+          "type": "text",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "chunk_path",
+          "type": "text",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "provider_id",
+          "type": "text",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "model_id",
+          "type": "text",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "model_version",
+          "type": "text",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "int4",
+          "name": "dimensions",
+          "type": "integer",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "vector",
+          "name": "embedding",
+          "type": "USER-DEFINED",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "legal_embedding_status",
+          "name": "embedding_status",
+          "type": "USER-DEFINED",
+          "default": "'embedded'::legal_embedding_status",
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "content_hash",
+          "type": "text",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "int4",
+          "name": "input_format_version",
+          "type": "integer",
+          "default": "1",
+          "nullable": false
+        },
+        {
+          "udt": "int4",
+          "name": "token_count",
+          "type": "integer",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "int4",
+          "name": "input_character_count",
+          "type": "integer",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "jsonb",
+          "name": "usage_metadata",
+          "type": "jsonb",
+          "default": "'{}'::jsonb",
+          "nullable": false
+        },
+        {
+          "udt": "jsonb",
+          "name": "cost_metadata",
+          "type": "jsonb",
+          "default": "'{}'::jsonb",
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "error_code",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "error_message",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "int4",
+          "name": "attempt_count",
+          "type": "integer",
+          "default": "0",
+          "nullable": false
+        },
+        {
+          "udt": "timestamptz",
+          "name": "embedded_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "nullable": false
+        },
+        {
+          "udt": "timestamptz",
+          "name": "invalidated_at",
+          "type": "timestamp with time zone",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "timestamptz",
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "nullable": false
+        },
+        {
+          "udt": "timestamptz",
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "nullable": false
+        }
+      ],
+      "policies": [
+        {
+          "name": "legal_chunk_embeddings pilot all",
+          "check": "true",
+          "roles": [
+            "anon",
+            "authenticated"
+          ],
+          "using": "true",
+          "command": "ALL",
+          "permissive": "PERMISSIVE"
+        }
+      ],
+      "primary_key": [
+        "id"
+      ],
+      "rls_enabled": true,
+      "foreign_keys": [
+        {
+          "name": "legal_chunk_embeddings_chunk_id_fkey",
+          "column": "chunk_id",
+          "referenced_table": "legal_chunks",
+          "referenced_column": "id"
+        },
+        {
+          "name": "legal_chunk_embeddings_source_id_fkey",
+          "column": "source_id",
+          "referenced_table": "legal_sources",
+          "referenced_column": "id"
+        }
+      ]
+    },
+    "practice_subcategories": {
+      "name": "practice_subcategories",
+      "columns": [
+        {
+          "udt": "uuid",
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "nullable": false
+        },
+        {
+          "udt": "uuid",
+          "name": "category_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "name",
+          "type": "text",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "description",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "int4",
+          "name": "sort_order",
+          "type": "integer",
+          "default": "0",
+          "nullable": true
+        },
+        {
+          "udt": "timestamptz",
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "nullable": true
+        }
+      ],
+      "policies": [
+        {
+          "name": "_role_insert_editor",
+          "check": "is_editor()",
+          "roles": [
+            "authenticated"
+          ],
+          "using": null,
+          "command": "INSERT",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "_role_select",
+          "check": null,
+          "roles": [
+            "anon",
+            "authenticated"
+          ],
+          "using": "true",
+          "command": "SELECT",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "_role_delete_admin",
+          "check": null,
+          "roles": [
+            "authenticated"
+          ],
+          "using": "is_admin()",
+          "command": "DELETE",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "_role_update_editor",
+          "check": "is_editor()",
+          "roles": [
+            "authenticated"
+          ],
+          "using": "is_editor()",
+          "command": "UPDATE",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "Public read practice subcategories",
+          "check": null,
+          "roles": [
+            "public"
+          ],
+          "using": "true",
+          "command": "SELECT",
+          "permissive": "PERMISSIVE"
+        }
+      ],
+      "primary_key": [
+        "id"
+      ],
+      "rls_enabled": true,
+      "foreign_keys": [
+        {
+          "name": "practice_subcategories_category_id_fkey",
+          "column": "category_id",
+          "referenced_table": "practice_categories",
+          "referenced_column": "id"
+        }
+      ]
+    },
+    "case_legal_review_flags": {
+      "name": "case_legal_review_flags",
+      "columns": [
+        {
+          "udt": "uuid",
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "nullable": false
+        },
+        {
+          "udt": "uuid",
+          "name": "case_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "uuid",
+          "name": "legal_section_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "reason",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "timestamptz",
+          "name": "raised_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "nullable": false
+        },
+        {
+          "udt": "timestamptz",
+          "name": "resolved_at",
+          "type": "timestamp with time zone",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "uuid",
+          "name": "resolved_by",
+          "type": "uuid",
+          "default": null,
+          "nullable": true
+        }
+      ],
+      "policies": [],
+      "primary_key": [
+        "id"
+      ],
+      "rls_enabled": true,
+      "foreign_keys": [
+        {
+          "name": "case_legal_review_flags_legal_section_id_fkey",
+          "column": "legal_section_id",
+          "referenced_table": "legal_sections",
+          "referenced_column": "id"
+        },
+        {
+          "name": "case_legal_review_flags_case_id_fkey",
+          "column": "case_id",
+          "referenced_table": "practice_cases",
+          "referenced_column": "id"
+        }
+      ]
+    },
+    "legal_section_references": {
+      "name": "legal_section_references",
+      "columns": [
+        {
+          "udt": "uuid",
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "nullable": false
+        },
+        {
+          "udt": "uuid",
+          "name": "section_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "raw_text",
+          "type": "text",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "ref_type",
+          "type": "text",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "jsonb",
+          "name": "ref_value",
+          "type": "jsonb",
+          "default": "'{}'::jsonb",
+          "nullable": false
+        },
+        {
+          "udt": "uuid",
+          "name": "resolved_section_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "int4",
+          "name": "start_offset",
+          "type": "integer",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "int4",
+          "name": "end_offset",
+          "type": "integer",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "numeric",
+          "name": "confidence",
+          "type": "numeric",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "timestamptz",
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "nullable": false
+        }
+      ],
+      "policies": [
+        {
+          "name": "_role_delete_editor",
+          "check": null,
+          "roles": [
+            "authenticated"
+          ],
+          "using": "is_editor()",
+          "command": "DELETE",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "_role_insert_editor",
+          "check": "is_editor()",
+          "roles": [
+            "authenticated"
+          ],
+          "using": null,
+          "command": "INSERT",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "_role_update_editor",
+          "check": "is_editor()",
+          "roles": [
+            "authenticated"
+          ],
+          "using": "is_editor()",
+          "command": "UPDATE",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "_role_select",
+          "check": null,
+          "roles": [
+            "anon",
+            "authenticated"
+          ],
+          "using": "true",
+          "command": "SELECT",
+          "permissive": "PERMISSIVE"
+        }
+      ],
+      "primary_key": [
+        "id"
+      ],
+      "rls_enabled": true,
+      "foreign_keys": [
+        {
+          "name": "legal_section_references_resolved_section_id_fkey",
+          "column": "resolved_section_id",
+          "referenced_table": "legal_sections",
+          "referenced_column": "id"
+        },
+        {
+          "name": "legal_section_references_section_id_fkey",
+          "column": "section_id",
+          "referenced_table": "legal_sections",
+          "referenced_column": "id"
+        }
+      ]
+    },
+    "search_testset_overrides": {
+      "name": "search_testset_overrides",
+      "columns": [
+        {
+          "udt": "text",
+          "name": "test_id",
+          "type": "text",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "_uuid",
+          "name": "expected_case_ids",
+          "type": "ARRAY",
+          "default": "'{}'::uuid[]",
+          "nullable": false
+        },
+        {
+          "udt": "_uuid",
+          "name": "acceptable_case_ids",
+          "type": "ARRAY",
+          "default": "'{}'::uuid[]",
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "audit",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "note",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "timestamptz",
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "nullable": false
+        },
+        {
+          "udt": "uuid",
+          "name": "updated_by",
+          "type": "uuid",
+          "default": null,
+          "nullable": true
+        }
+      ],
+      "policies": [
+        {
+          "name": "_role_insert_editor",
+          "check": "is_editor()",
+          "roles": [
+            "authenticated"
+          ],
+          "using": null,
+          "command": "INSERT",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "_role_update_editor",
+          "check": "is_editor()",
+          "roles": [
+            "authenticated"
+          ],
+          "using": "is_editor()",
+          "command": "UPDATE",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "_role_delete_admin",
+          "check": null,
+          "roles": [
+            "authenticated"
+          ],
+          "using": "is_admin()",
+          "command": "DELETE",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "_role_select",
+          "check": null,
+          "roles": [
+            "anon",
+            "authenticated"
+          ],
+          "using": "true",
+          "command": "SELECT",
+          "permissive": "PERMISSIVE"
+        }
+      ],
+      "primary_key": [
+        "test_id"
+      ],
+      "rls_enabled": true,
+      "foreign_keys": []
+    },
+    "legal_embedding_job_items": {
+      "name": "legal_embedding_job_items",
+      "columns": [
+        {
+          "udt": "uuid",
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "nullable": false
+        },
+        {
+          "udt": "uuid",
+          "name": "job_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "uuid",
+          "name": "chunk_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "chunk_stable_hash",
+          "type": "text",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "legal_embedding_item_status",
+          "name": "status",
+          "type": "USER-DEFINED",
+          "default": "'pending'::legal_embedding_item_status",
+          "nullable": false
+        },
+        {
+          "udt": "int4",
+          "name": "attempt_count",
+          "type": "integer",
+          "default": "0",
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "provider_request_id",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "int4",
+          "name": "token_count",
+          "type": "integer",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "int4",
+          "name": "latency_ms",
+          "type": "integer",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "worker_id",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "timestamptz",
+          "name": "processing_started_at",
+          "type": "timestamp with time zone",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "timestamptz",
+          "name": "processing_lease_until",
+          "type": "timestamp with time zone",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "error_code",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "error_message",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "timestamptz",
+          "name": "started_at",
+          "type": "timestamp with time zone",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "timestamptz",
+          "name": "completed_at",
+          "type": "timestamp with time zone",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "timestamptz",
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "nullable": false
+        },
+        {
+          "udt": "timestamptz",
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "nullable": false
+        }
+      ],
+      "policies": [
+        {
+          "name": "legal_embedding_job_items pilot all",
+          "check": "true",
+          "roles": [
+            "anon",
+            "authenticated"
+          ],
+          "using": "true",
+          "command": "ALL",
+          "permissive": "PERMISSIVE"
+        }
+      ],
+      "primary_key": [
+        "id"
+      ],
+      "rls_enabled": true,
+      "foreign_keys": [
+        {
+          "name": "legal_embedding_job_items_job_id_fkey",
+          "column": "job_id",
+          "referenced_table": "legal_embedding_jobs",
+          "referenced_column": "id"
+        },
+        {
+          "name": "legal_embedding_job_items_chunk_id_fkey",
+          "column": "chunk_id",
+          "referenced_table": "legal_chunks",
+          "referenced_column": "id"
+        }
+      ]
+    },
+    "legal_source_review_events": {
+      "name": "legal_source_review_events",
+      "columns": [
+        {
+          "udt": "uuid",
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "nullable": false
+        },
+        {
+          "udt": "uuid",
+          "name": "source_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "legal_source_lifecycle",
+          "name": "from_status",
+          "type": "USER-DEFINED",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "legal_source_lifecycle",
+          "name": "to_status",
+          "type": "USER-DEFINED",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "uuid",
+          "name": "actor_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "note",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "timestamptz",
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "nullable": false
+        }
+      ],
+      "policies": [
+        {
+          "name": "legal_source_review_events pilot all",
+          "check": "true",
+          "roles": [
+            "anon",
+            "authenticated"
+          ],
+          "using": "true",
+          "command": "ALL",
+          "permissive": "PERMISSIVE"
+        }
+      ],
+      "primary_key": [
+        "id"
+      ],
+      "rls_enabled": true,
+      "foreign_keys": [
+        {
+          "name": "legal_source_review_events_source_id_fkey",
+          "column": "source_id",
+          "referenced_table": "legal_sources",
+          "referenced_column": "id"
+        }
+      ]
+    },
+    "practice_case_search_embeddings": {
+      "name": "practice_case_search_embeddings",
+      "columns": [
+        {
+          "udt": "uuid",
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "nullable": false
+        },
+        {
+          "udt": "uuid",
+          "name": "case_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "vector",
+          "name": "embedding",
+          "type": "USER-DEFINED",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "content_hash",
+          "type": "text",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "embedding_model",
+          "type": "text",
+          "default": "'openai/text-embedding-3-small'::text",
+          "nullable": false
+        },
+        {
+          "udt": "timestamptz",
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "nullable": false
+        },
+        {
+          "udt": "timestamptz",
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "nullable": false
+        }
+      ],
+      "policies": [
+        {
+          "name": "_role_insert_editor",
+          "check": "is_editor()",
+          "roles": [
+            "authenticated"
+          ],
+          "using": null,
+          "command": "INSERT",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "_role_delete_admin",
+          "check": null,
+          "roles": [
+            "authenticated"
+          ],
+          "using": "is_admin()",
+          "command": "DELETE",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "_role_update_editor",
+          "check": "is_editor()",
+          "roles": [
+            "authenticated"
+          ],
+          "using": "is_editor()",
+          "command": "UPDATE",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "_role_select",
+          "check": null,
+          "roles": [
+            "anon",
+            "authenticated"
+          ],
+          "using": "true",
+          "command": "SELECT",
+          "permissive": "PERMISSIVE"
+        }
+      ],
+      "primary_key": [
+        "id"
+      ],
+      "rls_enabled": true,
+      "foreign_keys": [
+        {
+          "name": "practice_case_search_embeddings_case_id_fkey",
+          "column": "case_id",
+          "referenced_table": "practice_cases",
+          "referenced_column": "id"
+        }
+      ]
+    }
+  },
+  "generated_at": "2026-07-24T05:38:03.499654+00:00"
+}

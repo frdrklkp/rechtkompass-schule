@@ -1,0 +1,18 @@
+-- ============================================================
+-- OBSOLETE / NICHT MEHR AUSFÜHREN
+-- ------------------------------------------------------------
+-- Diese Datei ist absichtlich leer. Frühere Versionen enthielten
+-- riskante Rename-Blöcke (u. a. legal_section_id → section_id),
+-- die nicht mit dem realen Live-Schema übereinstimmen.
+--
+-- Verbindliche Quelle für Schema-Änderungen:
+--   db/2026-07-06_schema_introspection.sql   (Snapshot-Funktion)
+--   scripts/schema-check.mjs                 (Validator)
+--   db/schema.lock.json                      (Lockfile)
+--
+-- Falls Sie diese Datei früher bereits ausgeführt haben und
+-- dabei Spalten falsch umbenannt wurden, bitte manuell im
+-- Supabase-Editor prüfen. Neue Migrationen werden nach Bedarf
+-- separat erzeugt.
+-- ============================================================
+SELECT 1;

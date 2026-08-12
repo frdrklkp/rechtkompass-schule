@@ -171,7 +171,7 @@ export class SupabaseWorkflowTemplateRepository implements WorkflowTemplateRepos
       this.db.from("workflow_phases").select("*").eq("template_id", templateId),
       this.db.from("workflow_steps").select("*").eq("template_id", templateId),
       this.db.from("workflow_step_dependencies")
-        .select("step_id, depends_on_step_id, workflow_steps!inner(template_id)")
+        .select("step_id, depends_on_step_id, workflow_steps!workflow_step_dependencies_step_id_fkey!inner(template_id)")
         .eq("workflow_steps.template_id", templateId),
       this.db.from("workflow_step_checklists")
         .select("id, step_id, sort_order, title, is_required, workflow_steps!inner(template_id)")

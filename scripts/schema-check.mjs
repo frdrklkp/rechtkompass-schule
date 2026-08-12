@@ -98,7 +98,9 @@ function scanFile(path) {
     const startIdx = m.index;
     // Chain endet spätestens beim nächsten .from( – sonst bluten Spalten aus Nachbarketten hinein.
     const rest = text.slice(startIdx + m[0].length);
-    const nextFromRel = rest.search(/\.from\(\s*["'`]/);
+    // Auch bei .from(variable) (z.B. in einer Schleife über Tabellennamen) die Kette
+    // beenden, sonst bluten spätere dynamische Aufrufe in diese Analyse hinein.
+    const nextFromRel = rest.search(/\.from\(/);
     const chainEnd = nextFromRel === -1 ? startIdx + 1200 : startIdx + m[0].length + nextFromRel;
     const chain = text.slice(startIdx, Math.min(chainEnd, startIdx + 2000));
     const line = text.slice(0, startIdx).split("\n").length;
@@ -127,8 +129,9 @@ function scanFile(path) {
       for (const p of parts) {
         const s = p.trim();
         if (!s || s === "*" || s.startsWith("count(")) continue;
-        // rel(x,y) => Beziehungsname (Tabelle/FK) – separat prüfen
-        const rel = s.match(/^([a-z_][a-z0-9_]*)\s*\(/);
+        // rel(x,y) => Beziehungsname (Tabelle/FK) – separat prüfen.
+        // Erlaubt optionale PostgREST-Hints wie rel!inner(...) oder rel!fk_name!inner(...).
+        const rel = s.match(/^([a-z_][a-z0-9_]*)\s*(?:![a-z_][a-z0-9_]*)*\s*\(/);
         if (rel) { selectCols.push({ kind: "relation", name: rel[1] }); continue; }
         // alias:col oder alias:col.type
         const col = s.split(/[:!]/)[0].trim();

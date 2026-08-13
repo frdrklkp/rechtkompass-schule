@@ -1,6 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { checkRateLimit, getClientIp } from "@/lib/rateLimit";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const MAX_SUBJECT_LEN = 200;
+const MAX_MESSAGE_LEN = 2000;
 
 function escapeHtml(s: string): string {
   return s
@@ -30,6 +33,16 @@ export const Route = createFileRoute("/api/send-case-document-email")({
   server: {
     handlers: {
       POST: async ({ request }) => {
+        // Kein Login für Lehrkräfte vorhanden (Route wird von echten,
+        // unauthentifizierten Nutzern auf öffentlichen Fallseiten genutzt) -
+        // Auth-Zwang würde die Funktion für sie brechen. Stattdessen: harte
+        // Rate-Begrenzung gegen Missbrauch des eigenen Resend-Kontingents/
+        // der Reputation als Spam-Relais (Fund: Code-Audit 12.08.2026).
+        const ip = getClientIp(request);
+        if (!checkRateLimit(`send-case-document-email:${ip}`, { max: 5, windowMs: 60 * 60 * 1000 })) {
+          return jsonError(429, "Zu viele E-Mail-Versendungen. Bitte später erneut versuchen.");
+        }
+
         let body: {
           case_document_id?: string;
           recipient_email?: string;
@@ -46,6 +59,12 @@ export const Route = createFileRoute("/api/send-case-document-email")({
         const to = body.recipient_email?.trim();
         if (!docId) return jsonError(400, "case_document_id fehlt");
         if (!to || !EMAIL_RE.test(to)) return jsonError(400, "Ungültige Empfängeradresse");
+        if (body.subject && body.subject.length > MAX_SUBJECT_LEN) {
+          return jsonError(400, `Betreff zu lang (max. ${MAX_SUBJECT_LEN} Zeichen)`);
+        }
+        if (body.message && body.message.length > MAX_MESSAGE_LEN) {
+          return jsonError(400, `Nachricht zu lang (max. ${MAX_MESSAGE_LEN} Zeichen)`);
+        }
 
         if (!process.env.RESEND_API_KEY) {
           return jsonError(

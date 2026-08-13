@@ -21,6 +21,12 @@ const CAPS: ReadonlySet<AIProviderCapability> = new Set([
 
 const ANTHROPIC_URL = "https://api.anthropic.com/v1/messages";
 const ANTHROPIC_VERSION = "2023-06-01";
+// Standard-Timeout, falls der Aufrufer kein eigenes AbortSignal übergibt.
+// Bisher hatte praktisch kein KI-Aufruf im Projekt einen Timeout (Fund:
+// Code-Audit 12.08.2026) - eine hängende Anfrage blockierte unbegrenzt.
+// Großzügig bemessen (komplexe Entwürfe mit viel Kontext brauchen Zeit),
+// aber verhindert echte Hänger.
+const DEFAULT_TIMEOUT_MS = 120_000;
 
 // Registry-IDs ("anthropic/claude-sonnet-5") -> tatsächliche API-Modell-IDs.
 // Getrennt gehalten, damit sich unser interner Bezeichner nie zufällig mit
@@ -96,6 +102,14 @@ export class AnthropicProvider implements AIProvider {
   }
 
   private async request(body: Record<string, unknown>, signal?: AbortSignal): Promise<Response> {
+    // Ohne eigenes Signal des Aufrufers: eigenen Timeout aufsetzen, statt
+    // unbegrenzt zu hängen. Wurde bereits ein Signal übergeben, respektieren
+    // wir dessen Steuerung und legen keinen zweiten Timeout darüber.
+    const ownController = signal ? null : new AbortController();
+    const effectiveSignal = signal ?? ownController!.signal;
+    const timeoutId = ownController
+      ? setTimeout(() => ownController.abort(), DEFAULT_TIMEOUT_MS)
+      : null;
     try {
       return await fetch(this.baseUrl, {
         method: "POST",
@@ -105,7 +119,7 @@ export class AnthropicProvider implements AIProvider {
           "anthropic-version": ANTHROPIC_VERSION,
         },
         body: JSON.stringify(body),
-        signal,
+        signal: effectiveSignal,
       });
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
@@ -114,6 +128,8 @@ export class AnthropicProvider implements AIProvider {
         userMessage: "Netzwerkfehler bei Anthropic.",
         detail: msg,
       });
+    } finally {
+      if (timeoutId) clearTimeout(timeoutId);
     }
   }
 

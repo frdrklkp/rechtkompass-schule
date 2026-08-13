@@ -24,6 +24,9 @@ const CAPS: ReadonlySet<AIProviderCapability> = new Set([
 ]);
 
 const GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
+// Siehe AnthropicProvider.ts DEFAULT_TIMEOUT_MS - dieselbe Begründung
+// (Fund: Code-Audit 12.08.2026, keine Timeouts auf KI-Aufrufen).
+const DEFAULT_TIMEOUT_MS = 120_000;
 
 export interface GatewayProviderOptions {
   apiKey: string;
@@ -81,6 +84,13 @@ export class GatewayProvider implements AIProvider {
 
   async complete(req: AICompletionRequest): Promise<AICompletionResult> {
     const started = Date.now();
+    // Ohne eigenes Signal des Aufrufers: eigenen Timeout aufsetzen, statt
+    // unbegrenzt zu hängen (siehe AnthropicProvider.ts für dieselbe Logik).
+    const ownController = req.signal ? null : new AbortController();
+    const effectiveSignal = req.signal ?? ownController!.signal;
+    const timeoutId = ownController
+      ? setTimeout(() => ownController.abort(), DEFAULT_TIMEOUT_MS)
+      : null;
     let res: Response;
     try {
       res = await fetch(this.baseUrl, {
@@ -90,7 +100,7 @@ export class GatewayProvider implements AIProvider {
           Authorization: `Bearer ${this.apiKey}`,
         },
         body: JSON.stringify(this.buildBody(req, false)),
-        signal: req.signal,
+        signal: effectiveSignal,
       });
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
@@ -99,6 +109,8 @@ export class GatewayProvider implements AIProvider {
         userMessage: "Netzwerkfehler beim KI-Gateway.",
         detail: msg,
       });
+    } finally {
+      if (timeoutId) clearTimeout(timeoutId);
     }
     if (!res.ok) {
       const text = await res.text().catch(() => "");

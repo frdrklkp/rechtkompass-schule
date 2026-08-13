@@ -644,6 +644,21 @@ export function PracticeCaseWizard({ forcedId }: { forcedId?: string } = {}) {
     }
   }, [id, isNew]);
 
+  // Hooks müssen VOR den frühen Returns unten stehen (React Rules of Hooks) -
+  // standen zuvor danach, was bei jedem Laden/Fehler-Zustand eine andere
+  // Hook-Anzahl pro Render erzeugte ("React has detected a change in the
+  // order of Hooks", Absturz + Neuaufbau der Komponente über die
+  // ErrorBoundary. Fund 2026-08-13, sichtbar in den Dev-Server-Logs).
+  const [aiBusy, setAiBusy] = useState(false);
+  const [aiStep, setAiStep] = useState<string>("");
+  const [aiDraft, setAiDraft] = useState<import("@/components/AiReviewDialog").AiDraft | null>(null);
+  const [aiReviewOpen, setAiReviewOpen] = useState(false);
+  const [aiCatalog, setAiCatalog] = useState<{
+    keywords: Array<{ id: string; label: string }>;
+    templates: Array<{ id: string; label: string }>;
+    sections: Array<{ id: string; label: string }>;
+  }>({ keywords: [], templates: [], sections: [] });
+
   if (!isNew && caseQ.isLoading) return <LoadingState />;
   if (!isNew && caseQ.error) return <ErrorState error={caseQ.error} />;
   if (!isNew && !caseQ.data) {
@@ -758,9 +773,10 @@ export function PracticeCaseWizard({ forcedId }: { forcedId?: string } = {}) {
             ? "partial"
             : "missing";
       case 10:
-        return form.status === "published"
+        return caseQ.data?.workflow_status === "published"
           ? "full"
-          : form.status === "review"
+          : caseQ.data?.workflow_status === "in_review" ||
+              caseQ.data?.workflow_status === "approved"
             ? "partial"
             : "missing";
       default:
@@ -816,24 +832,19 @@ export function PracticeCaseWizard({ forcedId }: { forcedId?: string } = {}) {
 
   const statusIcon = (s: StepStatus) =>
     s === "full" ? "🟢" : s === "partial" ? "🟡" : "🔴";
-  const publishBadge =
-    form.status === "published"
-      ? { label: "Veröffentlicht", cls: "bg-emerald-500/10 text-emerald-700 border-emerald-500/40" }
-      : form.status === "review"
-        ? { label: "In Prüfung", cls: "bg-amber-500/10 text-amber-700 border-amber-500/40" }
-        : form.status === "archived"
-          ? { label: "Archiviert", cls: "bg-muted text-muted-foreground border-border" }
-          : { label: "Entwurf", cls: "bg-sky-500/10 text-sky-700 border-sky-500/40" };
-
-  const [aiBusy, setAiBusy] = useState(false);
-  const [aiStep, setAiStep] = useState<string>("");
-  const [aiDraft, setAiDraft] = useState<import("@/components/AiReviewDialog").AiDraft | null>(null);
-  const [aiReviewOpen, setAiReviewOpen] = useState(false);
-  const [aiCatalog, setAiCatalog] = useState<{
-    keywords: Array<{ id: string; label: string }>;
-    templates: Array<{ id: string; label: string }>;
-    sections: Array<{ id: string; label: string }>;
-  }>({ keywords: [], templates: [], sections: [] });
+  // workflow_status statt der Legacy-Spalte status - die ist seit den
+  // Editorial-Triggern (2026-07-26) nur noch ein Abbild, das nicht mehr
+  // direkt geschrieben wird und daher veralten kann (Fund 2026-08-13, siehe
+  // toUpdatePayload weiter oben).
+  const workflowStatus = caseQ.data?.workflow_status ?? "draft";
+  const publishBadge: Record<string, { label: string; cls: string }> = {
+    draft: { label: "Entwurf", cls: "bg-sky-500/10 text-sky-700 border-sky-500/40" },
+    in_review: { label: "In Prüfung", cls: "bg-amber-500/10 text-amber-700 border-amber-500/40" },
+    approved: { label: "Genehmigt", cls: "bg-violet-500/10 text-violet-700 border-violet-500/40" },
+    published: { label: "Veröffentlicht", cls: "bg-emerald-500/10 text-emerald-700 border-emerald-500/40" },
+    archived: { label: "Archiviert", cls: "bg-muted text-muted-foreground border-border" },
+  };
+  const badge = publishBadge[workflowStatus] ?? publishBadge.draft;
 
   const runAiSuggest = async () => {
     const title = form.title.trim();
@@ -1302,10 +1313,10 @@ export function PracticeCaseWizard({ forcedId }: { forcedId?: string } = {}) {
             <span
               className={cn(
                 "inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-medium",
-                publishBadge.cls,
+                badge.cls,
               )}
             >
-              {publishBadge.label}
+              {badge.label}
             </span>
           </div>
         </div>

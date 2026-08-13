@@ -2,7 +2,7 @@
  * Build a full SectionNode tree from ParseEvents. Assigns stable ids, paths,
  * breadcrumbs, depth, order, and structured metadata.
  */
-import { createHash } from "crypto";
+import { stableHash } from "@/lib/stableHash";
 import type {
   OutlineEntry,
   SectionMetadata,
@@ -218,7 +218,12 @@ function normalize(text: string): string {
 }
 
 function sha1(input: string): string {
-  return createHash("sha1").update(input).digest("hex").slice(0, 24);
+  // Keine Node-crypto-Abhängigkeit mehr (Fund 2026-08-13: dieses Modul wird
+  // transitiv von ChunksPanel.tsx/DocumentStructurePanel.tsx client-seitig
+  // importiert, "crypto" ist im Browser nicht vorhanden). Nur für baum-
+  // interne, pro Render neu berechnete "stabile" IDs verwendet, nicht
+  // gegen gespeicherte Werte verglichen - Algorithmuswechsel unbedenklich.
+  return stableHash(input).slice(0, 24);
 }
 
 export const _internal = { slug, sha1, normalize };

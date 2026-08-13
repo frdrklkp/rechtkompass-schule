@@ -149,8 +149,13 @@ export async function getCase(id: string) {
   if (data.length > 1) {
     throwRowCountError("practice_cases", filter, `Praxisfall ${id} ist nicht eindeutig.`, data.length);
   }
-  return fromDbCaseRow(data[0] as Record<string, unknown>) as unknown as PracticeCase & {
+  const raw = data[0] as Record<string, unknown>;
+  return {
+    ...fromDbCaseRow(raw),
+    workflow_status: (raw.workflow_status as string | undefined) ?? "draft",
+  } as unknown as PracticeCase & {
     ampel: string;
+    workflow_status: "draft" | "in_review" | "approved" | "published" | "archived";
   };
 }
 

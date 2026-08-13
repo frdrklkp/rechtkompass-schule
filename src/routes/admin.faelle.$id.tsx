@@ -30,7 +30,6 @@ import {
   listTemplates,
   createLegalLink,
   deleteLegalLink,
-  STATUS_LABELS,
 } from "@/lib/coreBuilder";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -54,6 +53,16 @@ import { mapDbCase } from "@/lib/casesFromDb";
 import { useKnowledgeIndex } from "@/lib/knowledgeIndex";
 import { countBullets } from "@/lib/caseCompleteness";
 import { apiFetch } from "@/lib/apiFetch";
+import { WorkflowProgress } from "@/components/editorial/WorkflowProgress";
+import type { WorkflowStatus } from "@/services/editorial";
+
+const WORKFLOW_STATUS_LABELS: Record<WorkflowStatus, string> = {
+  draft: "Entwurf",
+  in_review: "In Prüfung",
+  approved: "Genehmigt",
+  published: "Veröffentlicht",
+  archived: "Archiviert",
+};
 
 export const Route = createFileRoute("/admin/faelle/$id")({
   component: PracticeCaseWizard,
@@ -352,6 +361,25 @@ function toPayload(form: FormState) {
   };
 }
 
+/**
+ * Wie toPayload(), aber ohne die Legacy-Spalte "status" - die DB-Trigger aus
+ * 2026-07-26_editorial_triggers.sql blocken jeden direkten status-Wechsel
+ * auf einer BESTEHENDEN Zeile ("legacy_status_direct_change_forbidden");
+ * status wird ausschließlich über die Workflow-RPCs
+ * (submit_case_for_review, decide_case_review, publish_case, ...) verändert,
+ * siehe WorkflowActionButtons/EditorialWorkflowService. Für UPDATE also
+ * status weglassen (Spalte bleibt unverändert), nur beim INSERT einer neuen
+ * Zeile ist status:"draft" weiterhin nötig (toPayload) - dort verlangt der
+ * Insert-Guard genau diesen Wert (Fund 2026-08-13).
+ */
+function toUpdatePayload(form: FormState) {
+  const { meta, status: _status, ...rest } = form;
+  return {
+    ...rest,
+    faq: { meta } as unknown as import("@/integrations/supabase/types").Json,
+  };
+}
+
 function toDbErrorDetails(error: unknown): DbErrorDetails {
   const e = error as Partial<DbErrorDetails> & { message?: string };
   return {
@@ -474,7 +502,7 @@ export function PracticeCaseWizard({ forcedId }: { forcedId?: string } = {}) {
         if (savedId) setSavedId(savedId);
       } else {
         op = "update";
-        await updateCase(id, toPayload(effective));
+        await updateCase(id, toUpdatePayload(effective));
         savedId = id;
         setSavedId(id);
       }
@@ -1624,18 +1652,10 @@ export function PracticeCaseWizard({ forcedId }: { forcedId?: string } = {}) {
                 />
               </div>
               <div>
-                <Label className="mb-1.5 block text-xs">Status</Label>
-                <select
-                  value={form.status}
-                  onChange={(e) => set("status", e.target.value as FormState["status"])}
-                  className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm"
-                >
-                  {Object.entries(STATUS_LABELS).map(([k, v]) => (
-                    <option key={k} value={k}>
-                      {v}
-                    </option>
-                  ))}
-                </select>
+                <Label className="mb-1.5 block text-xs">Redaktions-Status</Label>
+                <div className="flex h-9 w-full items-center rounded-md border border-input bg-muted/40 px-3 text-sm text-muted-foreground">
+                  {WORKFLOW_STATUS_LABELS[caseQ.data?.workflow_status ?? "draft"]}
+                </div>
               </div>
               <div>
                 <Label className="mb-1.5 block text-xs">Ampel</Label>
@@ -2160,60 +2180,45 @@ export function PracticeCaseWizard({ forcedId }: { forcedId?: string } = {}) {
                 </div>
               </dl>
             </div>
-            <div>
-              <Label className="mb-1.5 block text-xs">Status setzen</Label>
-              <select
-                value={form.status}
-                onChange={(e) => set("status", e.target.value as FormState["status"])}
-                className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm sm:w-64"
-              >
-                {Object.entries(STATUS_LABELS).map(([k, v]) => (
-                  <option key={k} value={k}>
-                    {v}
-                  </option>
-                ))}
-              </select>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Wähle „Veröffentlicht“ um den Fall live zu schalten.
-              </p>
-            </div>
+            {!isNew && (
+              <div>
+                <Label className="mb-1.5 block text-xs">Redaktions-Workflow</Label>
+                <WorkflowProgress status={caseQ.data?.workflow_status ?? "draft"} />
+                <p className="mt-2 text-xs text-muted-foreground">
+                  Einreichen, Prüfen, Genehmigen, Veröffentlichen und Archivieren laufen
+                  über den{" "}
+                  <Link
+                    to="/admin/editorial/faelle/$id"
+                    params={{ id }}
+                    className="underline underline-offset-2"
+                  >
+                    Redaktions-Workflow
+                  </Link>{" "}
+                  – nicht mehr über diese Seite (verhindert inkonsistente Status-Wechsel).
+                </p>
+              </div>
+            )}
             <div className="flex gap-2">
               <Button
                 variant="outline"
                 onClick={async () => {
-                  const saved = await persist({ status: "draft" });
+                  const saved = await persist();
                   if (saved) {
-                    toast.success("Als Entwurf gespeichert.");
+                    toast.success("Gespeichert.");
                     navigate({ to: "/admin/faelle" });
                   }
                 }}
-                disabled={saving}
+                disabled={saving || !form.title.trim()}
               >
-                Als Entwurf speichern
+                <Save className="h-4 w-4" /> Speichern
               </Button>
-              <Button
-                onClick={async () => {
-                  if (doCount < 5) {
-                    toast.error(
-                      "Mindestens 5 konkrete fallbezogene Do's erforderlich.",
-                    );
-                    return;
-                  }
-                  const saved = await persist({ status: "published" });
-                  if (saved) {
-                    toast.success("Praxisfall veröffentlicht.");
-                    navigate({ to: "/admin/faelle" });
-                  }
-                }}
-                disabled={saving || !form.title.trim() || doCount < 5}
-                title={
-                  doCount < 5
-                    ? "Mindestens 5 konkrete fallbezogene Do's erforderlich."
-                    : undefined
-                }
-              >
-                <Save className="h-4 w-4" /> Veröffentlichen
-              </Button>
+              {!isNew && (
+                <Button asChild>
+                  <Link to="/admin/editorial/faelle/$id" params={{ id }}>
+                    Zum Redaktions-Workflow
+                  </Link>
+                </Button>
+              )}
             </div>
           </div>
         )}

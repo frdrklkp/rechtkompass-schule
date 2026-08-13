@@ -214,6 +214,7 @@ export const Route = createFileRoute("/api/generate-case-document")({
           "- Strukturiere entlang der übergebenen Vorlagenstruktur. Ergänze KEINE Abschnitte, die nicht in der Vorlage stehen, es sei denn, die Vorlage ist leer.",
           "- Nutze vorhandene Fallangaben (Sachverhalt, Handlungsempfehlung, Sofortmaßnahmen, Zuständigkeiten) wörtlich oder sprachlich sauber paraphrasiert, aber ohne neue Tatsachen zu ergänzen.",
           "- Sprache: nüchtern, sachlich, verwaltungsdeutsch, ohne Wertungen.",
+          "- Verwende KEINE Markdown-Formatierung (keine **, __, #, Backticks) - reiner Fließtext, wird unformatiert als reiner Text angezeigt.",
           "- Antworte NUR mit JSON gemäß Schema.",
         ].join("\n");
 

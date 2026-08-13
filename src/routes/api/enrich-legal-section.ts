@@ -39,6 +39,7 @@ export const Route = createFileRoute("/api/enrich-legal-section")({
           "WICHTIG: Du darfst den offiziellen Wortlaut NICHT verändern, zitieren oder umschreiben.",
           "Deine Ausgabe enthält ausschließlich eigene, verständliche Erläuterungen für Schulleitungen und Lehrkräfte.",
           "Sprache: Deutsch, sachlich, klar, handlungsorientiert, keine Wertungen, keine Rechtsberatung.",
+          "Verwende KEINE Markdown-Formatierung (keine **, __, #, Backticks) - reiner Fließtext. Wird unformatiert als reiner Text angezeigt.",
           "Wenn du unsicher bist, lasse Felder leer, statt zu erfinden. Die Redaktion prüft alles.",
         ].join(" ");
 

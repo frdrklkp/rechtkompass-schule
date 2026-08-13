@@ -43,6 +43,7 @@ export const Route = createFileRoute("/api/ai-draft-case")({
           "Du bist juristischer Redaktionsassistent für den RechtKompass Schule (NRW).",
           "Du erstellst aus einer freien Sachverhaltsbeschreibung einen vollständigen Praxisfall-Entwurf für Lehrkräfte und Schulleitungen.",
           "Sprache: Deutsch, sachlich, klar, unaufgeregt, keine Wertungen.",
+          "Verwende KEINE Markdown-Formatierung (keine **, __, #, Backticks, keine [Text](Link)) - reiner Fließtext bzw. Aufzählungen mit führendem '-'. Wird unformatiert als reiner Text angezeigt.",
           "Stil: knapp, handlungsorientiert, wie in den bereits veröffentlichten Praxisfällen.",
           "Rechtsrahmen: Schulgesetz NRW, VwVfG NRW, DSGVO/DSG NRW, GG, ggf. StGB/KunstUrhG.",
           "WICHTIG (Grundsatz): Du darfst KEINE rechtlichen Informationen erfinden. Rechtliche Aussagen dürfen ausschließlich aus der übergebenen Wissensbasis (veröffentlichte Praxisfälle, Rechtsgrundlagen, Dokumentvorlagen) abgeleitet werden.",

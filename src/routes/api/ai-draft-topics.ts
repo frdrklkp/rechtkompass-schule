@@ -34,6 +34,7 @@ export const Route = createFileRoute("/api/ai-draft-topics")({
           "Jeder Eintrag: kurzer, prägnanter Titel (max. 80 Zeichen) + 2–3 Sätze Sachverhalts-Skizze.",
           "Vermeide Dubletten zu bereits vorhandenen Titeln. Wähle unterschiedliche Rollen, Handlungsfelder und Eskalationsstufen.",
           "Sprache: Deutsch, sachlich, klar. Keine Wertungen, keine Rechtsberatung.",
+          "Verwende KEINE Markdown-Formatierung (keine **, __, #, Backticks) - reiner Fließtext. Wird unformatiert als reiner Text angezeigt.",
         ].join(" ");
 
         const user = {

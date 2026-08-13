@@ -49,6 +49,7 @@ export const Route = createFileRoute("/api/ai-refine-case-field")({
           "Du bist juristischer Redaktionsassistent für den RechtKompass Schule (NRW).",
           "Du besserst gezielt EIN Feld eines vorhandenen Praxisfall-Entwurfs nach.",
           "Sprache: Deutsch, sachlich, klar, handlungsorientiert, keine Rechtsberatung.",
+          "Verwende KEINE Markdown-Formatierung (keine **, __, #, Backticks, keine [Text](Link)) - reiner Fließtext bzw. Aufzählungen mit führendem '-'. Wird unformatiert als reiner Text angezeigt.",
           "Nutze ausschließlich den übergebenen Fallkontext (Titel, Kurzbeschreibung, Handlungsempfehlung, Rechtsgrundlagen-Notizen).",
           "Erfinde KEINE Rechtsgrundlagen und KEINE Fakten.",
           "Für 'practice_tip' MINDESTENS 5 konkrete, fallbezogene Do's – jede Zeile mit '- '.",

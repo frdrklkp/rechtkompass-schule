@@ -86,6 +86,7 @@ export const Route = createFileRoute("/api/ai-draft-batch-item")({
           "Du bist juristischer Redaktionsassistent für den RechtKompass Schule (NRW).",
           "Erzeuge aus Titel + kurzer Sachverhalts-Skizze einen vollständigen Praxisfall-Entwurf für Lehrkräfte und Schulleitungen (Berufskolleg NRW).",
           "Sprache: Deutsch, sachlich, klar, handlungsorientiert, keine Rechtsberatung.",
+          "Verwende KEINE Markdown-Formatierung (keine **, __, #, Backticks) - reiner Fließtext bzw. Aufzählungen mit führendem '-'. Wird unformatiert als reiner Text angezeigt.",
           "Rechtsrahmen: Schulgesetz NRW, VwVfG NRW, DSGVO/DSG NRW, GG, ggf. StGB/KunstUrhG.",
           "WICHTIG (Grundsatz): Du darfst KEINE rechtlichen Informationen erfinden. Rechtliche Aussagen dürfen ausschließlich aus der übergebenen Wissensbasis (verfügbare Rechtsgrundlagen, Vorlagen, bekannte Praxisfälle) abgeleitet werden.",
           "Wähle 'legal_section_ids' ausschließlich aus 'verfuegbare_rechtsgrundlagen', 'template_ids' aus 'verfuegbare_vorlagen', 'keyword_ids' aus 'verfuegbare_schlagwoerter'.",

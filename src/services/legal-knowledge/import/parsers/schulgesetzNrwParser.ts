@@ -43,6 +43,17 @@ export const schulgesetzNrwParser: LegalImportParser = {
   canParse(input: LegalImportInput): boolean {
     const raw = input.raw.slice(0, 4000);
     if (input.hint?.officialUrl?.includes("recht.nrw.de")) return true;
+    // bass.schule.nrw liefert dasselbe Dokument (u.a. bei einer BASS-Kapitel-
+    // Verlinkung des Schulgesetzes) mit Cookie-Banner/Teilen-Werkzeugleiste
+    // vor dem Titelblock (siehe bassSiteHeader.ts) - diese Chrome-Filterung
+    // hat nur bassNrwParser, nicht dieser Parser. Auf bass.schule.nrw daher
+    // bewusst zurücktreten, sonst gewinnt dieser Parser über den generischen
+    // Inhalts-Fallback unten und liefert ein leeres Dokument (Fund beim
+    // BASS-Vollimport, 2026-08-13).
+    const onBassDomain =
+      input.hint?.officialUrl?.includes("bass.schule.nrw") ||
+      input.hint?.officialUrl?.includes("bass.schul-welt.de");
+    if (onBassDomain) return false;
     if (/Schulgesetz\s+(?:für\s+das\s+Land\s+)?Nordrhein[-\s]Westfalen/i.test(raw)) return true;
     // Fallback: „§ 1" gefolgt von „(1)" im Rohtext
     return /^§\s*\d/m.test(raw) && /^\(\d+\)/m.test(raw);

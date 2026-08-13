@@ -140,13 +140,28 @@ async function main() {
     const remaining = TARGET - stats.created;
     const count = Math.min(IDEAS_PER_BATCH, remaining + 5); // etwas Puffer für Duplikate
     console.log(`\n=== Fordere ${count} Ideen an (${stats.created}/${TARGET} erledigt) ===`);
-    const ideasRes = await fetch(`${API_BASE}/api/ai-draft-topics`, {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ count, topics: TOPICS, existingTitles: existingCases.map((e) => e.title).slice(0, 200) }),
-    });
-    if (!ideasRes.ok) { console.error("ai-draft-topics fehlgeschlagen:", await ideasRes.text()); break; }
-    const { ideas: rawIdeas } = (await ideasRes.json()) as { ideas: Idea[] };
-    if (!rawIdeas?.length) { console.error("Keine Ideen erhalten, breche ab."); break; }
+
+    // Vereinzelt liefert /api/ai-draft-topics trotz HTTP 200 eine leere
+    // Ideenliste (KI-Ausreißer, kein Programmfehler - Fund beim Neustart
+    // nach Rechner-Neustart, 2026-08-13). Hat zuvor den ganzen Lauf (hunderte
+    // bereits fertige Fälle im Ziel) sofort abgebrochen. Statt direkt
+    // aufzugeben: bis zu 3 Versuche mit kurzer Pause, erst danach abbrechen.
+    let rawIdeas: Idea[] | undefined;
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      const ideasRes = await fetch(`${API_BASE}/api/ai-draft-topics`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ count, topics: TOPICS, existingTitles: existingCases.map((e) => e.title).slice(0, 200) }),
+      });
+      if (!ideasRes.ok) {
+        console.error(`  [ideen-versuch ${attempt}/3] ai-draft-topics fehlgeschlagen:`, await ideasRes.text());
+      } else {
+        const body = (await ideasRes.json()) as { ideas: Idea[] };
+        if (body.ideas?.length) { rawIdeas = body.ideas; break; }
+        console.error(`  [ideen-versuch ${attempt}/3] leere Ideenliste erhalten`);
+      }
+      if (attempt < 3) await new Promise((r) => setTimeout(r, 3000));
+    }
+    if (!rawIdeas?.length) { console.error("Keine Ideen nach 3 Versuchen erhalten, breche ab."); break; }
     // Anthropics erzwungenes Tool-Use-JSON liefert vereinzelt eine Idee ohne
     // "title" zurück (Fund beim Neustart nach Rechner-Neustart, 2026-08-13) -
     // hat zuvor das ganze Skript abgeschossen (label-Berechnung außerhalb des

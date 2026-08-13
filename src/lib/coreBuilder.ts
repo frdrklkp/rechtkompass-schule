@@ -250,16 +250,30 @@ export async function listSections() {
   // Zeilen liefert.
   const PAGE_SIZE = 1000;
   const all: Array<Record<string, unknown>> = [];
+  const seenIds = new Set<string>();
   for (let offset = 0; ; offset += PAGE_SIZE) {
+    // section_number ist über 17.557 Zeilen NICHT eindeutig (viele Gesetze
+    // haben je ein "§ 1", "1.1" usw.) - ohne eindeutigen Tiebreaker kann
+    // Postgres die Sortierreihenfolge zwischen zwei separaten .range()-
+    // Abfragen an Seitengrenzen abweichend auflösen, was Zeilen dupliziert
+    // oder auslässt (Fund 2026-08-13, sichtbar als doppelte React-Keys
+    // "task:sec:<id>" in der Wissensbasis-Übersicht). "id" als
+    // Sekundärkriterium erzwingt eine deterministische Reihenfolge.
     const { data, error } = await (supabase.from("legal_sections") as any)
       .select("*")
       .order("section_number")
+      .order("id")
       .range(offset, offset + PAGE_SIZE - 1);
     if (error) {
       logQuery("legal_sections", filter, all.length, error);
       throwQueryError("legal_sections", filter, error, all.length);
     }
-    all.push(...((data ?? []) as Array<Record<string, unknown>>));
+    for (const row of (data ?? []) as Array<Record<string, unknown>>) {
+      const id = row.id as string;
+      if (seenIds.has(id)) continue;
+      seenIds.add(id);
+      all.push(row);
+    }
     if (!data || data.length < PAGE_SIZE) break;
   }
   logQuery("legal_sections", filter, all.length, null);

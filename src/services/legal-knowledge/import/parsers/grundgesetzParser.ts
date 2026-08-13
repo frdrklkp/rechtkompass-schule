@@ -33,6 +33,15 @@ export const grundgesetzParser: LegalImportParser = {
   canParse(input: LegalImportInput): boolean {
     const raw = input.raw.slice(0, 4000);
     if (input.hint?.officialUrl?.includes("gesetze-im-internet.de/gg")) return true;
+    // Der generische Inhalts-Fallback trifft auch auf BASS-Runderlasse, die
+    // "das Grundgesetz für die Bundesrepublik Deutschland" nur als Zitat in
+    // einem Satz erwähnen, nicht als eigenen Dokumenttitel (Fund beim
+    // BASS-Vollimport, 2026-08-13, Bsp. "15-02 Nr. 9.6"). Domain daher
+    // explizit ausschließen; das eigentliche GG kommt nur von
+    // gesetze-im-internet.de (siehe Fall oben).
+    if (input.hint?.officialUrl?.includes("bass.schule.nrw") || input.hint?.officialUrl?.includes("bass.schul-welt.de")) {
+      return false;
+    }
     return /Grundgesetz\s+für\s+die\s+Bundesrepublik\s+Deutschland/i.test(raw);
   },
 

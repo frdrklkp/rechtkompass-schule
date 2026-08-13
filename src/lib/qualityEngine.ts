@@ -620,11 +620,20 @@ export function deriveQualityTasks(evalRes: EvalResult): QualityTask[] {
     });
   }
   // Hard Blocker, die nicht bereits über reasons abgedeckt sind, ergänzen.
+  // "code" muss je Task innerhalb eines Falls eindeutig sein - wird sowohl
+  // als React-Key (`${caseId}::${code}`, admin.fallmanager.tsx) als auch
+  // zum Zuordnen von Fix-Ergebnissen genutzt (`caseId===...&&code===...`,
+  // admin.qualitaetsmanager.tsx). Ein für alle Hard Blocker eines Falls
+  // identischer Code "HARD_BLOCKER" verursachte bei mehreren gleichzeitigen
+  // Hard Blockern doppelte Keys UND ließ die Fix-Ergebnis-Zuordnung immer
+  // nur den ersten Treffer finden (Fund 2026-08-13). Laufindex macht den
+  // Code je Fall eindeutig.
+  let hardBlockerIndex = 0;
   for (const hb of evalRes.hardBlockers) {
     if (!tasks.some((t) => hb.toLowerCase().includes(t.code.toLowerCase().replace(/_/g, " ")))) {
       tasks.push({
         caseId: evalRes.caseId,
-        code: "HARD_BLOCKER",
+        code: `HARD_BLOCKER_${hardBlockerIndex++}`,
         category: "TECHNIK",
         severity: "critical",
         title: "Hard Blocker beheben",

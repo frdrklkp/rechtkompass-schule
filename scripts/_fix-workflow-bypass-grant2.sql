@@ -1,0 +1,20 @@
+-- Zweiter, kleinerer Nachtrag zum vorigen Fix.
+--
+-- Owner sind jetzt konsistent (postgres) - das behebt den Pfad über
+-- submit_case_for_review()/decide_case_review() usw. (SECURITY DEFINER,
+-- läuft als postgres). Aber: das normale Anlegen eines Falls (createCase)
+-- macht ein DIREKTES INSERT auf practice_cases, nicht über eine RPC. Der
+-- dabei feuernde Trigger _practice_cases_insert_guard() ist NICHT SECURITY
+-- DEFINER (bewusst, siehe editorial_triggers.sql) und läuft deshalb als der
+-- tatsächlich einfügende Nutzer ("authenticated"), nicht als postgres. Er
+-- ruft _workflow_bypass() auf, um zu prüfen, ob eine RPC bereits eine
+-- Ausnahme gesetzt hat - diese Prüfung selbst ist aber weiterhin für
+-- "authenticated" gesperrt.
+--
+-- Fix: nur die LESE-Prüfung _workflow_bypass() für authenticated freigeben.
+-- Das ist unbedenklich - sie liefert nur zurück, ob die (nur von den
+-- RPCs setzbare) Ausnahme-Flagge in der aktuellen Transaktion aktiv ist,
+-- vergibt selbst keinerlei zusätzliche Rechte. Die eigentliche Sperre bleibt
+-- bestehen: _set_workflow_bypass() (das SETZEN der Flagge) bleibt für
+-- authenticated gesperrt.
+grant execute on function public._workflow_bypass() to authenticated;

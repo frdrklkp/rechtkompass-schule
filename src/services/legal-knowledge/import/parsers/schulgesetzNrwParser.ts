@@ -5,11 +5,31 @@
  * Absätzen „(1) …" und einfacher Satznummerierung. Andere Gesetzestexte
  * (BASS, APO-BK, VV, Erlasse) lassen sich durch analoge Parser ergänzen –
  * die Domänenobjekte sind identisch.
+ *
+ * Hinweis (Fund beim Testimport, 2026-08-13): recht.nrw.de liefert „§ N"
+ * nie mit Bindestrich-Titel auf derselben Zeile, sondern als eigene Zeile,
+ * gefolgt von der echten Überschrift auf der NÄCHSTEN Zeile sowie einer
+ * Werkzeugleiste ("Mehr", "Paragraph ausdrucken", "Paragraph Link kopieren",
+ * "Fußnoten") und Kopier-Hinweisen ("Link kopiert", "Der Link zum Pragraph
+ * wurde kopiert" – Tippfehler im Original) VOR jedem Paragraphen. Der
+ * generische HtmlExtractor entfernt das nicht (bewusst quellenunabhängig,
+ * kennt keine Bedienelemente einzelner Portale) – die Behandlung gehört
+ * hierher, in den quellenspezifischen Parser.
  */
 import type { LegalImportInput, LegalImportParser, LegalNode, NormalizedLegalDocument } from "../types";
 
 const PARAGRAPH_RE = /^§\s*(\d+[a-z]?)\s*(?:[–—-]\s*(.+))?$/;
 const SUBSECTION_RE = /^\((\d+[a-z]?)\)\s*(.*)$/;
+
+/** Wiederkehrende Bedienelemente/Meldungen der recht.nrw.de-Seite, keine Rechtstext-Inhalte. */
+const NOISE_LINES = new Set([
+  "Mehr",
+  "Paragraph ausdrucken",
+  "Paragraph Link kopieren",
+  "Fußnoten",
+  "Link kopiert",
+  "Der Link zum Pragraph wurde kopiert", // Tippfehler steht so im Original
+]);
 
 function mkNode(node: Omit<LegalNode, "localId" | "children"> & { children?: LegalNode[] }): LegalNode {
   return { localId: "", children: node.children ?? [], ...node };
@@ -33,10 +53,27 @@ export const schulgesetzNrwParser: LegalImportParser = {
     const root: LegalNode = mkNode({ kind: "document", heading: input.hint?.detectedTitle ?? "Schulgesetz NRW" });
     let currentParagraph: LegalNode | null = null;
     let currentSubsection: LegalNode | null = null;
+    // Direkt nach "§ N" (ohne Bindestrich-Titel) steht die echte Überschrift
+    // auf der nächsten inhaltlichen Zeile - einmalig als Titel abgreifen.
+    let awaitingHeading = false;
+    // Die Inhaltsübersicht am Dokumentanfang listet jede "§ N ..."-Zeile
+    // noch einmal auf; das sind keine Rechtsnormen, sondern Navigation.
+    let inTableOfContents = false;
 
     for (const rawLine of lines) {
       const line = rawLine.trim();
       if (!line) continue;
+
+      if (line === "Inhaltsübersicht") {
+        inTableOfContents = true;
+        continue;
+      }
+      if (NOISE_LINES.has(line)) {
+        // "Link kopiert" markiert zuverlässig den Beginn der echten Vorschriften.
+        if (line === "Link kopiert") inTableOfContents = false;
+        continue;
+      }
+      if (inTableOfContents) continue;
 
       const paraMatch = PARAGRAPH_RE.exec(line);
       if (paraMatch) {
@@ -47,6 +84,7 @@ export const schulgesetzNrwParser: LegalImportParser = {
         });
         root.children.push(currentParagraph);
         currentSubsection = null;
+        awaitingHeading = !currentParagraph.heading;
         continue;
       }
 
@@ -58,6 +96,13 @@ export const schulgesetzNrwParser: LegalImportParser = {
           text: subMatch[2]?.trim() || null,
         });
         currentParagraph.children.push(currentSubsection);
+        awaitingHeading = false;
+        continue;
+      }
+
+      if (awaitingHeading && currentParagraph) {
+        currentParagraph.heading = line;
+        awaitingHeading = false;
         continue;
       }
 

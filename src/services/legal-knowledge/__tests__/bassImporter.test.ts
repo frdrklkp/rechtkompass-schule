@@ -18,10 +18,17 @@ import {
 import type { LegalImportInput, LegalImportTelemetryPayload, LegalNode } from "../import";
 
 const BASS_TXT = [
-  "BASS 12-05 Nr. 1",
-  "Verordnung über den Bildungsgang und die Abiturprüfung",
-  "RdErl. d. Ministeriums für Schule und Bildung vom 05.10.2010",
-  "Zuletzt geändert durch RdErl. vom 15.06.2024",
+  "12-05 Nr. 1",
+  "",
+  "Verordnung",
+  "über den Bildungsgang und die Abiturprüfung",
+  "in der gymnasialen Oberstufe",
+  "",
+  "Vom 5. Oktober 2010",
+  "zuletzt geändert durch RdErl. vom 15.06.2024",
+  "",
+  "Herausgeber: Ministerium für Schule und Bildung",
+  "Vgl. BASS 12-05 Nr. 1.",
   "",
   "Teil 1 Allgemeine Bestimmungen",
   "",
@@ -136,7 +143,7 @@ test("BASS: Metadaten (Zitat, Herausgeber, Daten) und Versionslabel", () => {
   assert.match(doc.source.title, /Verordnung/);
   assert.match(String(doc.source.authority), /Ministerium/);
   assert.equal(doc.version.publishedAt, "2010-10-05");
-  assert.match(doc.version.citation ?? "", /BASS 12-05 Nr\. 1/);
+  assert.match(doc.version.citation ?? "", /12-05 Nr\. 1/);
   // Versionslabel bevorzugt „Zuletzt geändert".
   assert.equal(doc.version.label, "Fassung 2024-06-15");
   assert.equal((doc.source.metadata as { source?: string }).source, "bass");

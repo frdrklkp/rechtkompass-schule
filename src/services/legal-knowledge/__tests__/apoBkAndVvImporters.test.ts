@@ -33,12 +33,16 @@ function findByNumber(root: LegalNode, number: string): LegalNode | null {
 /* --------------------------- APO-BK --------------------------- */
 
 const APO_TXT = [
-  "APO-BK",
+  "13-33 Nr. 1.1",
+  "",
   "Ausbildungs- und Prüfungsordnung Berufskolleg",
-  "vom 26.05.1999",
-  "Zuletzt geändert durch VO vom 01.07.2023",
+  "(APO-BK)",
+  "",
+  "Vom 26. Mai 1999",
+  "zuletzt geändert durch VO vom 01.07.2023",
+  "(GV. NRW. S. 240)",
+  "",
   "Herausgeber: Ministerium für Schule und Bildung NRW",
-  "GV. NRW. S. 240",
   "",
   "Teil 1 Allgemeine Bestimmungen",
   "",
@@ -145,7 +149,7 @@ test("APO-BK: Kopfmetadaten (Datum, Herausgeber, Fundstelle, Änderung)", () => 
   assert.equal(doc.version.publishedAt, "1999-05-26");
   assert.equal(doc.version.label, "Fassung 2023-07-01");
   assert.match(String(doc.source.authority), /Ministerium/);
-  assert.match(String(doc.source.metadata && (doc.source.metadata as any).citation), /GV\.\s*NRW/);
+  assert.match(String(doc.source.metadata && (doc.source.metadata as any).citation), /13-33 Nr\.\s*1\.1/);
 });
 
 test("APO-BK: Normalisierung + Validierung ohne Fehler", () => {

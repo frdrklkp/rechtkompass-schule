@@ -4,7 +4,8 @@
  */
 
 export const OFFICIAL_HOST_WHITELIST: readonly string[] = [
-  "bass.schul-welt.de",
+  "bass.schul-welt.de", // alte Domain, Stand 2026-08 nicht mehr erreichbar (siehe bass.schule.nrw)
+  "bass.schule.nrw",
   "recht.nrw.de",
   "www.recht.nrw.de",
   "schulministerium.nrw.de",

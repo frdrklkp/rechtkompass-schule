@@ -22,9 +22,15 @@ import type {
   LegalNode,
   NormalizedLegalDocument,
 } from "../types";
+import {
+  BASS_CHROME_NOISE,
+  CITATION_MARKER_RE,
+  VOM_LINE_RE,
+  findDate,
+  looksLikeCrossReference,
+} from "./bassSiteHeader";
 
 const BASS_CITATION_RE = /BASS\s+(\d{1,2}\s*[-–]\s*\d{2})\s*(?:Nr\.?\s*(\d+))?/i;
-const DATE_ISO_RE = /(\d{1,2})\.(\d{1,2})\.(\d{4})/;
 const PARAGRAPH_RE = /^§\s*(\d+[a-z]?)\s*(?:[–—-]\s*)?(.*)$/;
 const ARTICLE_RE = /^Artikel\s+(\d+[a-z]?)\s*(?:[–—-]\s*)?(.*)$/i;
 const PART_RE = /^Teil\s+([IVXLCDM]+|\d+)\s*(?:[–—-]\s*)?(.*)$/i;
@@ -39,12 +45,6 @@ const REFERENCE_RE = /(§\s*\d+[a-z]?(?:\s*Abs\.\s*\d+)?|BASS\s+\d{1,2}\s*[-–]
 
 function mkNode(node: Omit<LegalNode, "localId" | "children"> & { children?: LegalNode[] }): LegalNode {
   return { localId: "", children: node.children ?? [], ...node };
-}
-
-function toIso(dm: RegExpMatchArray | null): string | null {
-  if (!dm) return null;
-  const [, d, m, y] = dm;
-  return `${y}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`;
 }
 
 function extractReferences(text: string): string[] {
@@ -85,12 +85,26 @@ function extractHeader(rawLines: string[]): {
   let authority: string | null = null;
   let headerConsumed = 0;
 
-  for (let i = 0; i < rawLines.length && i < 40; i++) {
+  const titleLines: string[] = [];
+  let collectingTitle = false;
+  let titleCaptured = false;
+
+  for (let i = 0; i < rawLines.length && i < 60; i++) {
     const line = rawLines[i].trim();
-    if (!line) {
-      headerConsumed = i + 1;
-      continue;
-    }
+    if (!line) { headerConsumed = i + 1; continue; }
+    if (BASS_CHROME_NOISE.has(line)) { headerConsumed = i + 1; continue; }
+    // Die "Inhaltsübersicht" markiert das Ende des Kopfbereichs. Ohne diesen
+    // expliziten Stopp würde der generische Struktur-Abbruch weiter unten
+    // erst bei der ERSTEN Inhaltsübersicht-Zeile ("§ N Titel", passt auf
+    // PARAGRAPH_RE) greifen - der Hauptparser sähe die "Inhaltsübersicht"-
+    // Zeile dann nie und die eigene Inhaltsübersicht-Erkennung liefe leer
+    // (Fund beim Testimport, 2026-08-13: BASS NRW - leere §-Knoten).
+    if (line === "Inhaltsübersicht") break;
+
+    // Struktur-Abbruch gilt IMMER, auch bevor ein Aktenzeichen gefunden wurde:
+    // ohne diesen frühen Abbruch würde ein Dokument ohne erkennbaren
+    // Aktenzeichen-Marker ewig auf den Marker warten und dabei den kompletten
+    // Inhalt inkl. aller § als "Kopfbereich" verschlucken.
     if (
       PART_RE.test(line) ||
       CHAPTER_RE.test(line) ||
@@ -100,27 +114,45 @@ function extractHeader(rawLines: string[]): {
     ) {
       break;
     }
+
+    if (!titleCaptured) {
+      if (!collectingTitle) {
+        if (CITATION_MARKER_RE.test(line)) {
+          if (!citation) citation = line;
+          collectingTitle = true;
+        }
+        headerConsumed = i + 1;
+        continue;
+      }
+      if (VOM_LINE_RE.test(line)) {
+        title = titleLines.join(" ").replace(/\s+/g, " ").trim() || null;
+        titleCaptured = true;
+        collectingTitle = false;
+        // "Vom ..." selbst noch normal weiterverarbeiten (publishedAt), daher kein continue.
+      } else {
+        titleLines.push(line);
+        headerConsumed = i + 1;
+        continue;
+      }
+    }
     const cit = BASS_CITATION_RE.exec(line);
     if (cit) {
       const nr = cit[2] ? ` Nr. ${cit[2]}` : "";
-      citation = `BASS ${cit[1].replace(/\s+/g, "")}${nr}`.replace(/\s*-\s*/, "-");
+      if (!citation) citation = `BASS ${cit[1].replace(/\s+/g, "")}${nr}`.replace(/\s*-\s*/, "-");
       headerConsumed = i + 1;
       continue;
     }
-    const geand = /Zuletzt\s+ge[aä]ndert\s+(?:durch|vom)?\s*.*?(\d{1,2}\.\d{1,2}\.\d{4})/i.exec(line);
-    if (geand) {
-      amendedAt = toIso(DATE_ISO_RE.exec(geand[1]));
-    }
-    const vom = !geand ? /\bvom\s+(\d{1,2}\.\d{1,2}\.\d{4})/i.exec(line) : null;
-    if (vom) {
-      publishedAt = toIso(DATE_ISO_RE.exec(vom[1]));
-      if (!validFrom) validFrom = publishedAt;
+    const geandAt = findDate(line, String.raw`Zuletzt\s+ge[aä]ndert\s+(?:durch|vom)?.*?`);
+    if (geandAt) amendedAt = geandAt;
+    else {
+      const vomAt = findDate(line, String.raw`\bvom`);
+      if (vomAt) {
+        publishedAt = vomAt;
+        if (!validFrom) validFrom = vomAt;
+      }
     }
     if (/Ministerium|Herausgeber:/i.test(line)) {
       authority = line.replace(/^Herausgeber:\s*/i, "");
-    }
-    if (!title && !cit && !vom && !geand && !/Herausgeber:/i.test(line) && line.length > 3) {
-      title = line;
     }
     headerConsumed = i + 1;
   }
@@ -145,6 +177,7 @@ export const bassNrwParser: LegalImportParser = {
 
   canParse(input: LegalImportInput): boolean {
     const raw = input.raw.slice(0, 6000);
+    if (input.hint?.officialUrl?.includes("bass.schule.nrw")) return true;
     if (input.hint?.officialUrl?.includes("bass.schul-welt.de")) return true;
     if (BASS_CITATION_RE.test(raw)) return true;
     if (/Bereinigte\s+Amtliche\s+Sammlung/i.test(raw)) return true;
@@ -155,9 +188,13 @@ export const bassNrwParser: LegalImportParser = {
     const lines = input.raw.split(/\r?\n/);
     const header = extractHeader(lines);
 
+    // Hinweis (2026-08-13): der HTML-<title> von bass.schule.nrw ist auf jeder
+    // Seite generisch "BASS" (input.hint.detectedTitle) - kein Rückschluss auf
+    // das konkrete Dokument. Der aus dem Titelblock geparste header.title hat
+    // deshalb Vorrang, detectedTitle ist nur Notnagel, falls das Parsen scheitert.
     const root: LegalNode = mkNode({
       kind: "document",
-      heading: input.hint?.detectedTitle ?? header.title ?? "BASS-Vorschrift",
+      heading: header.title ?? input.hint?.detectedTitle ?? "BASS-Vorschrift",
     });
 
     // Aktueller Verankerungspfad: document → part → chapter → section → paragraph/article → subsection
@@ -167,6 +204,15 @@ export const bassNrwParser: LegalImportParser = {
     let currentBlock: LegalNode | null = null; // paragraph / article
     let currentSubsection: LegalNode | null = null;
     let tableBuffer: string[][] | null = null;
+    // Direkt nach "§ N"/"Artikel N" (ohne Titel auf derselben Zeile) steht die
+    // echte Überschrift auf der nächsten inhaltlichen Zeile.
+    let awaitingHeading = false;
+    // Die "Inhaltsübersicht" listet jeden Paragraphen nochmal inline ("§ N Titel")
+    // auf - Navigationsvorschau, keine Rechtsnorm. Echte Paragraphen stehen auf
+    // dieser Seite immer als "§ N" allein auf eigener Zeile.
+    let inTableOfContents = false;
+    // Echte Paragraphenüberschriften stehen immer isoliert nach einer Leerzeile.
+    let precededByBlank = true;
 
     const containerForBlock = (): LegalNode =>
       currentSection ?? currentChapter ?? currentPart ?? root;
@@ -185,7 +231,24 @@ export const bassNrwParser: LegalImportParser = {
       const line = lines[i].trim();
       if (!line) {
         flushTable();
+        precededByBlank = true;
         continue;
+      }
+      const isNewBlock = precededByBlank;
+      precededByBlank = false;
+
+      if (line === "Inhaltsübersicht") {
+        inTableOfContents = true;
+        continue;
+      }
+      if (inTableOfContents) {
+        const tocPara = PARAGRAPH_RE.exec(line);
+        if (tocPara && !tocPara[2]?.trim()) {
+          // "§ N" allein auf eigener Zeile = Ende der Inhaltsübersicht, echter Inhalt beginnt.
+          inTableOfContents = false;
+        } else {
+          continue;
+        }
       }
 
       // Tabellen (zusammenhängende Pipe-Zeilen)
@@ -218,7 +281,11 @@ export const bassNrwParser: LegalImportParser = {
         currentBlock = currentSubsection = null;
         continue;
       }
-      if ((m = PARAGRAPH_RE.exec(line))) {
+      if (
+        isNewBlock &&
+        (m = PARAGRAPH_RE.exec(line)) &&
+        !(m[2]?.trim() && looksLikeCrossReference(m[2]))
+      ) {
         currentBlock = mkNode({
           kind: "paragraph",
           number: `§ ${m[1]}`,
@@ -226,9 +293,14 @@ export const bassNrwParser: LegalImportParser = {
         });
         containerForBlock().children.push(currentBlock);
         currentSubsection = null;
+        awaitingHeading = !currentBlock.heading;
         continue;
       }
-      if ((m = ARTICLE_RE.exec(line))) {
+      if (
+        isNewBlock &&
+        (m = ARTICLE_RE.exec(line)) &&
+        !(m[2]?.trim() && looksLikeCrossReference(m[2]))
+      ) {
         currentBlock = mkNode({
           kind: "article",
           number: `Artikel ${m[1]}`,
@@ -236,6 +308,7 @@ export const bassNrwParser: LegalImportParser = {
         });
         containerForBlock().children.push(currentBlock);
         currentSubsection = null;
+        awaitingHeading = !currentBlock.heading;
         continue;
       }
       if ((m = SUBSECTION_RE.exec(line)) && currentBlock) {
@@ -246,6 +319,13 @@ export const bassNrwParser: LegalImportParser = {
         });
         attachReferences(currentSubsection);
         currentBlock.children.push(currentSubsection);
+        awaitingHeading = false;
+        continue;
+      }
+
+      if (awaitingHeading && currentBlock) {
+        currentBlock.heading = line;
+        awaitingHeading = false;
         continue;
       }
 
@@ -297,7 +377,7 @@ export const bassNrwParser: LegalImportParser = {
       source: {
         key: "bass-nrw",
         kind: "administrative_regulation",
-        title: input.hint?.detectedTitle ?? header.title ?? "BASS-Vorschrift NRW",
+        title: header.title ?? input.hint?.detectedTitle ?? "BASS-Vorschrift NRW",
         shortName: "BASS",
         jurisdiction: "NRW",
         authority: header.authority ?? "MSB NRW",

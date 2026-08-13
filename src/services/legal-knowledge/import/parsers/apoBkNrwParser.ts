@@ -21,10 +21,16 @@ import type {
   LegalNode,
   NormalizedLegalDocument,
 } from "../types";
+import {
+  BASS_CHROME_NOISE,
+  CITATION_MARKER_RE,
+  VOM_LINE_RE,
+  findDate,
+  looksLikeCrossReference,
+} from "./bassSiteHeader";
 
 const APO_TITLE_RE = /Ausbildungs[-\s]?\s*und\s+Pr(?:ü|ue)fungsordnung.*(Berufskolleg|APO[-\s]BK)/i;
 const APO_SHORT_RE = /\bAPO[-\s]?BK\b/i;
-const DATE_RE = /(\d{1,2})\.(\d{1,2})\.(\d{4})/;
 const PART_RE = /^Teil\s+([IVXLCDM]+|\d+)\s*(?:[–—-]\s*)?(.*)$/i;
 const CHAPTER_RE = /^Kapitel\s+([IVXLCDM]+|\d+)\s*(?:[–—-]\s*)?(.*)$/i;
 const SECTION_RE = /^Abschnitt\s+([IVXLCDM]+|\d+)\s*(?:[–—-]\s*)?(.*)$/i;
@@ -40,12 +46,6 @@ const REFERENCE_RE =
 
 function mk(node: Omit<LegalNode, "localId" | "children"> & { children?: LegalNode[] }): LegalNode {
   return { localId: "", children: node.children ?? [], ...node };
-}
-
-function iso(d: RegExpMatchArray | null): string | null {
-  if (!d) return null;
-  const [, dd, mm, yy] = d;
-  return `${yy}-${mm.padStart(2, "0")}-${dd.padStart(2, "0")}`;
 }
 
 function extractRefs(text: string): string[] {
@@ -85,28 +85,70 @@ function extractHeader(lines: string[]): Header {
     citation: null,
     consumed: 0,
   };
-  for (let i = 0; i < lines.length && i < 40; i++) {
+  const titleLines: string[] = [];
+  let collectingTitle = false;
+  let titleCaptured = false;
+
+  for (let i = 0; i < lines.length && i < 60; i++) {
     const line = lines[i].trim();
     if (!line) { h.consumed = i + 1; continue; }
+    if (BASS_CHROME_NOISE.has(line)) { h.consumed = i + 1; continue; }
+    // Die "Inhaltsübersicht" markiert das Ende des Kopfbereichs. Ohne diesen
+    // expliziten Stopp würde der generische Struktur-Abbruch weiter unten
+    // erst bei der ERSTEN Inhaltsübersicht-Zeile ("§ N Titel", passt auf
+    // PARAGRAPH_RE) greifen - der Hauptparser sähe die "Inhaltsübersicht"-
+    // Zeile dann nie und die eigene Inhaltsübersicht-Erkennung liefe leer.
+    if (line === "Inhaltsübersicht") break;
+
+    // Struktur-Abbruch gilt IMMER, auch bevor ein Aktenzeichen gefunden wurde:
+    // ohne diesen frühen Abbruch würde ein Dokument ohne erkennbaren
+    // Aktenzeichen-Marker (z.B. ein aus mehreren Seiten zusammengeführter
+    // Rohtext ohne die bass.schule.nrw-Kopfzeilen) ewig auf den Marker warten
+    // und dabei den kompletten Inhalt inkl. aller § als "Kopfbereich"
+    // verschlucken (Fund: Testfixtures mit zusammengeführten HTML-Seiten).
     if (
       PART_RE.test(line) || CHAPTER_RE.test(line) || SECTION_RE.test(line) ||
       PARAGRAPH_RE.test(line) || ANLAGE_RE.test(line)
     ) break;
 
-    if (APO_SHORT_RE.test(line) && !h.shortName) h.shortName = "APO-BK";
-    if (APO_TITLE_RE.test(line) && !h.title) h.title = line;
-
-    const amend = /Zuletzt\s+ge[aä]ndert\s+(?:durch|vom)?\s*.*?(\d{1,2}\.\d{1,2}\.\d{4})/i.exec(line);
-    if (amend) h.amendedAt = iso(DATE_RE.exec(amend[1]));
-    const vom = !amend ? /\bvom\s+(\d{1,2}\.\d{1,2}\.\d{4})/i.exec(line) : null;
-    if (vom) {
-      h.publishedAt = iso(DATE_RE.exec(vom[1]));
-      if (!h.validFrom) h.validFrom = h.publishedAt;
+    if (!titleCaptured) {
+      if (!collectingTitle) {
+        if (CITATION_MARKER_RE.test(line)) {
+          if (!h.citation) h.citation = line;
+          collectingTitle = true;
+        }
+        h.consumed = i + 1;
+        continue;
+      }
+      if (VOM_LINE_RE.test(line)) {
+        h.title = titleLines.join(" ").replace(/\s+/g, " ").trim() || null;
+        if (h.title && APO_SHORT_RE.test(h.title)) h.shortName = "APO-BK";
+        titleCaptured = true;
+        collectingTitle = false;
+        // "Vom ..." selbst noch normal weiterverarbeiten (publishedAt), daher kein continue.
+      } else {
+        titleLines.push(line);
+        h.consumed = i + 1;
+        continue;
+      }
     }
-    const gueltig = /G[üu]ltig\s+ab\s+(\d{1,2}\.\d{1,2}\.\d{4})/i.exec(line);
-    if (gueltig) h.validFrom = iso(DATE_RE.exec(gueltig[1]));
-    const bis = /G[üu]ltig\s+bis\s+(\d{1,2}\.\d{1,2}\.\d{4})/i.exec(line);
-    if (bis) h.validTo = iso(DATE_RE.exec(bis[1]));
+
+    if (APO_SHORT_RE.test(line) && !h.shortName) h.shortName = "APO-BK";
+    if (!h.title && APO_TITLE_RE.test(line)) h.title = line;
+
+    const amendedAt = findDate(line, String.raw`Zuletzt\s+ge[aä]ndert\s+(?:durch|vom)?.*?`);
+    if (amendedAt) h.amendedAt = amendedAt;
+    else {
+      const publishedAt = findDate(line, String.raw`\bvom`);
+      if (publishedAt) {
+        h.publishedAt = publishedAt;
+        if (!h.validFrom) h.validFrom = publishedAt;
+      }
+    }
+    const validFrom = findDate(line, String.raw`G[üu]ltig\s+ab`);
+    if (validFrom) h.validFrom = validFrom;
+    const validTo = findDate(line, String.raw`G[üu]ltig\s+bis`);
+    if (validTo) h.validTo = validTo;
 
     if (/Ministerium|Herausgeber:/i.test(line)) {
       h.authority = line.replace(/^Herausgeber:\s*/i, "");
@@ -114,9 +156,6 @@ function extractHeader(lines: string[]): Header {
     const cit = /GV\.\s*NRW\.?\s*S\.\s*\d+|BASS\s+\d{1,2}\s*[-–]\s*\d{2}(?:\s*Nr\.?\s*\d+)?/i.exec(line);
     if (cit && !h.citation) h.citation = cit[0].replace(/\s+/g, " ");
 
-    if (!h.title && line.length > 3 && !/^APO[-\s]?BK$/i.test(line)) {
-      h.title = line;
-    }
     h.consumed = i + 1;
   }
   return h;
@@ -148,9 +187,13 @@ export const apoBkNrwParser: LegalImportParser = {
     const lines = input.raw.split(/\r?\n/);
     const header = extractHeader(lines);
 
+    // Hinweis (2026-08-13): der HTML-<title> von bass.schule.nrw ist auf jeder
+    // Seite generisch "BASS" (input.hint.detectedTitle) - kein Rückschluss auf
+    // das konkrete Dokument. Der aus dem Titelblock geparste header.title hat
+    // deshalb Vorrang, detectedTitle ist nur Notnagel, falls das Parsen scheitert.
     const root = mk({
       kind: "document",
-      heading: input.hint?.detectedTitle ?? header.title ?? "APO-BK",
+      heading: header.title ?? input.hint?.detectedTitle ?? "APO-BK",
     });
 
     let currentAnlage: LegalNode | null = null;
@@ -160,6 +203,13 @@ export const apoBkNrwParser: LegalImportParser = {
     let currentBlock: LegalNode | null = null;
     let currentSubsection: LegalNode | null = null;
     let tableBuffer: string[][] | null = null;
+    // Direkt nach "§ N" (ohne Titel auf derselben Zeile) steht die echte
+    // Überschrift auf der nächsten inhaltlichen Zeile - einmalig als Titel abgreifen.
+    let awaitingHeading = false;
+    // Die "Inhaltsübersicht" listet jeden Paragraphen nochmal inline ("§ N Titel")
+    // auf - das sind Navigationsvorschauen, keine Rechtsnormen. Echte Paragraphen
+    // stehen auf dieser Seite immer als "§ N" allein auf eigener Zeile.
+    let inTableOfContents = false;
 
     /** Struktur-Reset beim Wechsel in eine Anlage. */
     const resetInAnlage = () => {
@@ -179,9 +229,33 @@ export const apoBkNrwParser: LegalImportParser = {
       tableBuffer = null;
     };
 
+    // Echte Paragraphenüberschriften stehen auf dieser Seite immer isoliert
+    // nach einer Leerzeile. Seitenumbrüche in mehrseitigen Anlagen können dazu
+    // führen, dass eine mitten im Fließtext stehende Verweisung ("... gemäß
+    // § 10") durch den Zeilenumbruch wie eine eigene "§ 10"-Zeile aussieht -
+    // ohne vorausgehende Leerzeile ist das aber keine neue Vorschrift, sondern
+    // Fließtext (Fund beim Testimport, 2026-08-13: leere §-Knoten in Anlage C/D).
+    let precededByBlank = true;
+
     for (let i = header.consumed; i < lines.length; i++) {
       const line = lines[i].trim();
-      if (!line) { flushTable(); continue; }
+      if (!line) { flushTable(); precededByBlank = true; continue; }
+      const isNewBlock = precededByBlank;
+      precededByBlank = false;
+
+      if (line === "Inhaltsübersicht") {
+        inTableOfContents = true;
+        continue;
+      }
+      if (inTableOfContents) {
+        const tocPara = PARAGRAPH_RE.exec(line);
+        if (tocPara && !tocPara[2]?.trim()) {
+          // "§ N" allein auf eigener Zeile = Ende der Inhaltsübersicht, echter Inhalt beginnt.
+          inTableOfContents = false;
+        } else {
+          continue;
+        }
+      }
 
       const tbl = TABLE_ROW_RE.exec(line);
       if (tbl) {
@@ -222,16 +296,28 @@ export const apoBkNrwParser: LegalImportParser = {
         currentBlock = currentSubsection = null;
         continue;
       }
-      if ((m = PARAGRAPH_RE.exec(line))) {
+      if (
+        isNewBlock &&
+        (m = PARAGRAPH_RE.exec(line)) &&
+        !(m[2]?.trim() && looksLikeCrossReference(m[2]))
+      ) {
         currentBlock = mk({ kind: "paragraph", number: `§ ${m[1]}`, heading: m[2]?.trim() || null });
         containerForBlock().children.push(currentBlock);
         currentSubsection = null;
+        awaitingHeading = !currentBlock.heading;
         continue;
       }
       if ((m = SUBSECTION_RE.exec(line)) && currentBlock) {
         currentSubsection = mk({ kind: "subsection", number: `(${m[1]})`, text: m[2]?.trim() || null });
         attachRefs(currentSubsection);
         currentBlock.children.push(currentSubsection);
+        awaitingHeading = false;
+        continue;
+      }
+
+      if (awaitingHeading && currentBlock) {
+        currentBlock.heading = line;
+        awaitingHeading = false;
         continue;
       }
 
@@ -278,7 +364,7 @@ export const apoBkNrwParser: LegalImportParser = {
       source: {
         key: "apo-bk-nrw",
         kind: "ordinance",
-        title: input.hint?.detectedTitle ?? header.title ?? "APO Berufskolleg NRW",
+        title: header.title ?? input.hint?.detectedTitle ?? "APO Berufskolleg NRW",
         shortName: header.shortName ?? "APO-BK",
         jurisdiction: "NRW",
         authority: header.authority ?? "MSB NRW",

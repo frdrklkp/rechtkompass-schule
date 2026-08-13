@@ -340,6 +340,7 @@ describe("Crawler", () => {
     });
     const result = await crawlOfficialSource({
       definition: BASS_DEF,
+      startUrl: "https://bass.schul-welt.de/db.htm",
       downloader: new Downloader({ fetchImpl: fetchImpl as unknown as typeof fetch, allowedHosts: BASS_DEF.hosts }),
       maxPages: 20,
       maxDepth: 3,
@@ -357,7 +358,9 @@ describe("Crawler", () => {
     });
     const result = await crawlOfficialSource({
       definition: BASS_DEF,
+      startUrl: "https://bass.schul-welt.de/db.htm",
       downloader: new Downloader({ fetchImpl: fetchImpl as unknown as typeof fetch, allowedHosts: BASS_DEF.hosts }),
+      maxDepth: 3,
     });
     expect(result.duplicates).toBeGreaterThanOrEqual(1);
   });
@@ -370,8 +373,10 @@ describe("Crawler", () => {
     });
     const result = await crawlOfficialSource({
       definition: BASS_DEF,
+      startUrl: "https://bass.schul-welt.de/db.htm",
       downloader: new Downloader({ fetchImpl: fetchImpl as unknown as typeof fetch, allowedHosts: BASS_DEF.hosts }),
       maxPages: 2,
+      maxDepth: 3,
     });
     expect(result.visited).toHaveLength(2);
     expect(result.truncated).toBe(true);
@@ -386,11 +391,13 @@ describe("Crawler", () => {
     });
     const result = await crawlOfficialSource({
       definition: BASS_DEF,
+      startUrl: "https://bass.schul-welt.de/db.htm",
       downloader: new Downloader({
         fetchImpl: fetchImpl as unknown as typeof fetch,
         allowedHosts: BASS_DEF.hosts,
         retries: 0,
       }),
+      maxDepth: 3,
     });
     expect(result.errors).toHaveLength(1);
     expect(result.documents.length).toBeGreaterThanOrEqual(2);
@@ -401,6 +408,7 @@ describe("Crawler", () => {
     const fetchImpl = fakeSite({ "https://bass.schul-welt.de/db.htm": PAGE_INDEX });
     await crawlOfficialSource({
       definition: BASS_DEF,
+      startUrl: "https://bass.schul-welt.de/db.htm",
       downloader: new Downloader({ fetchImpl: fetchImpl as unknown as typeof fetch, allowedHosts: BASS_DEF.hosts }),
       maxDepth: 0,
       onProgress: (p) => phases.push(p.phase),
@@ -455,7 +463,7 @@ describe("OfficialSourceConnectorService", () => {
 
   it("erstellt eine vollständige Importvorschau", async () => {
     const { svc } = service(fakeSite(site));
-    const preview = await svc.preview({ sourceId: "bass-nrw" });
+    const preview = await svc.preview({ sourceId: "bass-nrw", url: "https://bass.schul-welt.de/db.htm", maxDepth: 3 });
     expect(preview.parser.id).toBe("bass-nrw");
     expect(preview.stats.documents).toBe(3);
     expect(preview.stats.paragraphs).toBeGreaterThanOrEqual(2);
@@ -479,11 +487,11 @@ describe("OfficialSourceConnectorService", () => {
   it("erkennt beim erneuten Abruf nur die Änderungen (Aktualisierung)", async () => {
     const repository = new InMemoryLegalImportRepository();
     const first = service(fakeSite(site), repository);
-    const p1 = await first.svc.preview({ sourceId: "bass-nrw" });
+    const p1 = await first.svc.preview({ sourceId: "bass-nrw", url: "https://bass.schul-welt.de/db.htm", maxDepth: 3 });
     await repository.saveSnapshot(buildSnapshot(p1.document));
 
     const unchanged = service(fakeSite(site), repository);
-    const p2 = await unchanged.svc.preview({ sourceId: "bass-nrw" });
+    const p2 = await unchanged.svc.preview({ sourceId: "bass-nrw", url: "https://bass.schul-welt.de/db.htm", maxDepth: 3 });
     expect(p2.delta.added).toBe(0);
     expect(p2.delta.updated).toBe(0);
     expect(p2.delta.unchanged).toBeGreaterThan(0);
@@ -496,7 +504,7 @@ describe("OfficialSourceConnectorService", () => {
       ),
     };
     const changed = service(fakeSite(changedSite), repository);
-    const p3 = await changed.svc.preview({ sourceId: "bass-nrw" });
+    const p3 = await changed.svc.preview({ sourceId: "bass-nrw", url: "https://bass.schul-welt.de/db.htm", maxDepth: 3 });
     expect(p3.delta.added + p3.delta.updated).toBeGreaterThan(0);
   });
 
@@ -534,7 +542,7 @@ describe("Legal Update Monitor", () => {
         allowedHosts: BASS_DEF.hosts,
       }),
     });
-    const preview = await svc.preview({ sourceId: "bass-nrw" });
+    const preview = await svc.preview({ sourceId: "bass-nrw", url: "https://bass.schul-welt.de/db.htm", maxDepth: 3 });
     const state = stateFromPreview(preview, null, "2026-07-30T00:00:00.000Z");
     expect(state.sourceId).toBe("bass-nrw");
     expect(state.lastCheckedAt).toBe("2026-07-30T00:00:00.000Z");

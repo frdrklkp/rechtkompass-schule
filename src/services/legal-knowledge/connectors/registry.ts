@@ -11,14 +11,21 @@ import { isWhitelistedHost, validateOfficialUrl } from "./whitelist";
 
 export const OFFICIAL_SOURCES: OfficialSourceDefinition[] = [
   {
+    // Hinweis (2026-08-13): bass.schul-welt.de ist umgezogen auf bass.schule.nrw
+    // (alte URLs liefern HTTP 400). defaultUrl zeigt jetzt auf ein einzelnes,
+    // verifiziert echtes Dokument (Lehramtsausbildungsgesetz, BASS 1-8) statt
+    // auf die (nicht mehr existierende) alte Startseite. BASS ist als Ganzes
+    // eine mehrhundertseitige Bibliothek über 21 Kapitel - ein einzelner Crawl
+    // deckt sie nicht ab; weitere Einzeldokumente lassen sich über den
+    // "Import"-Tab mit eigener URL ergänzen.
     id: "bass-nrw",
     label: "BASS NRW",
     description: "Bereinigte Amtliche Sammlung der Schulvorschriften NRW",
-    defaultUrl: "https://bass.schul-welt.de/db.htm",
+    defaultUrl: "https://bass.schule.nrw/9767.htm",
     parserId: "bass-nrw",
-    hosts: ["bass.schul-welt.de"],
+    hosts: ["bass.schule.nrw", "bass.schul-welt.de"],
     maxPages: 40,
-    maxDepth: 3,
+    maxDepth: 0,
   },
   {
     id: "schulgesetz-nrw",
@@ -32,25 +39,32 @@ export const OFFICIAL_SOURCES: OfficialSourceDefinition[] = [
     maxDepth: 2,
   },
   {
+    // Hinweis (2026-08-13): korrekte, verifizierte URL auf der neuen Domain
+    // (BASS 13-33 Nr. 1.1). Alte URL (bass.schul-welt.de/9584.htm) tot.
     id: "apo-bk-nrw",
     label: "APO-BK",
     description: "Ausbildungs- und Prüfungsordnung Berufskolleg NRW",
-    defaultUrl:
-      "https://bass.schul-welt.de/9584.htm",
+    defaultUrl: "https://bass.schule.nrw/3129.htm",
     parserId: "apo-bk-nrw",
-    hosts: ["bass.schul-welt.de", "recht.nrw.de"],
+    hosts: ["bass.schule.nrw", "bass.schul-welt.de", "recht.nrw.de"],
     maxPages: 40,
-    maxDepth: 3,
+    maxDepth: 0,
   },
   {
+    // Hinweis (2026-08-13): korrekte, verifizierte URL (BASS 12-08 Nr. 1,
+    // Verwaltungsvorschriften zu § 57 Abs. 1 SchulG - Aufsicht). Alte URL
+    // (bass.schul-welt.de/6043.htm) tot. "Verwaltungsvorschriften zum
+    // Schulrecht" ist thematisch breiter als ein Dokument - dies ist ein
+    // repräsentativer, praxisrelevanter Einstieg (Aufsichtspflicht), kein
+    // vollständiger Ersatz für alle VV-Dokumente.
     id: "vv-schulrecht-nrw",
     label: "Verwaltungsvorschriften",
     description: "Verwaltungsvorschriften zum Schulrecht NRW",
-    defaultUrl: "https://bass.schul-welt.de/6043.htm",
+    defaultUrl: "https://bass.schule.nrw/6333.htm",
     parserId: "vv-nrw",
-    hosts: ["bass.schul-welt.de", "recht.nrw.de", "schulministerium.nrw.de"],
+    hosts: ["bass.schule.nrw", "bass.schul-welt.de", "recht.nrw.de", "schulministerium.nrw.de"],
     maxPages: 40,
-    maxDepth: 3,
+    maxDepth: 0,
   },
   {
     id: "schulministerium-nrw",
@@ -88,7 +102,7 @@ export function resolveParserIdForUrl(url: string, fallback = "erlass-generic"):
 
   if (/apo[-_ ]?bk/.test(path)) return "apo-bk-nrw";
   if (/verwaltungsvorschrift|(^|\/)vv[-_]/.test(path)) return "vv-nrw";
-  if (host.endsWith("bass.schul-welt.de")) return "bass-nrw";
+  if (host.endsWith("bass.schule.nrw") || host.endsWith("bass.schul-welt.de")) return "bass-nrw";
   if (host.endsWith("recht.nrw.de")) return "schulgesetz-nrw";
   if (host.endsWith("schulministerium.nrw.de")) return "erlass-generic";
   return fallback;
@@ -105,8 +119,16 @@ class RegistryConnector implements OfficialSourceConnector {
     return check.ok && isWhitelistedHost(check.host, this.definition.hosts);
   }
 
-  resolveParserId(url: string): string {
-    return resolveParserIdForUrl(url, this.definition.parserId);
+  resolveParserId(_url: string): string {
+    // Eine registrierte Quelle hat immer genau einen zugewiesenen Parser (s.
+    // Registry-Definition oben) - kein Erraten anhand der URL nötig. Wichtig
+    // insbesondere für bass.schule.nrw: dort tragen alle Dokumente (BASS,
+    // APO-BK, VV-Schulrecht) rein numerische Pfade ("/3129.htm"), sodass die
+    // URL selbst keinerlei Rückschluss auf den richtigen Parser zulässt (Fund
+    // beim Testimport, 2026-08-13 - APO-BK wurde fälschlich vom BASS-Parser
+    // verarbeitet, weil dessen Host-Heuristik in resolveParserIdForUrl vor
+    // der eigentlichen Zuordnung griff).
+    return this.definition.parserId;
   }
 }
 

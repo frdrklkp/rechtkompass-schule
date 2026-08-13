@@ -10,6 +10,8 @@
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
     "lint": "eslint .",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "node scripts/test-all.mjs",
     "format": "prettier --write .",
     "schema:check": "node scripts/schema-check.mjs",
     "schema:update": "node scripts/schema-check.mjs --update"

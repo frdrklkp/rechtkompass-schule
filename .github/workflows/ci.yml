@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  test:
+    name: Typecheck, Lint & Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Typecheck
+        run: bun run typecheck
+
+      - name: Test
+        run: bun run test
+
+      # Lint ist aktuell NICHT blockierend: 7.722 Fundstellen (größtenteils
+      # Prettier-Formatierung, 7.281 automatisch fixbar) - ein projektweiter
+      # Autofix wurde bewusst noch nicht durchgeführt (großer, ungeprüfter
+      # Diff über ~770 Dateien). Sobald bereinigt, `continue-on-error`
+      # entfernen (Fund 2026-08-13).
+      - name: Lint (informativ, nicht blockierend)
+        run: bun run lint
+        continue-on-error: true

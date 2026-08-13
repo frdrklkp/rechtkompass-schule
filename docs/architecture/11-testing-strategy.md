@@ -1,7 +1,18 @@
 # 11 – Testing Strategy
 
-Testrunner: Vitest (`bunx vitest run`). Tests liegen als `__tests__/`
+Testrunner: `bun test` über Node's eingebautes `node:test`/`node:assert`
+(keine Vitest-Abhängigkeit im Projekt). Tests liegen als `__tests__/`
 unmittelbar bei der jeweiligen Fachdomäne.
+
+**Achtung:** `bun test` ohne Pfadangabe versucht, alle Testdateien im selben
+Prozess zu registrieren - das kollidiert mit einem bekannten Bun-Bug
+(`node:test` innerhalb `node:test` nicht unterstützt,
+[oven-sh/bun#5090](https://github.com/oven-sh/bun/issues/5090)) und erzeugt
+falsche Fehlschläge, obwohl jede Datei einzeln fehlerfrei läuft. Offizieller
+Testbefehl ist deshalb `bun run test` (→ `scripts/test-all.mjs`), das jede
+Datei als eigenen `bun test <datei>`-Prozess ausführt und die Ergebnisse
+aggregiert. `bunx vitest run` funktioniert NICHT - Vitest ist nicht
+installiert.
 
 ## Unit Tests
 Reine Funktionen und einzelne Bausteine: Hashing, Normalisierung,
@@ -50,3 +61,4 @@ Zusätzlich sichert `scripts/schema-check.mjs` den Datenbankstand gegen
   keine externen Netzwerkaufrufe.
 - Externe Systeme werden über Ports gemockt, nicht über Monkey-Patching.
 - Stand bei Freeze v1.0: 114 Tests grün, Typecheck sauber.
+- Stand 2026-08-13: 441 Tests grün über 28 Dateien (`bun run test`).

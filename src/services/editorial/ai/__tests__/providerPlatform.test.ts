@@ -89,7 +89,14 @@ test("router: overrideRoute registriert Fallbacks", () => {
 
 test("router runTask: verwendet Mock ohne Key", async () => {
   const orig = process.env.LOVABLE_API_KEY;
+  const origAnthropic = process.env.ANTHROPIC_API_KEY;
   delete process.env.LOVABLE_API_KEY;
+  // AIProviderFactory fällt auch auf ANTHROPIC_API_KEY zurück (siehe
+  // AIProviderFactory.ts:36,67) - ist der in der Umgebung gesetzt (z.B. für
+  // echte KI-Aufrufe während der Entwicklung), wählt der Router sonst den
+  // echten Anthropic-Provider statt Mock. Für "ohne Key" müssen beide
+  // möglichen Schlüssel-Quellen entfernt werden (Fund 2026-08-13).
+  delete process.env.ANTHROPIC_API_KEY;
   // Ohne Key liefert die Factory für das Gateway den Mock-Provider. Damit der
   // Router eine mock-fähige Route hat, wird für den Test das Mock-Modell als
   // Fallback registriert (Testdaten, keine Produktivlogik).
@@ -122,6 +129,7 @@ test("router runTask: verwendet Mock ohne Key", async () => {
   assert.equal(sum.totalCalls >= 1, true);
   overrideRoute("improve.title", { fallbackModels: beforeRoute.fallbackModels });
   if (orig) process.env.LOVABLE_API_KEY = orig;
+  if (origAnthropic) process.env.ANTHROPIC_API_KEY = origAnthropic;
   AIProviderFactory.clearCache();
 });
 

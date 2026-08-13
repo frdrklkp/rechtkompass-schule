@@ -9,6 +9,7 @@
  */
 import { supabase } from "@/integrations/supabase/client";
 import type { TestAudit } from "@/lib/searchTestSet";
+import { apiFetch } from "@/lib/apiFetch";
 
 const T = "search_testset_overrides" as const;
 
@@ -72,7 +73,7 @@ async function parseApiError(res: Response): Promise<string> {
 export async function upsertTestOverride(
   input: UpsertTestOverrideInput,
 ): Promise<TestOverride> {
-  const res = await fetch("/api/search-testset-overrides", {
+  const res = await apiFetch("/api/search-testset-overrides", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -89,7 +90,7 @@ export async function upsertTestOverride(
 }
 
 export async function deleteTestOverride(testId: string): Promise<void> {
-  const res = await fetch("/api/search-testset-overrides", {
+  const res = await apiFetch("/api/search-testset-overrides", {
     method: "DELETE",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ testId }),

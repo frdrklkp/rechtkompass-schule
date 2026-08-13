@@ -27,6 +27,7 @@ import {
   recordJobItem,
 } from "@/lib/importJobs";
 import { LoadingState, ErrorState, EmptyState } from "@/components/DataStates";
+import { apiFetch } from "@/lib/apiFetch";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -186,7 +187,7 @@ function ImportUebersicht() {
 
         let drafts: ImportSectionDraft[] = [];
         try {
-          const res = await fetch("/api/import-legal-source", {
+          const res = await apiFetch("/api/import-legal-source", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ url: page.url }),

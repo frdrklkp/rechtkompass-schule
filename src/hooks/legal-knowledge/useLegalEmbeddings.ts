@@ -2,9 +2,10 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { legalKnowledgeQueryKeys } from "./queryKeys";
 import { EmbeddingModelRegistry } from "@/services/legal-knowledge/embeddings";
+import { apiFetch } from "@/lib/apiFetch";
 
 async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(url, {
+  const res = await apiFetch(url, {
     headers: { "Content-Type": "application/json", ...(init?.headers ?? {}) },
     ...init,
   });

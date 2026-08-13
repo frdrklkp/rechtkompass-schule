@@ -12,6 +12,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { assertAdminWrite } from "@/lib/adminAuth";
+import { apiFetch } from "@/lib/apiFetch";
 import { loadCaseForEvaluation, type EvalResult } from "@/lib/qualityEngine";
 import {
   EditorialWorkflowService,
@@ -128,7 +129,7 @@ export async function refineCaseField(
   const caseRow = (caseRes.data ?? [])[0];
   if (!caseRow) return { ok: false, message: "Fall nicht gefunden" };
 
-  const res = await fetch("/api/ai-refine-case-field", {
+  const res = await apiFetch("/api/ai-refine-case-field", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ field, reason, caseRow }),

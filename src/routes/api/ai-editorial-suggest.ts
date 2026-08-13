@@ -11,6 +11,7 @@ import {
 import { runTask } from "@/services/editorial/ai/router/AIModelRouter";
 import { AIError } from "@/services/editorial/ai/types";
 import type { AITaskType } from "@/services/editorial/ai/types";
+import { requireApiAuth } from "@/integrations/supabase/apiAuthGuard";
 
 interface RequestBody {
   task?: AITaskType;
@@ -24,6 +25,9 @@ export const Route = createFileRoute("/api/ai-editorial-suggest")({
   server: {
     handlers: {
       POST: async ({ request }) => {
+        const auth = await requireApiAuth(request);
+        if (auth instanceof Response) return auth;
+
         let body: RequestBody;
         try {
           body = (await request.json()) as RequestBody;

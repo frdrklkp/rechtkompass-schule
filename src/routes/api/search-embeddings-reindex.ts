@@ -5,6 +5,7 @@ import {
   computePracticeCaseHash,
   SEARCH_DOCUMENT_VERSION,
 } from "@/lib/searchDocument";
+import { requireApiAuth } from "@/integrations/supabase/apiAuthGuard";
 
 type Mode = "missing" | "stale" | "all" | "single";
 
@@ -32,6 +33,9 @@ export const Route = createFileRoute("/api/search-embeddings-reindex")({
   server: {
     handlers: {
       POST: async ({ request }) => {
+        const auth = await requireApiAuth(request);
+        if (auth instanceof Response) return auth;
+
         let body: { mode?: Mode; caseId?: string; maxBatch?: number };
         try {
           body = (await request.json()) as { mode?: Mode; caseId?: string; maxBatch?: number };

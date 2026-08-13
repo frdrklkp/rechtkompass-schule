@@ -1,5 +1,6 @@
 // Query-Hook für die Wissenssuche.
 import { useMutation } from "@tanstack/react-query";
+import { apiFetch } from "@/lib/apiFetch";
 import type {
   RetrievalFilters,
   RetrievalResult,
@@ -19,7 +20,7 @@ export interface RunRetrievalArgs {
 export function useRunLegalRetrieval() {
   return useMutation({
     mutationFn: async (args: RunRetrievalArgs) => {
-      const res = await fetch("/api/legal-retrieval-search", {
+      const res = await apiFetch("/api/legal-retrieval-search", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(args),

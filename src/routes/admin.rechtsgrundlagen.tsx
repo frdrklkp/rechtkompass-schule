@@ -50,6 +50,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { LoadingState, ErrorState, EmptyState } from "@/components/DataStates";
+import { apiFetch } from "@/lib/apiFetch";
 
 export const Route = createFileRoute("/admin/rechtsgrundlagen")({
   component: RechtsAdmin,
@@ -1145,7 +1146,7 @@ function SourceDevTools({
       for (let i = 0; i < targets.length; i++) {
         const sec = targets[i];
         try {
-          const res = await fetch("/api/enrich-legal-section", {
+          const res = await apiFetch("/api/enrich-legal-section", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({

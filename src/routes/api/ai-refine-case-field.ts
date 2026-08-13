@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AIProviderFactory } from "@/services/editorial/ai/providers/AIProviderFactory";
 import { AIError } from "@/services/editorial/ai/types";
+import { requireApiAuth } from "@/integrations/supabase/apiAuthGuard";
 
 /**
  * Gezielte KI-Nachbesserung eines einzelnen Feldes.
@@ -30,6 +31,9 @@ export const Route = createFileRoute("/api/ai-refine-case-field")({
   server: {
     handlers: {
       POST: async ({ request }) => {
+        const auth = await requireApiAuth(request);
+        if (auth instanceof Response) return auth;
+
         let body: RequestBody;
         try {
           body = (await request.json()) as RequestBody;

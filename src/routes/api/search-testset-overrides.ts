@@ -6,14 +6,13 @@
  * und die Browser-Session keine Schreibrechte auf public.search_testset_overrides
  * benötigt.
  *
- * Auth-Hinweis: Das Projekt besitzt (Stand Pilotphase) noch keine serverseitige
- * Admin-Rollenprüfung — die bestehenden /api/*-Admin-Routen sind ebenfalls
- * unauthentifiziert. Wir folgen diesem Muster und ergänzen einen optionalen
- * Shared-Secret-Guard: Ist ADMIN_API_TOKEN gesetzt, muss der Request den
- * Header `x-admin-token` mitschicken. Ist das Secret nicht gesetzt, verhält
- * sich der Endpunkt wie die vorhandenen Reindex-/Diagnose-Routen (offen).
+ * Auth: erfordert eine echte Supabase-Session (Bearer-Token), siehe
+ * requireApiAuth in apiAuthGuard.ts (Fund: Code-Audit 12.08.2026 - Route war
+ * zuvor unauthentifiziert, der frühere ADMIN_API_TOKEN-Shared-Secret-Guard
+ * war standardmäßig ein No-Op).
  */
 import { createFileRoute } from "@tanstack/react-router";
+import { requireApiAuth } from "@/integrations/supabase/apiAuthGuard";
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -45,16 +44,6 @@ function jsonOk(body: unknown, status = 200) {
   });
 }
 
-function checkAdmin(request: Request): Response | null {
-  const required = process.env.ADMIN_API_TOKEN;
-  if (!required) return null; // kein Secret gesetzt → offen (Pilotphase, wie übrige Admin-Routen)
-  const provided = request.headers.get("x-admin-token");
-  if (!provided || provided !== required) {
-    return jsonError(401, "Nicht autorisiert.");
-  }
-  return null;
-}
-
 type UpsertBody = {
   testId?: unknown;
   expectedCaseIds?: unknown;
@@ -80,8 +69,8 @@ export const Route = createFileRoute("/api/search-testset-overrides")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const authFail = checkAdmin(request);
-        if (authFail) return authFail;
+        const auth = await requireApiAuth(request);
+        if (auth instanceof Response) return auth;
 
         let body: UpsertBody;
         try {
@@ -189,8 +178,8 @@ export const Route = createFileRoute("/api/search-testset-overrides")({
       },
 
       DELETE: async ({ request }) => {
-        const authFail = checkAdmin(request);
-        if (authFail) return authFail;
+        const auth = await requireApiAuth(request);
+        if (auth instanceof Response) return auth;
 
         let body: { testId?: unknown };
         try {

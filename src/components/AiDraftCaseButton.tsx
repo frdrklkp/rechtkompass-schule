@@ -13,6 +13,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { apiFetch } from "@/lib/apiFetch";
 import {
   createCase,
   createLegalLink,
@@ -78,7 +79,7 @@ export function AiDraftCaseButton() {
       );
 
       setStep("KI erstellt Entwurf…");
-      const res = await fetch("/api/ai-draft-case", {
+      const res = await apiFetch("/api/ai-draft-case", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

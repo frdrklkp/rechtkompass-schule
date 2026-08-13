@@ -6,6 +6,7 @@ import type { EditorialCaseRow } from "../types";
 import { buildCaseContext, buildQualityContext } from "./AIContextBuilder";
 import { mapHttpError, mapNetworkError } from "./AIErrorMapper";
 import { enqueue } from "./AIRequestQueue";
+import { apiFetch } from "@/lib/apiFetch";
 import type {
   AIEditorialField,
   AISuggestion,
@@ -41,7 +42,7 @@ function newId(): string {
 async function postSuggest(body: Record<string, unknown>, signal?: AbortSignal) {
   let res: Response;
   try {
-    res = await fetch(ENDPOINT, {
+    res = await apiFetch(ENDPOINT, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),

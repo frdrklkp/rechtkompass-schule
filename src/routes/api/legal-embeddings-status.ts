@@ -4,11 +4,15 @@
  */
 import { createFileRoute } from "@tanstack/react-router";
 import { EmbeddingModelRegistry, EmbeddingStatistics } from "@/services/legal-knowledge/embeddings";
+import { requireApiAuth } from "@/integrations/supabase/apiAuthGuard";
 
 export const Route = createFileRoute("/api/legal-embeddings-status")({
   server: {
     handlers: {
       GET: async ({ request }) => {
+        const auth = await requireApiAuth(request);
+        if (auth instanceof Response) return auth;
+
         const url = new URL(request.url);
         const sourceId = url.searchParams.get("sourceId");
         if (!sourceId) return Response.json({ error: "sourceId required" }, { status: 400 });

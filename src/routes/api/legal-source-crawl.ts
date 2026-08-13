@@ -3,6 +3,7 @@ import { Downloader } from "@/services/legal-knowledge/connectors/Downloader";
 import { crawlOfficialSource } from "@/services/legal-knowledge/connectors/OfficialSourceCrawler";
 import { getOfficialSource } from "@/services/legal-knowledge/connectors/registry";
 import { validateOfficialUrl } from "@/services/legal-knowledge/connectors/whitelist";
+import { requireApiAuth } from "@/integrations/supabase/apiAuthGuard";
 
 /**
  * Sprint 4.5G – Serverseitiger Abruf offizieller Rechtsquellen.
@@ -15,6 +16,9 @@ export const Route = createFileRoute("/api/legal-source-crawl")({
   server: {
     handlers: {
       POST: async ({ request }) => {
+        const auth = await requireApiAuth(request);
+        if (auth instanceof Response) return auth;
+
         const json = (v: unknown, status = 200) =>
           new Response(JSON.stringify(v), {
             status,

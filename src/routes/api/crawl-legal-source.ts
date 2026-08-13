@@ -4,6 +4,7 @@ import {
   extractTitle,
   guessBassNumber,
 } from "@/lib/legalSourceParser";
+import { requireApiAuth } from "@/integrations/supabase/apiAuthGuard";
 
 /**
  * Crawler für offizielle Rechtsquellen (Fokus: BASS NRW).
@@ -108,6 +109,9 @@ export const Route = createFileRoute("/api/crawl-legal-source")({
   server: {
     handlers: {
       POST: async ({ request }) => {
+        const auth = await requireApiAuth(request);
+        if (auth instanceof Response) return auth;
+
         let body: {
           start_url?: string;
           max_pages?: number;

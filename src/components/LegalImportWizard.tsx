@@ -27,6 +27,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ErrorState } from "@/components/DataStates";
+import { apiFetch } from "@/lib/apiFetch";
 
 
 type ParsedSection = {
@@ -173,7 +174,7 @@ export function LegalImportWizard({ onClose }: { onClose: () => void }) {
     setIsFetching(true);
     setPreview(null);
     try {
-      const res = await fetch("/api/import-legal-source", {
+      const res = await apiFetch("/api/import-legal-source", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ url }),
@@ -252,7 +253,7 @@ export function LegalImportWizard({ onClose }: { onClose: () => void }) {
     );
     try {
       const source = (sourcesQ.data ?? []).find((s: any) => s.id === sourceId);
-      const res = await fetch("/api/enrich-legal-section", {
+      const res = await apiFetch("/api/enrich-legal-section", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -336,7 +337,7 @@ export function LegalImportWizard({ onClose }: { onClose: () => void }) {
     setCrawlResult(null);
     setCrawlSelected(new Set());
     try {
-      const res = await fetch("/api/crawl-legal-source", {
+      const res = await apiFetch("/api/crawl-legal-source", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -419,7 +420,7 @@ export function LegalImportWizard({ onClose }: { onClose: () => void }) {
           // Seite parsen
           let drafts: ImportSectionDraft[] = [];
           try {
-            const res = await fetch("/api/import-legal-source", {
+            const res = await apiFetch("/api/import-legal-source", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ url: page.url }),

@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AIProviderFactory } from "@/services/editorial/ai/providers/AIProviderFactory";
 import { AIError } from "@/services/editorial/ai/types";
+import { requireApiAuth } from "@/integrations/supabase/apiAuthGuard";
 
 type Ref = { id: string; label: string };
 type CaseRef = { id: string; label: string; category?: string; ampel?: string };
@@ -18,6 +19,9 @@ export const Route = createFileRoute("/api/ai-draft-case")({
   server: {
     handlers: {
       POST: async ({ request }) => {
+        const auth = await requireApiAuth(request);
+        if (auth instanceof Response) return auth;
+
         let body: RequestBody;
         try {
           body = (await request.json()) as RequestBody;

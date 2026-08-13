@@ -11,11 +11,15 @@ import {
   EmbeddingModelRegistry,
   legalEmbeddingFlags,
 } from "@/services/legal-knowledge/embeddings";
+import { requireApiAuth } from "@/integrations/supabase/apiAuthGuard";
 
 export const Route = createFileRoute("/api/legal-embeddings-run")({
   server: {
     handlers: {
       POST: async ({ request }) => {
+        const auth = await requireApiAuth(request);
+        if (auth instanceof Response) return auth;
+
         if (!legalEmbeddingFlags.jobsEnabled) {
           return Response.json({ error: "jobs disabled" }, { status: 403 });
         }

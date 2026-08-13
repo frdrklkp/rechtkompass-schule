@@ -44,6 +44,7 @@ import {
   updateCase,
 } from "@/lib/coreBuilder";
 import { completePracticeCase } from "@/lib/casePipeline.completion";
+import { apiFetch } from "@/lib/apiFetch";
 import {
   parseCuratedTree,
   validateCuratedTree,
@@ -602,7 +603,7 @@ function ExcelImportPage() {
         try {
           const description = buildDescriptionFromRow(row.data);
 
-          const res = await fetch("/api/ai-draft-case", {
+          const res = await apiFetch("/api/ai-draft-case", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({

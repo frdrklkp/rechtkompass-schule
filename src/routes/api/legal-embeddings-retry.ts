@@ -3,11 +3,15 @@
  */
 import { createFileRoute } from "@tanstack/react-router";
 import { EmbeddingJobService } from "@/services/legal-knowledge/embeddings";
+import { requireApiAuth } from "@/integrations/supabase/apiAuthGuard";
 
 export const Route = createFileRoute("/api/legal-embeddings-retry")({
   server: {
     handlers: {
       POST: async ({ request }) => {
+        const auth = await requireApiAuth(request);
+        if (auth instanceof Response) return auth;
+
         const body = (await request.json().catch(() => ({}))) as { jobId?: string };
         if (!body.jobId) return Response.json({ error: "jobId required" }, { status: 400 });
         try {

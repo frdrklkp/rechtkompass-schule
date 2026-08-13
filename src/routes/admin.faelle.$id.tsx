@@ -53,6 +53,7 @@ import { mapDbCase } from "@/lib/casesFromDb";
 
 import { useKnowledgeIndex } from "@/lib/knowledgeIndex";
 import { countBullets } from "@/lib/caseCompleteness";
+import { apiFetch } from "@/lib/apiFetch";
 
 export const Route = createFileRoute("/admin/faelle/$id")({
   component: PracticeCaseWizard,
@@ -851,7 +852,7 @@ export function PracticeCaseWizard({ forcedId }: { forcedId?: string } = {}) {
       }));
 
       setAiStep("KI erzeugt Vorschläge …");
-      const res = await fetch("/api/ai-draft-case", {
+      const res = await apiFetch("/api/ai-draft-case", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

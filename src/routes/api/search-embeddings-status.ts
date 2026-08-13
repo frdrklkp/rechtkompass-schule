@@ -1,9 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { requireApiAuth } from "@/integrations/supabase/apiAuthGuard";
 
 export const Route = createFileRoute("/api/search-embeddings-status")({
   server: {
     handlers: {
-      GET: async () => {
+      GET: async ({ request }) => {
+        const auth = await requireApiAuth(request);
+        if (auth instanceof Response) return auth;
+
         const { createPublicSupabase, getSearchIndexEnvStatus } = await import(
           "@/lib/searchEmbeddings.supabase.server"
         );

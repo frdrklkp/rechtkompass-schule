@@ -6,11 +6,15 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { HybridRetrievalService } from "@/services/legal-knowledge/retrieval";
 import type { RetrievalFilters, SearchType } from "@/services/legal-knowledge/retrieval";
+import { requireApiAuth } from "@/integrations/supabase/apiAuthGuard";
 
 export const Route = createFileRoute("/api/legal-retrieval-search")({
   server: {
     handlers: {
       POST: async ({ request }) => {
+        const auth = await requireApiAuth(request);
+        if (auth instanceof Response) return auth;
+
         let body: {
           query?: string;
           filters?: RetrievalFilters;

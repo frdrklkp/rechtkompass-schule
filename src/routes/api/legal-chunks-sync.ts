@@ -4,11 +4,15 @@
  * Upsert persistierter Chunks. Aktiviert Idempotenz für Embedding-Jobs.
  */
 import { createFileRoute } from "@tanstack/react-router";
+import { requireApiAuth } from "@/integrations/supabase/apiAuthGuard";
 
 export const Route = createFileRoute("/api/legal-chunks-sync")({
   server: {
     handlers: {
       POST: async ({ request }) => {
+        const auth = await requireApiAuth(request);
+        if (auth instanceof Response) return auth;
+
         const body = (await request.json().catch(() => ({}))) as {
           sourceId?: string;
           chunks?: Array<{

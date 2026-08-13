@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { parseHtmlToSections } from "@/lib/legalSourceParser";
+import { requireApiAuth } from "@/integrations/supabase/apiAuthGuard";
 
 /**
  * Import offizieller Rechtsquellen (Einzelseite).
@@ -11,6 +12,9 @@ export const Route = createFileRoute("/api/import-legal-source")({
   server: {
     handlers: {
       POST: async ({ request }) => {
+        const auth = await requireApiAuth(request);
+        if (auth instanceof Response) return auth;
+
         let body: { url?: string } = {};
         try {
           body = (await request.json()) as { url?: string };

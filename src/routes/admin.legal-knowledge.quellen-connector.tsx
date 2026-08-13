@@ -49,6 +49,7 @@ import { VersionCompareDialog } from "@/components/legal-knowledge/VersionCompar
 import { ImportProgressStepper } from "@/components/legal-knowledge/ImportProgressStepper";
 import { ImportReportPanel } from "@/components/legal-knowledge/ImportReportPanel";
 import { ImportErrorNotice } from "@/components/legal-knowledge/ImportErrorNotice";
+import { apiFetch } from "@/lib/apiFetch";
 
 export const Route = createFileRoute("/admin/legal-knowledge/quellen-connector")({
   component: OfficialSourceConnectorPage,
@@ -162,7 +163,7 @@ function OfficialSourceConnectorPage() {
     setReport(null);
     setMessage("Amtliche Startseite wird abgerufen…");
     try {
-      const res = await fetch("/api/legal-source-crawl", {
+      const res = await apiFetch("/api/legal-source-crawl", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ source_id: targetId, url: targetUrl }),

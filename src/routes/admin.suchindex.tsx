@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { RefreshCw, PlayCircle } from "lucide-react";
+import { apiFetch } from "@/lib/apiFetch";
 
 export const Route = createFileRoute("/admin/suchindex")({
   component: SearchIndexAdmin,
@@ -42,12 +43,12 @@ type ReindexResult = {
 
 
 async function fetchStatus(): Promise<StatusResp> {
-  const res = await fetch("/api/search-embeddings-status");
+  const res = await apiFetch("/api/search-embeddings-status");
   return (await res.json()) as StatusResp;
 }
 
 async function runReindex(mode: "missing" | "stale" | "all", maxBatch = 25): Promise<ReindexResult> {
-  const res = await fetch("/api/search-embeddings-reindex", {
+  const res = await apiFetch("/api/search-embeddings-reindex", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ mode, maxBatch }),

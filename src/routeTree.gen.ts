@@ -57,6 +57,7 @@ import { Route as ApiAiMatchKeywordsRouteImport } from './routes/api/ai-match-ke
 import { Route as ApiAiMatchLegalSectionsRouteImport } from './routes/api/ai-match-legal-sections'
 import { Route as ApiAiMatchSimilarCasesRouteImport } from './routes/api/ai-match-similar-cases'
 import { Route as ApiAiMatchTemplatesRouteImport } from './routes/api/ai-match-templates'
+import { Route as ApiAiReclassifyAmpelRouteImport } from './routes/api/ai-reclassify-ampel'
 import { Route as ApiAiReevaluateLegalLinksRouteImport } from './routes/api/ai-reevaluate-legal-links'
 import { Route as ApiAiRefineCaseFieldRouteImport } from './routes/api/ai-refine-case-field'
 import { Route as ApiCopilotTrackRouteImport } from './routes/api/copilot-track'
@@ -369,6 +370,11 @@ const ApiAiMatchSimilarCasesRoute = ApiAiMatchSimilarCasesRouteImport.update({
 const ApiAiMatchTemplatesRoute = ApiAiMatchTemplatesRouteImport.update({
   id: '/api/ai-match-templates',
   path: '/api/ai-match-templates',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAiReclassifyAmpelRoute = ApiAiReclassifyAmpelRouteImport.update({
+  id: '/api/ai-reclassify-ampel',
+  path: '/api/ai-reclassify-ampel',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiAiReevaluateLegalLinksRoute =
@@ -814,6 +820,7 @@ export interface FileRoutesByFullPath {
   '/api/ai-match-legal-sections': typeof ApiAiMatchLegalSectionsRoute
   '/api/ai-match-similar-cases': typeof ApiAiMatchSimilarCasesRoute
   '/api/ai-match-templates': typeof ApiAiMatchTemplatesRoute
+  '/api/ai-reclassify-ampel': typeof ApiAiReclassifyAmpelRoute
   '/api/ai-reevaluate-legal-links': typeof ApiAiReevaluateLegalLinksRoute
   '/api/ai-refine-case-field': typeof ApiAiRefineCaseFieldRoute
   '/api/copilot-track': typeof ApiCopilotTrackRoute
@@ -931,6 +938,7 @@ export interface FileRoutesByTo {
   '/api/ai-match-legal-sections': typeof ApiAiMatchLegalSectionsRoute
   '/api/ai-match-similar-cases': typeof ApiAiMatchSimilarCasesRoute
   '/api/ai-match-templates': typeof ApiAiMatchTemplatesRoute
+  '/api/ai-reclassify-ampel': typeof ApiAiReclassifyAmpelRoute
   '/api/ai-reevaluate-legal-links': typeof ApiAiReevaluateLegalLinksRoute
   '/api/ai-refine-case-field': typeof ApiAiRefineCaseFieldRoute
   '/api/copilot-track': typeof ApiCopilotTrackRoute
@@ -1052,6 +1060,7 @@ export interface FileRoutesById {
   '/api/ai-match-legal-sections': typeof ApiAiMatchLegalSectionsRoute
   '/api/ai-match-similar-cases': typeof ApiAiMatchSimilarCasesRoute
   '/api/ai-match-templates': typeof ApiAiMatchTemplatesRoute
+  '/api/ai-reclassify-ampel': typeof ApiAiReclassifyAmpelRoute
   '/api/ai-reevaluate-legal-links': typeof ApiAiReevaluateLegalLinksRoute
   '/api/ai-refine-case-field': typeof ApiAiRefineCaseFieldRoute
   '/api/copilot-track': typeof ApiCopilotTrackRoute
@@ -1175,6 +1184,7 @@ export interface FileRouteTypes {
     | '/api/ai-match-legal-sections'
     | '/api/ai-match-similar-cases'
     | '/api/ai-match-templates'
+    | '/api/ai-reclassify-ampel'
     | '/api/ai-reevaluate-legal-links'
     | '/api/ai-refine-case-field'
     | '/api/copilot-track'
@@ -1292,6 +1302,7 @@ export interface FileRouteTypes {
     | '/api/ai-match-legal-sections'
     | '/api/ai-match-similar-cases'
     | '/api/ai-match-templates'
+    | '/api/ai-reclassify-ampel'
     | '/api/ai-reevaluate-legal-links'
     | '/api/ai-refine-case-field'
     | '/api/copilot-track'
@@ -1412,6 +1423,7 @@ export interface FileRouteTypes {
     | '/api/ai-match-legal-sections'
     | '/api/ai-match-similar-cases'
     | '/api/ai-match-templates'
+    | '/api/ai-reclassify-ampel'
     | '/api/ai-reevaluate-legal-links'
     | '/api/ai-refine-case-field'
     | '/api/copilot-track'
@@ -1509,6 +1521,7 @@ export interface RootRouteChildren {
   ApiAiMatchLegalSectionsRoute: typeof ApiAiMatchLegalSectionsRoute
   ApiAiMatchSimilarCasesRoute: typeof ApiAiMatchSimilarCasesRoute
   ApiAiMatchTemplatesRoute: typeof ApiAiMatchTemplatesRoute
+  ApiAiReclassifyAmpelRoute: typeof ApiAiReclassifyAmpelRoute
   ApiAiReevaluateLegalLinksRoute: typeof ApiAiReevaluateLegalLinksRoute
   ApiAiRefineCaseFieldRoute: typeof ApiAiRefineCaseFieldRoute
   ApiCopilotTrackRoute: typeof ApiCopilotTrackRoute
@@ -1876,6 +1889,13 @@ declare module '@tanstack/react-router' {
       path: '/api/ai-match-templates'
       fullPath: '/api/ai-match-templates'
       preLoaderRoute: typeof ApiAiMatchTemplatesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/ai-reclassify-ampel': {
+      id: '/api/ai-reclassify-ampel'
+      path: '/api/ai-reclassify-ampel'
+      fullPath: '/api/ai-reclassify-ampel'
+      preLoaderRoute: typeof ApiAiReclassifyAmpelRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/ai-reevaluate-legal-links': {
@@ -2695,6 +2715,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiAiMatchLegalSectionsRoute: ApiAiMatchLegalSectionsRoute,
   ApiAiMatchSimilarCasesRoute: ApiAiMatchSimilarCasesRoute,
   ApiAiMatchTemplatesRoute: ApiAiMatchTemplatesRoute,
+  ApiAiReclassifyAmpelRoute: ApiAiReclassifyAmpelRoute,
   ApiAiReevaluateLegalLinksRoute: ApiAiReevaluateLegalLinksRoute,
   ApiAiRefineCaseFieldRoute: ApiAiRefineCaseFieldRoute,
   ApiCopilotTrackRoute: ApiCopilotTrackRoute,

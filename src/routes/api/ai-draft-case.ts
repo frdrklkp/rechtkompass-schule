@@ -51,6 +51,8 @@ export const Route = createFileRoute("/api/ai-draft-case")({
           "Wenn du unsicher bist oder keine passende Grundlage findest, lasse das Feld leer statt zu erfinden. Die Redaktion ergänzt bei Bedarf.",
           "Prüfe zuerst die Wissensbasis ('bekannte_praxisfaelle') auf ähnliche, bereits veröffentlichte Fälle und wiederverwende Formulierungen, wo sinnvoll. Nenne ähnliche Fälle als 'related_hints' (nur Titel).",
           "Falls nur ein Titel vorliegt, analysiere ihn semantisch (Thema, Handlungsfeld, Rechtsbereich) und erzeuge dennoch einen vollständigen Entwurf.",
+          "AMPEL-EINSTUFUNG (ampel) - verbindliche Kriterien, NICHT standardmäßig 'gruen' wählen: 'gruen' NUR bei einfacher Alltagssituation ohne Anhörungspflicht, ohne drohende Ordnungsmaßnahme, ohne Meldepflicht, eigenständig durch die Lehrkraft lösbar. 'gelb' bei formalen Verfahrensschritten (Anhörung nach § 66 VwVfG NRW, Dokumentationspflicht, mögliche Ordnungsmaßnahme, Rücksprache mit vorgesetzter Stelle nötig) OHNE akute Gefährdung. 'rot' bei akuter Gefährdung, Straftatverdacht, Meldepflicht an externe Stellen (Jugendamt, Polizei) oder Fällen, die sofortige Eskalation erfordern.",
+          "ZUSTÄNDIGKEITEN (responsibilities): nenne die tatsächlich passende Ebene, nicht automatisch Schulleitung. Bei echten Alltagsroutinen (ampel='gruen') ist meist die Lehrkraft, Klassenleitung, Abteilungsleitung oder Ausbildungskoordination zuständig - Schulleitung NUR nennen, wenn der Sachverhalt das nach den obigen Ampel-Kriterien tatsächlich erfordert (ampel='gelb'/'rot').",
         ].join(" ");
 
         const user = {

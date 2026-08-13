@@ -61,7 +61,7 @@ export const Route = createFileRoute("/api/ai-refine-case-field")({
           "Für 'short_description' eine ausführliche Sachverhaltsbeschreibung (mindestens 200 Zeichen).",
           "Für 'recommendation' eine klare, handlungsleitende Empfehlung (mindestens 150 Zeichen).",
           "Für 'immediate_actions' eine kurze Sofortentscheidung (mindestens 80 Zeichen).",
-          "Für 'responsibilities' eine klare Zuständigkeitsangabe (mindestens 80 Zeichen).",
+          "Für 'responsibilities' eine klare Zuständigkeitsangabe (mindestens 80 Zeichen). Nenne die tatsächlich passende Ebene, nicht automatisch Schulleitung - bei einfachen Alltagsroutinen ohne Anhörungspflicht/Ordnungsmaßnahme ist meist Lehrkraft, Klassenleitung, Abteilungsleitung oder Ausbildungskoordination zuständig; Schulleitung nur nennen, wenn der Fall das tatsächlich erfordert.",
         ].join(" ");
 
         const isArrayField = field === "checklist" || field === "documentation" || field === "common_mistakes" || field === "faq";

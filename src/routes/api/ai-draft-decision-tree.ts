@@ -155,6 +155,15 @@ export const Route = createFileRoute("/api/ai-draft-decision-tree")({
               { role: "user", content: JSON.stringify(user) },
             ],
             jsonSchema: { name: "curated_decision_tree", schema },
+            // Standard-Limit (4096) reichte für vollständige Bäume nicht:
+            // "steps" (3-6 Fragen mit Erklärungen) allein konnte das Budget
+            // aufbrauchen, sodass "results"/"meta" (später im Schema)
+            // fehlten - kein Parse-Fehler, da die Tool-Use-JSON bis dahin
+            // syntaktisch gültig blieb, nur unvollständig. Empirisch
+            // gefunden: 234 von 246 bereits erzeugten Bäumen fehlte
+            // "results" (Fund 2026-08-13, Nutzerrückmeldung "Entscheidungs-
+            // assistent fehlt").
+            maxTokens: 8192,
           });
           parsed = result.json;
         } catch (err) {

@@ -71,9 +71,18 @@ function findByNumber(root: LegalNode, number: string): LegalNode | null {
 
 test("BASS: canParse erkennt Zitat und offizielle URL", () => {
   assert.ok(bassNrwParser.canParse(inp("BASS 12-05 Nr. 1\nText")));
+  // Domain allein reicht bewusst NICHT mehr aus (viele bass.schule.nrw-
+  // Dokumente sind dezimal statt "§ N" strukturiert und gehören zu
+  // verwaltungsvorschriftNrwParser, siehe canParse-Kommentar dort) -
+  // Domain-Match + echte "§ N"-Struktur im Text muss zusammenkommen.
   assert.ok(
     bassNrwParser.canParse(
-      inp("Nur Fließtext", { officialUrl: "https://bass.schul-welt.de/1234.htm" }),
+      inp("Irgendein Vorspann\n\n§ 1 Geltungsbereich\n\nText", { officialUrl: "https://bass.schul-welt.de/1234.htm" }),
+    ),
+  );
+  assert.ok(
+    !bassNrwParser.canParse(
+      inp("Nur Fließtext ohne Paragraphen", { officialUrl: "https://bass.schul-welt.de/1234.htm" }),
     ),
   );
   assert.ok(!bassNrwParser.canParse(inp("Ein beliebiger Text ohne Marker.")));

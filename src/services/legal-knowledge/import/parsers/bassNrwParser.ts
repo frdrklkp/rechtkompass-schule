@@ -27,6 +27,7 @@ import {
   CITATION_MARKER_RE,
   VOM_LINE_RE,
   findDate,
+  findPublishedDate,
   looksLikeCrossReference,
 } from "./bassSiteHeader";
 
@@ -145,7 +146,7 @@ function extractHeader(rawLines: string[]): {
     const geandAt = findDate(line, String.raw`Zuletzt\s+ge[aä]ndert\s+(?:durch|vom)?.*?`);
     if (geandAt) amendedAt = geandAt;
     else {
-      const vomAt = findDate(line, String.raw`\bvom`);
+      const vomAt = findPublishedDate(line);
       if (vomAt) {
         publishedAt = vomAt;
         if (!validFrom) validFrom = vomAt;
@@ -177,8 +178,22 @@ export const bassNrwParser: LegalImportParser = {
 
   canParse(input: LegalImportInput): boolean {
     const raw = input.raw.slice(0, 6000);
-    if (input.hint?.officialUrl?.includes("bass.schule.nrw")) return true;
-    if (input.hint?.officialUrl?.includes("bass.schul-welt.de")) return true;
+    const onBassDomain =
+      input.hint?.officialUrl?.includes("bass.schule.nrw") ||
+      input.hint?.officialUrl?.includes("bass.schul-welt.de");
+    // Nicht jedes bass.schule.nrw-Dokument ist "§ N"-strukturiert - viele
+    // Runderlasse dort nutzen Dezimalnummerierung ("1", "1.1", "2.3", siehe
+    // verwaltungsvorschriftNrwParser). Reine Domain-Zugehörigkeit reicht
+    // deshalb nicht mehr, sonst gewinnt dieser Parser die Auto-Erkennung
+    // immer zuerst und lässt Dezimal-nummerierte Dokumente nie strukturiert
+    // parsen (Fund beim BASS-Vollimport, 2026-08-13: nur "text"-Fallback-
+    // Knoten statt echter Paragraphen).
+    if (onBassDomain) {
+      const lines = raw.split(/\r?\n/);
+      if (lines.some((l) => { const t = l.trim(); return PARAGRAPH_RE.test(t) || ARTICLE_RE.test(t); })) {
+        return true;
+      }
+    }
     if (BASS_CITATION_RE.test(raw)) return true;
     if (/Bereinigte\s+Amtliche\s+Sammlung/i.test(raw)) return true;
     return false;

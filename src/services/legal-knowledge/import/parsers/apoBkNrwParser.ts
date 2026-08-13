@@ -26,6 +26,7 @@ import {
   CITATION_MARKER_RE,
   VOM_LINE_RE,
   findDate,
+  findPublishedDate,
   looksLikeCrossReference,
 } from "./bassSiteHeader";
 
@@ -139,7 +140,7 @@ function extractHeader(lines: string[]): Header {
     const amendedAt = findDate(line, String.raw`Zuletzt\s+ge[aä]ndert\s+(?:durch|vom)?.*?`);
     if (amendedAt) h.amendedAt = amendedAt;
     else {
-      const publishedAt = findDate(line, String.raw`\bvom`);
+      const publishedAt = findPublishedDate(line);
       if (publishedAt) {
         h.publishedAt = publishedAt;
         if (!h.validFrom) h.validFrom = publishedAt;

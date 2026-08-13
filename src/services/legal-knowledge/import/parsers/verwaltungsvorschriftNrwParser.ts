@@ -26,6 +26,7 @@ import {
   CITATION_MARKER_RE,
   VOM_LINE_RE,
   findDate,
+  findPublishedDate,
 } from "./bassSiteHeader";
 
 const BASS_NR_RE = /BASS\s+(\d{1,2}\s*[-–]\s*\d{2})(?:\s*Nr\.?\s*(\d+))?/i;
@@ -124,7 +125,7 @@ function extractHeader(lines: string[]): Header {
     const amendedAt = findDate(line, String.raw`Zuletzt\s+ge[aä]ndert\s+(?:durch|vom)?.*?`);
     if (amendedAt) h.amendedAt = amendedAt;
     else {
-      const publishedAt = findDate(line, String.raw`\bvom`);
+      const publishedAt = findPublishedDate(line);
       if (publishedAt) {
         h.publishedAt = publishedAt;
         if (!h.validFrom) h.validFrom = publishedAt;
@@ -177,6 +178,16 @@ export const verwaltungsvorschriftNrwParser: LegalImportParser = {
     const raw = input.raw.slice(0, 6000);
     if (input.hint?.officialUrl && /verwaltungsvorschrift|vv[-_]/i.test(input.hint.officialUrl)) return true;
     if (/Verwaltungsvorschrift(?:en)?\b/i.test(raw)) return true;
+    // Viele Runderlasse auf bass.schule.nrw nennen das Wort
+    // "Verwaltungsvorschrift" nirgends, nutzen aber dieselbe
+    // Dezimalnummerierung ("1", "1.1", "2.3" ...) wie klassische
+    // Verwaltungsvorschriften. Mindestens zwei solcher Zeilen verlangen,
+    // um einzelne beiläufige Nummern (z.B. in Aufzählungen) nicht
+    // fälschlich als Strukturmuster zu werten.
+    if (input.hint?.officialUrl?.includes("bass.schule.nrw") || input.hint?.officialUrl?.includes("bass.schul-welt.de")) {
+      const hits = raw.split(/\r?\n/).filter((l) => NUM_RE.test(l.trim())).length;
+      if (hits >= 2) return true;
+    }
     return false;
   },
 

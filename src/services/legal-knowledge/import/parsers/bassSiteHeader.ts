@@ -41,7 +41,10 @@ const GERMAN_MONTHS: Record<string, string> = {
 
 const DATE_FRAGMENT = String.raw`\d{1,2}\.\s*(?:\d{1,2}\.\d{4}|[A-Za-zÄÖÜäöüß]+\s+\d{4})`;
 
-export const VOM_LINE_RE = new RegExp(`^Vom\\s+(${DATE_FRAGMENT})`, "i");
+// Manche Runderlasse schreiben statt "Vom 19. Dezember 2011" die verkürzte
+// Form "v. 19.12.2011" (Fund beim BASS-Vollimport, 2026-08-13) - beide
+// Schreibweisen markieren das Ende des Titelblocks.
+export const VOM_LINE_RE = new RegExp(`^(?:Vom|v\\.)\\s+(${DATE_FRAGMENT})`, "i");
 
 /** Parst sowohl "26.5.1999" als auch "26. Mai 1999" zu ISO YYYY-MM-DD. */
 export function parseGermanDate(text: string): string | null {
@@ -63,6 +66,11 @@ export function findDate(line: string, prefixPattern: string): string | null {
   const re = new RegExp(`${prefixPattern}\\s*(${DATE_FRAGMENT})`, "i");
   const m = re.exec(line);
   return m ? parseGermanDate(m[1]) : null;
+}
+
+/** Findet das Ausfertigungsdatum nach "vom ..." oder der Kurzform "v. ...". */
+export function findPublishedDate(line: string): string | null {
+  return findDate(line, String.raw`\bvom`) ?? findDate(line, String.raw`\bv\.`);
 }
 
 /**

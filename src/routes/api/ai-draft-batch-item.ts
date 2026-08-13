@@ -22,6 +22,49 @@ type RequestBody = {
   cases?: CaseRef[];
 };
 
+const STOPWORDS = new Set([
+  "der", "die", "das", "und", "oder", "für", "von", "mit", "bei", "im", "in", "zu", "auf",
+  "ist", "sind", "des", "dem", "den", "ein", "eine", "einer", "eines", "nach", "über", "als",
+  "an", "am", "um", "ohne", "durch", "wird", "werden", "kann", "können", "soll", "sollen",
+  "muss", "müssen", "nicht", "auch", "sich", "sie", "es", "vom", "zur", "zum",
+]);
+
+function tokenize(s: string): Set<string> {
+  return new Set(
+    s
+      .toLowerCase()
+      .normalize("NFKD")
+      .replace(/[^\p{L}\p{N}\s]/gu, " ")
+      .split(/\s+/)
+      .filter((w) => w.length > 2 && !STOPWORDS.has(w)),
+  );
+}
+
+/**
+ * Bei > 1000 Rechtsgrundlagen (voller BASS-Bestand, 17.557 legal_sections,
+ * Fund beim BASS-Vollimport 2026-08-13) sprengt die vollständige Liste als
+ * Freitext-Kontext das 200k-Token-Limit von Claude (gemessen: 672.727 Token
+ * für alle 17.557 Abschnitte). Lokale Relevanzfilterung per Tokenüberlappung
+ * zwischen Idee (Titel+Sachverhalt+Thema) und Abschnitts-Label VOR dem
+ * KI-Aufruf, Top-N behalten. Kein Embedding-Call nötig - das Label (Quelle +
+ * Nummer + Titel) reicht für eine brauchbare Vorauswahl; die KI wählt final
+ * aus dieser Teilmenge. Betrifft sowohl dieses Skript-getriebene Batch als
+ * auch die Admin-UI (admin.ki-entwurfsmaschine.index.tsx), die dieselbe
+ * Route mit derselben vollen Sektionsliste aufruft.
+ */
+function filterRelevantSections(sections: Ref[], queryText: string, maxCount = 300): Ref[] {
+  if (sections.length <= maxCount) return sections;
+  const queryTokens = tokenize(queryText);
+  const scored = sections.map((s) => {
+    const labelTokens = tokenize(s.label ?? "");
+    let overlap = 0;
+    for (const t of labelTokens) if (queryTokens.has(t)) overlap++;
+    return { ref: s, score: overlap };
+  });
+  scored.sort((a, b) => b.score - a.score);
+  return scored.slice(0, maxCount).map((x) => x.ref);
+}
+
 export const Route = createFileRoute("/api/ai-draft-batch-item")({
   server: {
     handlers: {
@@ -53,6 +96,11 @@ export const Route = createFileRoute("/api/ai-draft-batch-item")({
           "Für Do's (practice_tip) MINDESTENS 5 und maximal 8 konkrete, fallbezogene, handlungsorientierte Empfehlungen liefern – jede als eigene Zeile mit '- '. Keine allgemeinen Standardformulierungen, keine Dubletten, keine künstliche Auffüllung. Do's müssen mit Sachverhalt und gewählten Rechtsgrundlagen konsistent sein. Don'ts (common_mistakes) analog konkret formulieren.",
         ].join(" ");
 
+        const relevantSections = filterRelevantSections(
+          body.sections ?? [],
+          [title, sketch, body.topic ?? ""].join(" "),
+        );
+
         const user = {
           idee_titel: title,
           idee_sachverhalt: sketch,
@@ -60,7 +108,7 @@ export const Route = createFileRoute("/api/ai-draft-batch-item")({
           verfuegbare_kategorien: body.categories ?? [],
           verfuegbare_schlagwoerter: body.keywords ?? [],
           verfuegbare_vorlagen: body.templates ?? [],
-          verfuegbare_rechtsgrundlagen: body.sections ?? [],
+          verfuegbare_rechtsgrundlagen: relevantSections,
           bekannte_praxisfaelle: body.cases ?? [],
           hinweis:
             "Fülle möglichst alle Felder aus. Checkliste 5–10 Punkte, Doku 3–7 Punkte, FAQ 4–8 Q&A, Praxistipp MINDESTENS 5 und maximal 8 konkrete fallbezogene Do's (jede als eigene Zeile mit '- '), Typische Fehler 3–6 Don'ts. Zuständigkeiten (Lehrkraft, Klassenleitung, Schulleitung) klar benennen. Rechtsgrundlagen: Ziel mindestens 3 belastbare Treffer, keine künstliche Auffüllung, kein § 53 SchulG NRW ohne fachlichen Bezug (Fehlverhalten, Ordnungsmaßnahme, Verhältnismäßigkeit, Ausschluss).",

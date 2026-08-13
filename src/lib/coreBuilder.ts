@@ -238,14 +238,28 @@ export async function listSources() {
 
 export async function listSections() {
   const filter = { order: "section_number.asc" };
-  const { data, error } = await (supabase.from("legal_sections") as any)
-    .select("*")
-    .order("section_number");
-  const rows = data?.length ?? 0;
-  logQuery("legal_sections", filter, rows, error);
-  if (error) throwQueryError("legal_sections", filter, error, rows);
+  // PostgREST begrenzt eine einzelne Antwort standardmäßig auf 1000 Zeilen -
+  // bei > 1000 Rechtsgrundlagen (Fund beim BASS-Vollimport, 2026-08-13:
+  // 17.557 legal_sections) würden sonst stillschweigend nur die ersten 1000
+  // geladen, ohne Fehler. Seitenweise nachladen, bis eine Seite < PAGE_SIZE
+  // Zeilen liefert.
+  const PAGE_SIZE = 1000;
+  const all: Array<Record<string, unknown>> = [];
+  for (let offset = 0; ; offset += PAGE_SIZE) {
+    const { data, error } = await (supabase.from("legal_sections") as any)
+      .select("*")
+      .order("section_number")
+      .range(offset, offset + PAGE_SIZE - 1);
+    if (error) {
+      logQuery("legal_sections", filter, all.length, error);
+      throwQueryError("legal_sections", filter, error, all.length);
+    }
+    all.push(...((data ?? []) as Array<Record<string, unknown>>));
+    if (!data || data.length < PAGE_SIZE) break;
+  }
+  logQuery("legal_sections", filter, all.length, null);
   // Provide `reference` alias for UI compatibility (DB column is `section_number`).
-  return (data ?? []).map((s: Record<string, unknown>) => ({
+  return all.map((s: Record<string, unknown>) => ({
     ...s,
     reference: (s.section_number as string) ?? (s.reference as string) ?? "",
   })) as any;

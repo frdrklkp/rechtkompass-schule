@@ -114,6 +114,7 @@ import { Route as ApiWorkflowSessionsIdRouteImport } from './routes/api/workflow
 import { Route as ApiWorkflowsIdRouteImport } from './routes/api/workflows.$id'
 import { Route as FaelleIdDokumentRouteImport } from './routes/faelle_.$id.dokument'
 import { Route as WorkflowsSessionSessionIdRouteImport } from './routes/workflows.session.$sessionId'
+import { Route as AdminEditorialFaelleIndexRouteImport } from './routes/admin.editorial.faelle.index'
 import { Route as AdminEditorialFaelleIdRouteImport } from './routes/admin.editorial.faelle.$id'
 import { Route as AdminEditorialWorkflowsIndexRouteImport } from './routes/admin.editorial.workflows.index'
 import { Route as AdminEditorialWorkflowsIdRouteImport } from './routes/admin.editorial.workflows.$id'
@@ -681,6 +682,12 @@ const WorkflowsSessionSessionIdRoute =
     path: '/workflows/session/$sessionId',
     getParentRoute: () => rootRouteImport,
   } as any)
+const AdminEditorialFaelleIndexRoute =
+  AdminEditorialFaelleIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AdminEditorialFaelleRoute,
+  } as any)
 const AdminEditorialFaelleIdRoute = AdminEditorialFaelleIdRouteImport.update({
   id: '/$id',
   path: '/$id',
@@ -875,6 +882,7 @@ export interface FileRoutesByFullPath {
   '/api/workflow-sessions/$id/pause': typeof ApiWorkflowSessionsIdPauseRoute
   '/api/workflow-sessions/$id/resume': typeof ApiWorkflowSessionsIdResumeRoute
   '/api/workflow-sessions/$id/transitions': typeof ApiWorkflowSessionsIdTransitionsRoute
+  '/admin/editorial/faelle/': typeof AdminEditorialFaelleIndexRoute
   '/admin/editorial/workflows/': typeof AdminEditorialWorkflowsIndexRoute
   '/api/workflow-sessions/$id/documents/$docId': typeof ApiWorkflowSessionsIdDocumentsDocIdRouteWithChildren
   '/api/workflow-sessions/$id/documents/$docId/export': typeof ApiWorkflowSessionsIdDocumentsDocIdExportRoute
@@ -953,7 +961,6 @@ export interface FileRoutesByTo {
   '/workflows/$templateId': typeof WorkflowsTemplateIdRoute
   '/admin': typeof AdminIndexRoute
   '/workflows': typeof WorkflowsIndexRoute
-  '/admin/editorial/faelle': typeof AdminEditorialFaelleRouteWithChildren
   '/admin/editorial/legal-quality': typeof AdminEditorialLegalQualityRoute
   '/admin/editorial/publishing': typeof AdminEditorialPublishingRoute
   '/admin/editorial/qualitaet': typeof AdminEditorialQualitaetRoute
@@ -991,6 +998,7 @@ export interface FileRoutesByTo {
   '/api/workflow-sessions/$id/pause': typeof ApiWorkflowSessionsIdPauseRoute
   '/api/workflow-sessions/$id/resume': typeof ApiWorkflowSessionsIdResumeRoute
   '/api/workflow-sessions/$id/transitions': typeof ApiWorkflowSessionsIdTransitionsRoute
+  '/admin/editorial/faelle': typeof AdminEditorialFaelleIndexRoute
   '/admin/editorial/workflows': typeof AdminEditorialWorkflowsIndexRoute
   '/api/workflow-sessions/$id/documents/$docId': typeof ApiWorkflowSessionsIdDocumentsDocIdRouteWithChildren
   '/api/workflow-sessions/$id/documents/$docId/export': typeof ApiWorkflowSessionsIdDocumentsDocIdExportRoute
@@ -1112,6 +1120,7 @@ export interface FileRoutesById {
   '/api/workflow-sessions/$id/pause': typeof ApiWorkflowSessionsIdPauseRoute
   '/api/workflow-sessions/$id/resume': typeof ApiWorkflowSessionsIdResumeRoute
   '/api/workflow-sessions/$id/transitions': typeof ApiWorkflowSessionsIdTransitionsRoute
+  '/admin/editorial/faelle/': typeof AdminEditorialFaelleIndexRoute
   '/admin/editorial/workflows/': typeof AdminEditorialWorkflowsIndexRoute
   '/api/workflow-sessions/$id/documents/$docId': typeof ApiWorkflowSessionsIdDocumentsDocIdRouteWithChildren
   '/api/workflow-sessions/$id/documents/$docId/export': typeof ApiWorkflowSessionsIdDocumentsDocIdExportRoute
@@ -1234,6 +1243,7 @@ export interface FileRouteTypes {
     | '/api/workflow-sessions/$id/pause'
     | '/api/workflow-sessions/$id/resume'
     | '/api/workflow-sessions/$id/transitions'
+    | '/admin/editorial/faelle/'
     | '/admin/editorial/workflows/'
     | '/api/workflow-sessions/$id/documents/$docId'
     | '/api/workflow-sessions/$id/documents/$docId/export'
@@ -1312,7 +1322,6 @@ export interface FileRouteTypes {
     | '/workflows/$templateId'
     | '/admin'
     | '/workflows'
-    | '/admin/editorial/faelle'
     | '/admin/editorial/legal-quality'
     | '/admin/editorial/publishing'
     | '/admin/editorial/qualitaet'
@@ -1350,6 +1359,7 @@ export interface FileRouteTypes {
     | '/api/workflow-sessions/$id/pause'
     | '/api/workflow-sessions/$id/resume'
     | '/api/workflow-sessions/$id/transitions'
+    | '/admin/editorial/faelle'
     | '/admin/editorial/workflows'
     | '/api/workflow-sessions/$id/documents/$docId'
     | '/api/workflow-sessions/$id/documents/$docId/export'
@@ -1470,6 +1480,7 @@ export interface FileRouteTypes {
     | '/api/workflow-sessions/$id/pause'
     | '/api/workflow-sessions/$id/resume'
     | '/api/workflow-sessions/$id/transitions'
+    | '/admin/editorial/faelle/'
     | '/admin/editorial/workflows/'
     | '/api/workflow-sessions/$id/documents/$docId'
     | '/api/workflow-sessions/$id/documents/$docId/export'
@@ -2266,6 +2277,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WorkflowsSessionSessionIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/editorial/faelle/': {
+      id: '/admin/editorial/faelle/'
+      path: '/'
+      fullPath: '/admin/editorial/faelle/'
+      preLoaderRoute: typeof AdminEditorialFaelleIndexRouteImport
+      parentRoute: typeof AdminEditorialFaelleRoute
+    }
     '/admin/editorial/faelle/$id': {
       id: '/admin/editorial/faelle/$id'
       path: '/$id'
@@ -2465,10 +2483,12 @@ const AdminRechtsgrundlagenRouteWithChildren =
 
 interface AdminEditorialFaelleRouteChildren {
   AdminEditorialFaelleIdRoute: typeof AdminEditorialFaelleIdRoute
+  AdminEditorialFaelleIndexRoute: typeof AdminEditorialFaelleIndexRoute
 }
 
 const AdminEditorialFaelleRouteChildren: AdminEditorialFaelleRouteChildren = {
   AdminEditorialFaelleIdRoute: AdminEditorialFaelleIdRoute,
+  AdminEditorialFaelleIndexRoute: AdminEditorialFaelleIndexRoute,
 }
 
 const AdminEditorialFaelleRouteWithChildren =

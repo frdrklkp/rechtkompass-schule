@@ -204,7 +204,12 @@ export const EditorialQueryService = {
     view: "open" | "assigned_to_me" | "unassigned" | "decided";
     userId: string | null;
   }): Promise<CaseReviewRow[]> {
-    let q = (supabase as any).from("case_reviews").select("*").order("created_at", { ascending: false });
+    // Falltitel per Join mitladen statt nur case_id - die Liste zeigte
+    // bisher nur die gekürzte UUID an (Fund 2026-08-13, Nutzerrückmeldung).
+    let q = (supabase as any)
+      .from("case_reviews")
+      .select("*, practice_cases(title)")
+      .order("created_at", { ascending: false });
     switch (filters.view) {
       case "open":
         q = q.eq("status", "pending");

@@ -130,7 +130,7 @@ function ReviewCenter() {
                       params={{ id: r.case_id }}
                       className="text-sm font-medium hover:underline"
                     >
-                      Fall: {r.case_id.slice(0, 8)}…
+                      {r.practice_cases?.title ?? `Fall: ${r.case_id.slice(0, 8)}…`}
                     </Link>
                     <div className="mt-1 flex flex-wrap items-center gap-2">
                       <ReviewBadge status={r.status} />

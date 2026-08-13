@@ -72,6 +72,8 @@ export interface CaseReviewRow {
   decided_at: string | null;
   decided_by: string | null;
   created_at: string;
+  /** Per Join mitgeladen (getMyReviews) - nicht bei allen Abfragen vorhanden. */
+  practice_cases?: { title: string } | null;
 }
 
 export interface CaseEventRow {

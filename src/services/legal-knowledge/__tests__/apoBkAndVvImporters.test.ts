@@ -204,11 +204,16 @@ test("APO-BK: Versionskonflikt bei identischer Version, geänderter Struktur", (
 /* --------------------- Verwaltungsvorschriften --------------------- */
 
 const VV_TXT = [
-  "Verwaltungsvorschriften zum Schulgesetz NRW",
-  "BASS 10-32 Nr. 4",
-  "RdErl. d. Ministeriums für Schule und Bildung vom 15.03.2018",
-  "Zuletzt geändert durch RdErl. vom 22.11.2023",
+  "10-32 Nr. 4",
+  "",
+  "Verwaltungsvorschriften",
+  "zum Schulgesetz NRW",
+  "",
+  "Vom 15. März 2018",
+  "zuletzt geändert durch RdErl. vom 22.11.2023",
   "ABl. NRW. S. 187",
+  "",
+  "RdErl. d. Ministeriums für Schule und Bildung",
   "",
   "1 Geltungsbereich",
   "Diese Verwaltungsvorschrift gilt für alle Schulen nach § 2 SchulG.",
@@ -297,7 +302,7 @@ test("VV: Metadaten (BASS-Gliederung, ABl., Daten, Herausgeber)", () => {
   assert.equal(doc.version.publishedAt, "2018-03-15");
   assert.equal(doc.version.label, "Fassung 2023-11-22");
   const meta = doc.source.metadata as { bassNumber?: string; fundstelle?: string };
-  assert.match(String(meta.bassNumber), /BASS 10-32 Nr\. 4/);
+  assert.match(String(meta.bassNumber), /10-32 Nr\. 4/);
   assert.match(String(meta.fundstelle), /ABl\. NRW/);
 });
 

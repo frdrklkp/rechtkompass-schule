@@ -14,6 +14,9 @@ export { schulgesetzNrwParser } from "./parsers/schulgesetzNrwParser";
 export { bassNrwParser } from "./parsers/bassNrwParser";
 export { apoBkNrwParser } from "./parsers/apoBkNrwParser";
 export { verwaltungsvorschriftNrwParser } from "./parsers/verwaltungsvorschriftNrwParser";
+export { vwvfgNrwParser } from "./parsers/vwvfgNrwParser";
+export { grundgesetzParser } from "./parsers/grundgesetzParser";
+export { dsgvoParser } from "./parsers/dsgvoParser";
 export {
   bassParser,
   apoBkParser,

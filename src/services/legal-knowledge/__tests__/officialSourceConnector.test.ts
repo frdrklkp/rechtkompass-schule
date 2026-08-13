@@ -426,7 +426,7 @@ describe("Parserauswahl", () => {
     expect(resolveParserIdForUrl("https://bass.schul-welt.de/1234.htm")).toBe("bass-nrw");
     expect(resolveParserIdForUrl("https://recht.nrw.de/lmi/owa/br_text_anzeigen?v_id=1")).toBe("schulgesetz-nrw");
     expect(resolveParserIdForUrl("https://bass.schul-welt.de/apo-bk/anlage-a.htm")).toBe("apo-bk-nrw");
-    expect(resolveParserIdForUrl("https://recht.nrw.de/verwaltungsvorschrift/x")).toBe("vv-nrw");
+    expect(resolveParserIdForUrl("https://recht.nrw.de/verwaltungsvorschrift/x")).toBe("verwaltungsvorschrift-nrw");
     expect(resolveParserIdForUrl("https://www.schulministerium.nrw.de/erlass")).toBe("erlass-generic");
   });
 

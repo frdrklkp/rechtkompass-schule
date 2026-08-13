@@ -39,6 +39,44 @@ export const OFFICIAL_SOURCES: OfficialSourceDefinition[] = [
     maxDepth: 2,
   },
   {
+    // Hinweis (2026-08-13): amtliche Gesamtausgabe (eine einzelne HTML-Seite
+    // mit allen Artikeln) des Bundesministeriums der Justiz - kein Crawl
+    // über die 150+ Einzelartikel-Seiten nötig.
+    id: "grundgesetz",
+    label: "Grundgesetz",
+    description: "Grundgesetz für die Bundesrepublik Deutschland",
+    defaultUrl: "https://www.gesetze-im-internet.de/gg/BJNR000010949.html",
+    parserId: "grundgesetz",
+    hosts: ["gesetze-im-internet.de", "www.gesetze-im-internet.de"],
+    maxPages: 5,
+    maxDepth: 0,
+  },
+  {
+    // Hinweis (2026-08-13): amtliche deutschsprachige Volltext-Fassung auf
+    // eur-lex.europa.eu (Amt für Veröffentlichungen der EU), CELEX 32016R0679.
+    id: "dsgvo",
+    label: "DSGVO",
+    description: "Datenschutz-Grundverordnung (EU) 2016/679",
+    defaultUrl: "https://eur-lex.europa.eu/legal-content/DE/TXT/HTML/?uri=CELEX:32016R0679",
+    parserId: "dsgvo",
+    hosts: ["eur-lex.europa.eu"],
+    maxPages: 5,
+    maxDepth: 0,
+  },
+  {
+    // Hinweis (2026-08-13): verifizierte URL auf der neueren "LRGV"-
+    // Seitenvorlage von recht.nrw.de (anderes Chrome als beim Schulgesetz,
+    // eigener Parser vwvfgNrwParser). Einzelnes Dokument, kein Crawl nötig.
+    id: "vwvfg-nrw",
+    label: "VwVfG NRW",
+    description: "Verwaltungsverfahrensgesetz für das Land Nordrhein-Westfalen",
+    defaultUrl: "https://recht.nrw.de/lrgv/gesetz/01012025-verwaltungsverfahrensgesetz-fuer-das-land-nordrhein-westfalen/",
+    parserId: "vwvfg-nrw",
+    hosts: ["recht.nrw.de"],
+    maxPages: 5,
+    maxDepth: 0,
+  },
+  {
     // Hinweis (2026-08-13): korrekte, verifizierte URL auf der neuen Domain
     // (BASS 13-33 Nr. 1.1). Alte URL (bass.schul-welt.de/9584.htm) tot.
     id: "apo-bk-nrw",
@@ -61,7 +99,12 @@ export const OFFICIAL_SOURCES: OfficialSourceDefinition[] = [
     label: "Verwaltungsvorschriften",
     description: "Verwaltungsvorschriften zum Schulrecht NRW",
     defaultUrl: "https://bass.schule.nrw/6333.htm",
-    parserId: "vv-nrw",
+    // Hinweis (2026-08-13): parserId muss exakt der id in
+    // verwaltungsvorschriftNrwParser.ts entsprechen ("verwaltungsvorschrift-nrw",
+    // nicht "vv-nrw") - sonst schlägt die explizite Parser-Zuordnung fehl und
+    // fällt still auf Auto-Erkennung zurück, die auf bass.schule.nrw immer
+    // zuerst bassNrwParser trifft (Fund: 0 Paragraphen, falscher Parser).
+    parserId: "verwaltungsvorschrift-nrw",
     hosts: ["bass.schule.nrw", "bass.schul-welt.de", "recht.nrw.de", "schulministerium.nrw.de"],
     maxPages: 40,
     maxDepth: 0,
@@ -101,7 +144,7 @@ export function resolveParserIdForUrl(url: string, fallback = "erlass-generic"):
   const path = `${parsed.pathname}${parsed.search}`.toLowerCase();
 
   if (/apo[-_ ]?bk/.test(path)) return "apo-bk-nrw";
-  if (/verwaltungsvorschrift|(^|\/)vv[-_]/.test(path)) return "vv-nrw";
+  if (/verwaltungsvorschrift|(^|\/)vv[-_]/.test(path)) return "verwaltungsvorschrift-nrw";
   if (host.endsWith("bass.schule.nrw") || host.endsWith("bass.schul-welt.de")) return "bass-nrw";
   if (host.endsWith("recht.nrw.de")) return "schulgesetz-nrw";
   if (host.endsWith("schulministerium.nrw.de")) return "erlass-generic";

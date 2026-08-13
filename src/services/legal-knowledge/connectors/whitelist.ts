@@ -10,6 +10,12 @@ export const OFFICIAL_HOST_WHITELIST: readonly string[] = [
   "www.recht.nrw.de",
   "schulministerium.nrw.de",
   "www.schulministerium.nrw.de",
+  // Hinzugefügt 2026-08-13 für die vollständige Rechtsgrundlagen-Abdeckung
+  // (Grundgesetz, DSGVO) - beides offizielle, staatliche/EU-Quellen, keine
+  // Drittanbieter-Spiegel.
+  "gesetze-im-internet.de", // Bundesministerium der Justiz - amtliches Bundesrecht (u.a. Grundgesetz)
+  "www.gesetze-im-internet.de",
+  "eur-lex.europa.eu", // Amt für Veröffentlichungen der Europäischen Union - amtliches EU-Recht (u.a. DSGVO)
 ];
 
 export type UrlRejectionReason =

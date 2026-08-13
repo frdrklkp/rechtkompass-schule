@@ -21,10 +21,14 @@ import type {
   LegalNode,
   NormalizedLegalDocument,
 } from "../types";
+import {
+  BASS_CHROME_NOISE,
+  CITATION_MARKER_RE,
+  VOM_LINE_RE,
+  findDate,
+} from "./bassSiteHeader";
 
-const VV_TITLE_RE = /Verwaltungsvorschrift(?:en)?\s+(?:zu[rm]?\s+.+|.+)/i;
 const BASS_NR_RE = /BASS\s+(\d{1,2}\s*[-–]\s*\d{2})(?:\s*Nr\.?\s*(\d+))?/i;
-const DATE_RE = /(\d{1,2})\.(\d{1,2})\.(\d{4})/;
 const ABL_RE = /ABl\.\s*NRW\.?\s*S\.\s*\d+/i;
 const NUM_RE = /^(\d+(?:\.\d+){0,4})\s+(.+)$/;          // "1", "1.1", "1.1.1" gefolgt von Text
 const NUM_ONLY_RE = /^(\d+(?:\.\d+){0,4})\.?\s*$/;      // reine Nummer als Header
@@ -37,12 +41,6 @@ const REFERENCE_RE =
 
 function mk(node: Omit<LegalNode, "localId" | "children"> & { children?: LegalNode[] }): LegalNode {
   return { localId: "", children: node.children ?? [], ...node };
-}
-
-function iso(d: RegExpMatchArray | null): string | null {
-  if (!d) return null;
-  const [, dd, mm, yy] = d;
-  return `${yy}-${mm.padStart(2, "0")}-${dd.padStart(2, "0")}`;
 }
 
 function extractRefs(text: string): string[] {
@@ -80,10 +78,40 @@ function extractHeader(lines: string[]): Header {
     ablFundstelle: null,
     consumed: 0,
   };
-  for (let i = 0; i < lines.length && i < 40; i++) {
+  const titleLines: string[] = [];
+  let collectingTitle = false;
+  let titleCaptured = false;
+
+  for (let i = 0; i < lines.length && i < 60; i++) {
     const line = lines[i].trim();
     if (!line) { h.consumed = i + 1; continue; }
+    if (BASS_CHROME_NOISE.has(line)) { h.consumed = i + 1; continue; }
+
+    // Struktur-Abbruch gilt IMMER, auch bevor ein Aktenzeichen gefunden
+    // wurde - sonst würde ein Dokument ohne erkennbaren Aktenzeichen-Marker
+    // ewig auf den Marker warten und dabei den kompletten Inhalt verschlucken.
     if (NUM_RE.test(line) || NUM_ONLY_RE.test(line) || ANLAGE_RE.test(line)) break;
+
+    if (!titleCaptured) {
+      if (!collectingTitle) {
+        if (CITATION_MARKER_RE.test(line)) {
+          if (!h.citation) h.citation = line;
+          collectingTitle = true;
+        }
+        h.consumed = i + 1;
+        continue;
+      }
+      if (VOM_LINE_RE.test(line)) {
+        h.title = titleLines.join(" ").replace(/\s+/g, " ").trim() || null;
+        titleCaptured = true;
+        collectingTitle = false;
+        // "Vom ..." selbst noch normal weiterverarbeiten (publishedAt), daher kein continue.
+      } else {
+        titleLines.push(line);
+        h.consumed = i + 1;
+        continue;
+      }
+    }
 
     const bass = BASS_NR_RE.exec(line);
     if (bass && !h.citation) {
@@ -93,21 +121,20 @@ function extractHeader(lines: string[]): Header {
     const abl = ABL_RE.exec(line);
     if (abl) h.ablFundstelle = abl[0].replace(/\s+/g, " ");
 
-    const amend = /Zuletzt\s+ge[aä]ndert\s+(?:durch|vom)?\s*.*?(\d{1,2}\.\d{1,2}\.\d{4})/i.exec(line);
-    if (amend) h.amendedAt = iso(DATE_RE.exec(amend[1]));
-    const vom = !amend ? /\bvom\s+(\d{1,2}\.\d{1,2}\.\d{4})/i.exec(line) : null;
-    if (vom) {
-      h.publishedAt = iso(DATE_RE.exec(vom[1]));
-      if (!h.validFrom) h.validFrom = h.publishedAt;
+    const amendedAt = findDate(line, String.raw`Zuletzt\s+ge[aä]ndert\s+(?:durch|vom)?.*?`);
+    if (amendedAt) h.amendedAt = amendedAt;
+    else {
+      const publishedAt = findDate(line, String.raw`\bvom`);
+      if (publishedAt) {
+        h.publishedAt = publishedAt;
+        if (!h.validFrom) h.validFrom = publishedAt;
+      }
     }
-    const gueltig = /G[üu]ltig\s+ab\s+(\d{1,2}\.\d{1,2}\.\d{4})/i.exec(line);
-    if (gueltig) h.validFrom = iso(DATE_RE.exec(gueltig[1]));
+    const validFrom = findDate(line, String.raw`G[üu]ltig\s+ab`);
+    if (validFrom) h.validFrom = validFrom;
 
     if (/Ministerium|Herausgeber:/i.test(line)) {
       h.authority = line.replace(/^Herausgeber:\s*/i, "");
-    }
-    if (!h.title && (VV_TITLE_RE.test(line) || (line.length > 3 && !bass && !abl && !amend && !vom))) {
-      h.title = line;
     }
     h.consumed = i + 1;
   }
@@ -157,9 +184,12 @@ export const verwaltungsvorschriftNrwParser: LegalImportParser = {
     const lines = input.raw.split(/\r?\n/);
     const header = extractHeader(lines);
 
+    // Hinweis (2026-08-13): der HTML-<title> von bass.schule.nrw ist auf
+    // jeder Seite generisch "BASS" (input.hint.detectedTitle) - der aus dem
+    // Titelblock geparste header.title hat deshalb Vorrang.
     const root = mk({
       kind: "document",
-      heading: input.hint?.detectedTitle ?? header.title ?? "Verwaltungsvorschrift",
+      heading: header.title ?? input.hint?.detectedTitle ?? "Verwaltungsvorschrift",
     });
 
     // Stack für nummerierte Ebenen (1 → 1.1 → 1.1.1).
@@ -272,7 +302,7 @@ export const verwaltungsvorschriftNrwParser: LegalImportParser = {
       source: {
         key: "verwaltungsvorschrift-nrw",
         kind: "administrative_regulation",
-        title: input.hint?.detectedTitle ?? header.title ?? "Verwaltungsvorschrift NRW",
+        title: header.title ?? input.hint?.detectedTitle ?? "Verwaltungsvorschrift NRW",
         shortName: "VV",
         jurisdiction: "NRW",
         authority: header.authority ?? "MSB NRW",

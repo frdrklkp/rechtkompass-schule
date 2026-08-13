@@ -28,6 +28,7 @@ import {
   listSections,
   listSources,
   listTemplates,
+  listCaseTemplates,
   createLegalLink,
   deleteLegalLink,
 } from "@/lib/coreBuilder";
@@ -446,6 +447,17 @@ export function PracticeCaseWizard({ forcedId }: { forcedId?: string } = {}) {
     queryFn: () => listCaseLegalLinks(id),
     enabled: !isNew,
   });
+  // Tatsächlich verknüpfte Vorlagen (case_templates, auch von der
+  // automatischen KI-Zuordnung befüllt) - getrennt von form.meta.template_ids
+  // (rein manuelle Checkbox-Auswahl). TemplateAssignmentDialog invalidiert
+  // bereits genau diesen Query-Key; bisher gab es aber keine Query dafür,
+  // wodurch automatisch zugeordnete Vorlagen im Editor als "offen" erschienen
+  // (Fund 2026-08-14).
+  const caseTemplatesQ = useQuery({
+    queryKey: ["admin", "case-templates", id],
+    queryFn: () => listCaseTemplates(id),
+    enabled: !isNew,
+  });
 
   const [form, setForm] = useState<FormState>(empty);
   const [step, setStep] = useState(0);
@@ -677,7 +689,11 @@ export function PracticeCaseWizard({ forcedId }: { forcedId?: string } = {}) {
 
   const linksCount = (linksQ.data ?? []).length;
   const kwCount = (caseKwQ.data ?? []).length;
-  const tmplCount = form.meta.template_ids?.length ?? 0;
+  // Vereint automatisch zugeordnete Vorlagen (case_templates) mit manuell
+  // angehakten (form.meta.template_ids) - siehe caseTemplatesQ-Kommentar oben.
+  const autoTemplateIds = (caseTemplatesQ.data ?? []).map((t: any) => t.template_id as string);
+  const allTemplateIds = Array.from(new Set([...(form.meta.template_ids ?? []), ...autoTemplateIds]));
+  const tmplCount = allTemplateIds.length;
   const queryError = [
     caseQ.error,
     catsQ.error,
@@ -1420,7 +1436,12 @@ export function PracticeCaseWizard({ forcedId }: { forcedId?: string } = {}) {
                     toast.success(`„${s.label}“ als ähnlicher Fall vorgemerkt – bitte speichern.`);
                   }
                   qc.invalidateQueries({ queryKey: ["knowledge-index"] });
-                  qc.invalidateQueries({ queryKey: ["admin", "case-legal-links", id] });
+                  // War zuvor "case-legal-links" - kein Query in diesem Component
+                  // trägt diesen Key (die echte Rechtsgrundlagen-Query heißt
+                  // "case-links"), wodurch neu verknüpfte Rechtsgrundlagen nach
+                  // "Übernehmen" nicht sichtbar wurden, bis die Seite neu geladen
+                  // wurde (Fund 2026-08-14).
+                  qc.invalidateQueries({ queryKey: ["admin", "case-links", id] });
                   qc.invalidateQueries({ queryKey: ["admin", "case-keywords", id] });
                 } catch (e: any) {
                   toast.error("Übernehmen fehlgeschlagen: " + (e?.message ?? "unbekannt"));
@@ -1973,7 +1994,8 @@ export function PracticeCaseWizard({ forcedId }: { forcedId?: string } = {}) {
             </p>
             <div className="grid gap-2 md:grid-cols-2">
               {(templatesQ.data ?? []).map((t) => {
-                const selected = form.meta.template_ids?.includes(t.id) ?? false;
+                const autoMatched = autoTemplateIds.includes(t.id);
+                const selected = allTemplateIds.includes(t.id);
                 return (
                   <label
                     key={t.id}
@@ -1997,7 +2019,14 @@ export function PracticeCaseWizard({ forcedId }: { forcedId?: string } = {}) {
                       }}
                     />
                     <div>
-                      <div className="font-medium">{t.title}</div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-medium">{t.title}</span>
+                        {autoMatched && (
+                          <span className="rounded-full bg-violet-100 px-1.5 py-0.5 text-[10px] font-medium text-violet-700 dark:bg-violet-950/40 dark:text-violet-300">
+                            automatisch zugeordnet
+                          </span>
+                        )}
+                      </div>
                       {t.description && (
                         <div className="text-xs text-muted-foreground">{t.description}</div>
                       )}
@@ -2013,7 +2042,7 @@ export function PracticeCaseWizard({ forcedId }: { forcedId?: string } = {}) {
               <CaseDocumentsPanel
                 caseId={id}
                 linkedTemplates={(templatesQ.data ?? [])
-                  .filter((t) => (form.meta.template_ids ?? []).includes(t.id))
+                  .filter((t) => allTemplateIds.includes(t.id))
                   .map((t) => ({ id: t.id, title: t.title, description: t.description ?? null }))}
               />
             )}

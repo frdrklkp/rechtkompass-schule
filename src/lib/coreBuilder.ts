@@ -785,6 +785,26 @@ export async function listCaseLegalLinks(caseId?: string) {
     return l;
   }) as any[];
 }
+/**
+ * Tatsächlich verknüpfte Dokumentvorlagen (case_templates-Tabelle, u.a. von
+ * der automatischen KI-Zuordnung befüllt). Getrennt von `form.meta.template_ids`
+ * im Praxisfall-Editor (rein manuelle Checkbox-Auswahl, wird beim Speichern
+ * in die Fall-Metadaten geschrieben) - beide Quellen existierten bisher
+ * unabhängig nebeneinander, wodurch automatisch zugeordnete Vorlagen im
+ * Editor als "nicht zugeordnet" erschienen (Fund 2026-08-14).
+ */
+export async function listCaseTemplates(caseId: string) {
+  const filter = { case_id: caseId };
+  const { data, error } = await (supabase.from("case_templates" as any) as any)
+    .select("id, template_id, relevance, explanation, created_at, document_templates(id,title,description)")
+    .eq("case_id", caseId)
+    .order("created_at", { ascending: false });
+  const rows = data?.length ?? 0;
+  logQuery("case_templates", filter, rows, error);
+  if (error) throwQueryError("case_templates", filter, error, rows);
+  return (data ?? []) as any[];
+}
+
 export async function createLegalLink(
   caseId: string,
   sectionId: string,

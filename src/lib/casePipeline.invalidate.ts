@@ -14,10 +14,16 @@ export function invalidatePracticeCaseQueries(qc: QueryClient, caseId?: string) 
   qc.invalidateQueries({ queryKey: ["cases"] });
   qc.invalidateQueries({ queryKey: ["admin", "cases"] });
 
-  // Verknüpfungen (mit und ohne case-scope)
+  // Verknüpfungen (mit und ohne case-scope). Drei parallele Key-Konventionen
+  // sind historisch gewachsen ("case-legal-links", "case-links",
+  // "admin"+"case-links") - insbesondere die vom Praxisfall-Editor selbst
+  // genutzte ["admin","case-links",id] fehlte hier bisher komplett, wodurch
+  // dessen Rechtsgrundlagen-Fortschrittsanzeige nach JEDER Pipeline-Aktion
+  // (Vernetzen, Quality-Fix, Batch, ...) veraltet blieb (Fund 2026-08-14).
   qc.invalidateQueries({ queryKey: ["case-legal-links"] });
   qc.invalidateQueries({ queryKey: ["admin", "case-legal-links"] });
   qc.invalidateQueries({ queryKey: ["case-links"] });
+  qc.invalidateQueries({ queryKey: ["admin", "case-links"] });
   qc.invalidateQueries({ queryKey: ["case-keywords"] });
   qc.invalidateQueries({ queryKey: ["admin", "case-keywords"] });
   qc.invalidateQueries({ queryKey: ["case-templates"] });
@@ -40,7 +46,9 @@ export function invalidatePracticeCaseQueries(qc: QueryClient, caseId?: string) 
   if (caseId) {
     qc.invalidateQueries({ queryKey: ["case", caseId] });
     qc.invalidateQueries({ queryKey: ["case-legal-links", caseId] });
+    qc.invalidateQueries({ queryKey: ["admin", "case-links", caseId] });
     qc.invalidateQueries({ queryKey: ["case-keywords", caseId] });
+    qc.invalidateQueries({ queryKey: ["admin", "case-templates", caseId] });
     qc.invalidateQueries({ queryKey: ["case-templates", caseId] });
   }
 }

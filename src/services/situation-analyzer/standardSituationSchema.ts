@@ -6,6 +6,25 @@ import type { SituationSchemaDefinition } from "./types";
 
 export const STANDARD_SITUATION_SCHEMA_ID = "standard-situation-v1";
 
+let questionTitleById: Map<string, string> | null = null;
+
+/**
+ * Lesbarer Titel einer Standard-Schema-Frage für teacher-facing Anzeigen
+ * (Sprint 4.6J.2-Nachtrag): coverage.missing u. ä. transportieren intern
+ * Frage-IDs wie "betroffene.vorhanden" - im Lehrer-Frontend sollen
+ * stattdessen die Fragetitel erscheinen. Fallback ist die ID selbst, damit
+ * unbekannte oder zukünftige Fragen nie zu leeren Einträgen führen. Die
+ * Datenverträge (IDs) bleiben unverändert; nur die Anzeige übersetzt.
+ */
+export function situationQuestionTitle(questionId: string): string {
+  if (!questionTitleById) {
+    questionTitleById = new Map(
+      buildStandardSituationSchema().questions.map((q) => [q.id, q.title]),
+    );
+  }
+  return questionTitleById.get(questionId) ?? questionId;
+}
+
 export function buildStandardSituationSchema(): SituationSchemaDefinition {
   return {
     id: STANDARD_SITUATION_SCHEMA_ID,

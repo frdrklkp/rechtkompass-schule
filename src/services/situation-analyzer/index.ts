@@ -2,6 +2,7 @@
 export * from "./types";
 export {
   buildStandardSituationSchema,
+  situationQuestionTitle,
   STANDARD_SITUATION_SCHEMA_ID,
 } from "./standardSituationSchema";
 export {

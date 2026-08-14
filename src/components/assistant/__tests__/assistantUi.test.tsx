@@ -32,6 +32,7 @@ const { AssistantSituationSummary } = await import("../AssistantSituationSummary
 const { AssistantMatchSummary } = await import("../AssistantMatchSummary");
 const { AssistantQuestionCard } = await import("../AssistantQuestionCard");
 const { AssistantConfirmation } = await import("../AssistantConfirmation");
+const { AssistantMissingInformation } = await import("../AssistantMissingInformation");
 const { AssistantHandoff } = await import("../AssistantHandoff");
 const { AssistantSessionControls } = await import("../AssistantSessionControls");
 const { AssistantConversation } = await import("../AssistantConversation");
@@ -402,6 +403,17 @@ test("AssistantConfirmation ohne Praxisfall täuscht keine Rechtsgrundlagen-Vors
   assert.ok(!html.includes("Rechtsgrundlage"));
   assert.ok(!html.includes("In der Fallbearbeitung ansehen"));
   assert.ok(html.includes("Ohne Praxisfall (allgemeine Bearbeitung)"));
+});
+
+test("AssistantMissingInformation übersetzt Frage-IDs in lesbare Titel", () => {
+  const html = render(
+    <AssistantMissingInformation items={["gefahren.gemeldet", "unbekannte.frage"]} />,
+  );
+  // Sprint 4.6J.2-Nachtrag: teacher-facing erscheinen Fragetitel statt
+  // technischer IDs; unbekannte IDs fallen sichtbar auf die ID zurück.
+  assert.ok(html.includes("Wurde eine akute Gefahr geschildert?"));
+  assert.ok(!html.includes(">gefahren.gemeldet<"));
+  assert.ok(html.includes("unbekannte.frage"));
 });
 
 test("AssistantHandoff bestätigt die Übergabe und führt zu 'Fall bearbeiten'", () => {

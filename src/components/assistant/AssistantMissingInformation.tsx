@@ -1,8 +1,13 @@
 /**
  * Sprint 4.6F – Fehlende Angaben, die die Trefferlage begrenzen.
  * Reine Auflistung ohne Bewertung.
+ *
+ * Sprint 4.6J.2-Nachtrag: die Einträge sind intern Frage-IDs des
+ * Situation-Analyzers (z. B. "betroffene.vorhanden") - für Lehrkräfte
+ * werden sie hier in die lesbaren Fragetitel übersetzt.
  */
 import { HelpCircle } from "lucide-react";
+import { situationQuestionTitle } from "@/services/situation-analyzer";
 
 export interface AssistantMissingInformationProps {
   title?: string;
@@ -22,7 +27,7 @@ export function AssistantMissingInformation({
       </p>
       <ul className="mt-1 list-inside list-disc text-xs text-muted-foreground">
         {items.slice(0, 8).map((item) => (
-          <li key={item}>{item}</li>
+          <li key={item}>{situationQuestionTitle(item)}</li>
         ))}
       </ul>
     </div>

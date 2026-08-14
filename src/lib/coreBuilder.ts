@@ -761,27 +761,41 @@ export async function unlinkCaseKeyword(caseId: string, keywordId: string) {
 
 export async function listCaseLegalLinks(caseId?: string) {
   const filter = caseId ? { case_id: caseId } : { all: true };
+  // Kein verschachtelter legal_sections-Embed hier (Fund 2026-08-14):
+  // case_legal_links.legal_section_id hat keinen Datenbank-Fremdschlüssel
+  // (nur die ungenutzte Alt-Spalte section_id hat einen), wodurch PostgREST
+  // "legal_sections(...)" nicht auflösen kann und still null liefert. Das
+  // practice_cases(...)-Embed bleibt unverändert - case_id hat weiterhin
+  // einen echten Fremdschlüssel.
   let q = (supabase.from("case_legal_links") as any)
-    .select("id, case_id, legal_section_id, explanation, relevance, created_at, practice_cases(id,title), legal_sections(id,section_number,title,source_id,legal_sources(name))")
+    .select("id, case_id, legal_section_id, explanation, relevance, created_at, practice_cases(id,title)")
     .order("created_at", { ascending: false });
   if (caseId) q = q.eq("case_id", caseId);
   const { data, error } = await q;
   const rows = data?.length ?? 0;
   logQuery("case_legal_links", filter, rows, error);
   if (error) throwQueryError("case_legal_links", filter, error, rows);
+
+  const links = (data ?? []) as any[];
+  const sectionIds = [...new Set(links.map((l) => l.legal_section_id).filter(Boolean))];
+  const { data: sectionRows } = sectionIds.length
+    ? await (supabase.from("legal_sections") as any)
+        .select("id,section_number,title,source_id,legal_sources(name)")
+        .in("id", sectionIds)
+    : { data: [] };
+  const sectionById = new Map(((sectionRows ?? []) as any[]).map((s) => [s.id, s]));
+
   // UI-Kompat-Aliasse (`note`←explanation, `reference`←section_number, `short_name`←name).
-  return ((data ?? []) as any[]).map((l) => {
+  return links.map((l) => {
     l.note = l.explanation ?? null;
-    if (l?.legal_sections) {
-      l.legal_sections.reference =
-        l.legal_sections.section_number ?? l.legal_sections.reference ?? "";
-      if (l.legal_sections.legal_sources) {
-        l.legal_sections.legal_sources.short_name =
-          l.legal_sections.legal_sources.short_name ??
-          l.legal_sections.legal_sources.name ??
-          "";
+    const section = sectionById.get(l.legal_section_id);
+    if (section) {
+      section.reference = section.section_number ?? section.reference ?? "";
+      if (section.legal_sources) {
+        section.legal_sources.short_name = section.legal_sources.short_name ?? section.legal_sources.name ?? "";
       }
     }
+    l.legal_sections = section ?? null;
     return l;
   }) as any[];
 }

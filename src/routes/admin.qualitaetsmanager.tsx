@@ -93,15 +93,30 @@ type LegalLinkInfo = {
  */
 async function loadLegalLinksForCases(caseIds: string[]): Promise<Record<string, LegalLinkInfo[]>> {
   if (caseIds.length === 0) return {};
+  // Zweistufig statt verschachteltem Embed (Fund 2026-08-14): case_legal_links.
+  // legal_section_id hat keinen Datenbank-Fremdschlüssel, wodurch der
+  // "legal_sections(...)"-Embed hier bisher still leer blieb - die §53-Prüfung
+  // unten lief dadurch faktisch nie mit echten Daten.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data, error } = await (supabase.from("case_legal_links") as any)
-    .select("case_id, legal_section_id, legal_sections(section_number, legal_sources(short_name, name))")
+    .select("case_id, legal_section_id")
     .in("case_id", caseIds);
   if (error) throw error;
-  const out: Record<string, LegalLinkInfo[]> = {};
+  const rows = (data ?? []) as Array<{ case_id: string; legal_section_id: string }>;
+  const sectionIds = [...new Set(rows.map((r) => r.legal_section_id).filter(Boolean))];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  for (const row of (data ?? []) as any[]) {
-    const sec = row.legal_sections;
+  const { data: sectionRows, error: secError } = sectionIds.length
+    ? await (supabase.from("legal_sections") as any)
+        .select("id, section_number, legal_sources(short_name, name)")
+        .in("id", sectionIds)
+    : { data: [] as any[], error: null };
+  if (secError) throw secError;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const sectionById = new Map(((sectionRows ?? []) as any[]).map((s) => [s.id, s]));
+
+  const out: Record<string, LegalLinkInfo[]> = {};
+  for (const row of rows) {
+    const sec = sectionById.get(row.legal_section_id);
     const src = sec?.legal_sources;
     const info: LegalLinkInfo = {
       section_id: row.legal_section_id,

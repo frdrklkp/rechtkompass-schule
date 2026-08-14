@@ -35,6 +35,11 @@ type EmbeddedLinkRow = LegalLinkRow & {
  * Resolver sie als Issue melden kann.
  */
 export async function fetchLegalContextData(caseId: string): Promise<LegalContextData> {
+  // Zweistufig statt verschachteltem Embed (Fund 2026-08-14): case_legal_links.
+  // legal_section_id hat keinen Datenbank-Fremdschlüssel, wodurch der
+  // "legal_sections(...)"-Embed hier bisher IMMER leer blieb - jede
+  // Verknüpfung wurde faelschlich als "Abschnitt nicht auffindbar" gemeldet,
+  // unabhängig davon, ob der Abschnitt tatsächlich existierte.
   const [caseRes, linksRes] = await Promise.all([
     supabase
       .from("practice_cases")
@@ -43,10 +48,7 @@ export async function fetchLegalContextData(caseId: string): Promise<LegalContex
       .maybeSingle(),
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (supabase.from("case_legal_links") as any)
-      .select(
-        `id, legal_section_id, relevance, explanation, created_at, ` +
-          `legal_sections(${SECTION_COLUMNS}, legal_sources(${SOURCE_COLUMNS}))`,
-      )
+      .select("id, legal_section_id, relevance, explanation, created_at")
       .eq("case_id", caseId),
   ]);
 
@@ -54,7 +56,25 @@ export async function fetchLegalContextData(caseId: string): Promise<LegalContex
   if (linksRes.error) throw new Error(linksRes.error.message);
 
   const caseRow = (caseRes.data ?? null) as LegalContextCaseRow | null;
-  const rows = (linksRes.data ?? []) as EmbeddedLinkRow[];
+  const rawLinks = (linksRes.data ?? []) as Array<
+    LegalLinkRow & { legal_section_id: string | null }
+  >;
+  const sectionIds = [...new Set(rawLinks.map((l) => l.legal_section_id).filter((x): x is string => !!x))];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: sectionData, error: sectionError } = sectionIds.length
+    ? await (supabase.from("legal_sections") as any)
+        .select(`${SECTION_COLUMNS}, legal_sources(${SOURCE_COLUMNS})`)
+        .in("id", sectionIds)
+    : { data: [] as any[], error: null };
+  if (sectionError) throw new Error(sectionError.message);
+  const sectionById = new Map(
+    ((sectionData ?? []) as Array<LegalSectionRow & { legal_sources?: LegalSourceRow | null }>).map((s) => [s.id, s]),
+  );
+
+  const rows: EmbeddedLinkRow[] = rawLinks.map((l) => ({
+    ...l,
+    legal_sections: l.legal_section_id ? (sectionById.get(l.legal_section_id) ?? null) : null,
+  }));
 
   const links: LegalLinkRow[] = [];
   const sections: LegalSectionRow[] = [];

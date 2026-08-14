@@ -328,13 +328,19 @@ function useLegalLinkCounts() {
 }
 
 async function loadLegalBasisFor(caseId: string): Promise<string[]> {
-  const { data } = await (supabase.from("case_legal_links") as any)
-    .select("legal_sections(section_number, legal_sources(name))")
+  // Zweistufig statt verschachteltem Embed (Fund 2026-08-14): case_legal_links.
+  // legal_section_id hat keinen Datenbank-Fremdschlüssel, wodurch der
+  // "legal_sections(...)"-Embed hier bisher still leer blieb.
+  const { data: linkRows } = await (supabase.from("case_legal_links") as any)
+    .select("legal_section_id")
     .eq("case_id", caseId);
-  const rows = (data ?? []) as Array<any>;
-  return rows
-    .map((l) => {
-      const s = l?.legal_sections;
+  const sectionIds = [...new Set(((linkRows ?? []) as Array<{ legal_section_id: string }>).map((l) => l.legal_section_id).filter(Boolean))];
+  if (sectionIds.length === 0) return [];
+  const { data: sectionRows } = await (supabase.from("legal_sections") as any)
+    .select("section_number, legal_sources(name)")
+    .in("id", sectionIds);
+  return ((sectionRows ?? []) as Array<any>)
+    .map((s) => {
       if (!s?.section_number) return null;
       const name = s.legal_sources?.name;
       return name ? `${s.section_number} ${name}` : s.section_number;

@@ -76,17 +76,32 @@ async function fetchCaseById(id: string): Promise<CaseData | null> {
   // Enrich with legal links (case_legal_links -> legal_sections -> legal_sources).
   // Select the full editorial fields so the teacher-facing modal can render
   // the complete knowledge card without a second round-trip.
-  const { data: links } = await (supabase.from("case_legal_links") as any)
-    .select(
-      "explanation, legal_sections(id, section_number, title, summary, practice_relevance, recommendation, common_mistakes, full_text, official_url, version_label, valid_from, valid_to, status, last_reviewed_at, legal_sources(id, name, jurisdiction, official_url))",
-    )
+  //
+  // Zweistufig statt verschachteltem Embed (Fund 2026-08-14): case_legal_links.
+  // legal_section_id hat keinen Datenbank-Fremdschlüssel (nur die ungenutzte
+  // Alt-Spalte section_id hat einen), wodurch PostgREST den automatischen
+  // "legal_sections(...)"-Embed nicht auflösen kann und still legal_sections:
+  // null zurückgibt - betraf u.a. genau diese Funktion (öffentliche
+  // Falldetailseite zeigte dadurch nie Rechtsgrundlagen an).
+  const { data: linkRows } = await (supabase.from("case_legal_links") as any)
+    .select("legal_section_id, explanation")
     .eq("case_id", id);
+  const linkBySection = new Map(
+    ((linkRows ?? []) as Array<{ legal_section_id: string; explanation: string | null }>)
+      .filter((l) => l.legal_section_id)
+      .map((l) => [l.legal_section_id, l.explanation]),
+  );
+  const sectionIds = [...linkBySection.keys()];
+  const { data: sectionRows } = sectionIds.length
+    ? await (supabase.from("legal_sections") as any)
+        .select(
+          "id, section_number, title, summary, practice_relevance, recommendation, common_mistakes, full_text, official_url, version_label, valid_from, valid_to, status, last_reviewed_at, legal_sources(id, name, jurisdiction, official_url)",
+        )
+        .in("id", sectionIds)
+    : { data: [] };
 
-  const rows = (links ?? []) as Array<any>;
-
-  const legalSections = rows
-    .map((l) => {
-      const s = l?.legal_sections;
+  const legalSections = ((sectionRows ?? []) as Array<any>)
+    .map((s) => {
       if (!s?.id) return null;
       const src = s.legal_sources ?? null;
       return {
@@ -104,7 +119,7 @@ async function fetchCaseById(id: string): Promise<CaseData | null> {
         valid_to: s.valid_to ?? null,
         last_reviewed_at: s.last_reviewed_at ?? null,
         status: s.status ?? null,
-        explanation: (l.explanation as string | null) ?? null,
+        explanation: linkBySection.get(s.id) ?? null,
         source: src
           ? {
               id: src.id as string,

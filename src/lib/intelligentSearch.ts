@@ -174,10 +174,45 @@ const WEIGHTS = {
   topic: 2,
 };
 
+/**
+ * Begriffs-Seltenheits-Gewichtung (IDF), Fund 2026-08-14: reine Trefferzahl
+ * ohne Rücksicht auf Seltenheit lässt in diesem Corpus generische, aber
+ * häufig auftauchende Wörter wie "prüfung" fast jeden Fall ähnlich stark
+ * treffen - ein Fall, der zufällig VIELE Prüfungs-Erwähnungen enthält,
+ * schlägt dadurch einen Fall, der thematisch exakt passt, aber die
+ * Suchbegriffe seltener wiederholt. Klassische IDF-Glättung
+ * (ln((1+N)/(1+df))+1) hält Vielfach-Vorkommende bei ~1 (kein Nachteil
+ * gegenüber dem bisherigen Verhalten), boostet aber Begriffe, die nur in
+ * wenigen Fällen vorkommen - genau die, die eine Anfrage tatsächlich von
+ * anderen Fällen unterscheiden.
+ */
+function computeIdfWeights(cases: CaseData[], terms: string[]): Map<string, number> {
+  const n = cases.length;
+  const weights = new Map<string, number>();
+  if (n === 0) return weights;
+  for (const term of terms) {
+    let df = 0;
+    for (const c of cases) {
+      const h = haystack(c);
+      const hit =
+        countHits(h.title, term) > 0 ||
+        countHits(h.keywords, term) > 0 ||
+        countHits(h.facts, term) > 0 ||
+        countHits(h.category, term) > 0 ||
+        countHits(h.actions, term) > 0 ||
+        countHits(h.legal, term) > 0;
+      if (hit) df++;
+    }
+    weights.set(term, Math.log((1 + n) / (1 + df)) + 1);
+  }
+  return weights;
+}
+
 function scoreCase(
   c: CaseData,
   terms: string[],
   topics: string[],
+  idfWeights: Map<string, number>,
 ): { score: number; matched: string[]; reasons: string[] } {
   const h = haystack(c);
   const matched = new Set<string>();
@@ -198,7 +233,7 @@ function scoreCase(
     if (inActions) { termScore += inActions * WEIGHTS.actions; matched.add(term); }
     const inLegal = countHits(h.legal, term);
     if (inLegal) { termScore += inLegal * WEIGHTS.legal; matched.add(term); }
-    score += termScore;
+    score += termScore * (idfWeights.get(term) ?? 1);
   }
 
   // Themen-Signal (Kategorie exakt oder inhaltlich passend)
@@ -297,8 +332,9 @@ export function searchPublishedPracticeCases(
   const vague = isVague(q, tokens);
 
   // Kandidaten scoren
+  const idfWeights = computeIdfWeights(cases, terms);
   const scored = cases
-    .map((c) => ({ case: c, ...scoreCase(c, terms, topics) }))
+    .map((c) => ({ case: c, ...scoreCase(c, terms, topics, idfWeights) }))
     .filter((r) => r.score > 0)
     .sort((a, b) => b.score - a.score);
 

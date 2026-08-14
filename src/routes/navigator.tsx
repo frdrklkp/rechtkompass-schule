@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { DecisionNavigator } from "@/components/navigator/DecisionNavigator";
 import { NavigatorLanding } from "@/components/navigator/NavigatorLanding";
 import { useDecisionNavigator } from "@/hooks/navigator/useDecisionNavigator";
@@ -13,15 +13,25 @@ import {
 } from "@/services/situation-analyzer";
 
 export const Route = createFileRoute("/navigator")({
+  // Sprint 4.6J.2: ?fortsetzen=true setzt die gespeicherte Bearbeitung direkt
+  // fort (genutzt vom Assistant-Handoff "Fall bearbeiten") - ohne den Umweg
+  // über die Startansicht. Direktaufrufe ohne Parameter zeigen weiterhin die
+  // Startansicht mit expliziter Auswahl; ungültige Werte fallen auf sie zurück.
+  validateSearch: (search: Record<string, unknown>): { fortsetzen?: boolean } => ({
+    fortsetzen:
+      search.fortsetzen === true || search.fortsetzen === "true" || search.fortsetzen === "1"
+        ? true
+        : undefined,
+  }),
   head: () => ({
     meta: [
-      { title: "Entscheidungsnavigator – RechtKompass Schule" },
+      { title: "Fall bearbeiten – RechtKompass Schule" },
       {
         name: "description",
         content:
-          "Geführter Ablauf für die schrittweise Bearbeitung schulischer Situationen – von der Situation bis zum Abschluss, mit Demo-Bearbeitung.",
+          "Strukturierter Bearbeitungsweg für schulische Situationen – Schritt für Schritt von der Situation bis zum Abschluss, mit Demo-Bearbeitung.",
       },
-      { property: "og:title", content: "Entscheidungsnavigator – RechtKompass Schule" },
+      { property: "og:title", content: "Fall bearbeiten – RechtKompass Schule" },
       {
         property: "og:description",
         content: "Schritt für Schritt durch die Bearbeitung eines Vorgangs – mit Fortschritt und Wiederaufnahme.",
@@ -38,6 +48,27 @@ function NavigatorPage() {
   const work = useDecisionNavigator({ mode: "work" });
   const demo = useDecisionNavigator({ mode: "demo" });
   const nav = mode === "demo" ? demo : work;
+  const { fortsetzen } = Route.useSearch();
+
+  // Auto-Fortsetzung nach Assistant-Handoff (?fortsetzen=true): die soeben
+  // übergebene Session direkt öffnen statt die Startansicht zu zeigen. Läuft
+  // höchstens einmal und nur, wenn tatsächlich eine fortsetzbare Session
+  // existiert - sonst bleibt die Startansicht mit ihren Optionen.
+  const autoResumed = useRef(false);
+  const workSummary = work.sessionSummary;
+  useEffect(() => {
+    if (!fortsetzen || autoResumed.current || !work.hydrated || mode !== null) return;
+    autoResumed.current = true;
+    const canResume =
+      workSummary?.exists &&
+      workSummary.problem === "none" &&
+      (workSummary.status === "running" || workSummary.status === "paused");
+    if (canResume) {
+      setMode("work");
+      work.resumeStored();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fortsetzen, work.hydrated, workSummary, mode]);
 
   const startDemo = () => {
     const engineNav = demo;

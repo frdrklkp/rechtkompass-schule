@@ -54,7 +54,7 @@ export function DecisionNavigator({ nav, onLeave, onResetSession }: DecisionNavi
   return (
     <div className="space-y-5">
       <NavigatorHeader
-        title={isDemo ? "Decision Navigator – Demo" : nav.flow.title}
+        title={isDemo ? "Fall bearbeiten – Demo" : "Fall bearbeiten"}
         subtitle={nav.flow.description}
         statusLabel={STATUS_LABEL[nav.state.status] ?? nav.state.status}
       />

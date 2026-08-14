@@ -356,8 +356,8 @@ test("AssistantConfirmation fasst die Übergabe nachvollziehbar zusammen", () =>
   assert.ok(html.includes("Übergabe prüfen"));
   assert.ok(html.includes(SOURCE.title));
   assert.ok(html.includes("kuratierte"));
-  assert.ok(html.includes("nichts erneut eingeben"));
-  assert.ok(html.includes("In den Navigator übernehmen"));
+  assert.ok(html.includes("nichts erneut"));
+  assert.ok(html.includes("Fall bearbeiten"));
   assert.ok(html.includes("2 offene Rückfrage(n) beantworten"));
 });
 
@@ -384,7 +384,7 @@ test("AssistantConfirmation zeigt Anzahl und kompakte Rechtsgrundlagen-Vorschau"
   assert.ok(html.includes("§ 53"));
   assert.ok(html.includes("Aktuelle Fassung"));
   assert.ok(html.includes("Aktualität unbekannt"));
-  assert.ok(html.includes("Im Navigator ansehen"));
+  assert.ok(html.includes("In der Fallbearbeitung ansehen"));
 });
 
 test("AssistantConfirmation ohne Praxisfall täuscht keine Rechtsgrundlagen-Vorschau vor", () => {
@@ -400,15 +400,20 @@ test("AssistantConfirmation ohne Praxisfall täuscht keine Rechtsgrundlagen-Vors
     />,
   );
   assert.ok(!html.includes("Rechtsgrundlage"));
-  assert.ok(!html.includes("Im Navigator ansehen"));
+  assert.ok(!html.includes("In der Fallbearbeitung ansehen"));
   assert.ok(html.includes("Ohne Praxisfall (allgemeine Bearbeitung)"));
 });
 
-test("AssistantHandoff bestätigt die Übergabe und bietet Navigator-Einstieg", () => {
+test("AssistantHandoff bestätigt die Übergabe und führt zu 'Fall bearbeiten'", () => {
   const session = makeSession({ status: "handedOff", handoffAt: "2026-08-08T07:30:00.000Z" });
   const html = render(<AssistantHandoff session={session} onReset={() => {}} />);
   assert.ok(html.includes("Angaben übernommen"));
-  assert.ok(html.includes("Zum Navigator"));
+  // Sprint 4.6J.2: teacher-facing heißt der Navigator "Fall bearbeiten";
+  // der technische Handoff zeigt weiterhin auf /navigator.
+  assert.ok(html.includes("Fall bearbeiten"));
+  assert.ok(html.includes('href="/navigator"'));
+  assert.ok(html.includes("nicht erneut eingeben"));
+  assert.ok(!html.includes("Zum Navigator"));
   assert.ok(html.includes("Neue Fallschilderung beginnen"));
 });
 
@@ -448,7 +453,7 @@ test("DecisionAssistant zeigt nach der Übergabe die Abschlussansicht", () => {
   const session = makeSession({ status: "handedOff", handoffAt: "2026-08-08T07:30:00.000Z" });
   const html = render(<DecisionAssistant controller={makeController({ session })} />);
   assert.ok(html.includes("Angaben übernommen"));
-  assert.ok(html.includes("Zum Navigator"));
+  assert.ok(html.includes("Fall bearbeiten"));
 });
 
 test("DecisionAssistant zeigt Treffer, Rückfragen und Bestätigung im Ablauf", () => {

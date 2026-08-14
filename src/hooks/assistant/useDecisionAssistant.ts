@@ -183,7 +183,7 @@ export function useDecisionAssistant() {
       return result;
     } catch (e) {
       setError(
-        e instanceof Error ? e.message : "Die Übergabe an den Navigator ist nicht möglich.",
+        e instanceof Error ? e.message : "Die Übergabe zur Fallbearbeitung ist nicht möglich.",
       );
       return null;
     }

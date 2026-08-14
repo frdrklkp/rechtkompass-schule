@@ -89,7 +89,7 @@ export function NavigatorSessionControls({
         </Button>
       )}
       <Button type="button" size="sm" variant="outline" className="gap-1.5" onClick={onLeave}>
-        <LogOut className="h-3.5 w-3.5" aria-hidden="true" /> Navigator verlassen
+        <LogOut className="h-3.5 w-3.5" aria-hidden="true" /> Bearbeitung verlassen
       </Button>
       <Button
         type="button"

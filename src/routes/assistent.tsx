@@ -22,17 +22,17 @@ import type { CaseData } from "@/data/cases";
 export const Route = createFileRoute("/assistent")({
   head: () => ({
     meta: [
-      { title: "Entscheidungsassistent – RechtKompass Schule" },
+      { title: "Fall schildern – RechtKompass Schule" },
       {
         name: "description",
         content:
-          "Schildern Sie den Vorfall in eigenen Worten: Der Assistent strukturiert Ihre Angaben, gleicht sie mit Praxisfällen ab und übergibt sie an den Entscheidungsnavigator.",
+          "Schildern Sie den Vorfall in eigenen Worten: RechtKompass strukturiert Ihre Angaben, gleicht sie mit Praxisfällen ab und führt Sie anschließend durch die weitere Bearbeitung.",
       },
-      { property: "og:title", content: "Entscheidungsassistent – RechtKompass Schule" },
+      { property: "og:title", content: "Fall schildern – RechtKompass Schule" },
       {
         property: "og:description",
         content:
-          "Geführter Einstieg: Fallschilderung strukturieren, mit Praxisfällen abgleichen und an den Entscheidungsnavigator übergeben.",
+          "Geführter Einstieg: Fallschilderung strukturieren, mit Praxisfällen abgleichen und direkt weiterbearbeiten – ohne Doppeleingabe.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -150,7 +150,7 @@ function AssistentPage() {
   return (
     <div className="mx-auto w-full max-w-2xl px-4 pt-6 pb-40 sm:px-6">
       <div className="mb-4 flex items-center justify-between gap-2">
-        <Breadcrumbs items={[{ label: "Entscheidungsassistent" }]} />
+        <Breadcrumbs items={[{ label: "Fall schildern" }]} />
         <TimeModeToggle compact />
       </div>
 
@@ -159,9 +159,10 @@ function AssistentPage() {
           <Compass className="h-6 w-6" />
         </div>
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Entscheidungsassistent</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Fall schildern</h1>
           <p className="text-xs text-muted-foreground">
-            Fall schildern, passende Praxisfälle prüfen, in den Navigator übernehmen.
+            Situation beschreiben, passende Praxisfälle prüfen, anschließend direkt
+            weiterbearbeiten.
           </p>
         </div>
       </div>

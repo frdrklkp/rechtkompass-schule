@@ -2,7 +2,8 @@
  * Sprint 4.6B.1 – Startansicht des Decision Navigators.
  * Startet keine Bearbeitung automatisch.
  */
-import { AlertTriangle, Compass, Play, RotateCcw, Sparkles } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { AlertTriangle, ArrowRight, Compass, Play, RotateCcw, Sparkles } from "lucide-react";
 import { useState } from "react";
 import {
   AlertDialog,
@@ -61,11 +62,11 @@ export function NavigatorLanding({
         </span>
         <div className="min-w-0">
           <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-            Decision Navigator
+            Fall bearbeiten
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Ein geführter Ablauf, der einen schulischen Vorgang Schritt für Schritt strukturiert
-            erfasst – von der Situation bis zum Abschluss.
+            Der strukturierte Bearbeitungsweg: einen schulischen Vorgang Schritt für Schritt
+            erfassen – von der Situation bis zum Abschluss.
           </p>
         </div>
       </header>
@@ -118,11 +119,11 @@ export function NavigatorLanding({
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
             <Button type="button" className="gap-2" onClick={onStartNew}>
-              <Play className="h-4 w-4" aria-hidden="true" /> Neue Bearbeitung starten
+              <Play className="h-4 w-4" aria-hidden="true" /> Neuen Fall strukturiert erfassen
             </Button>
             {canResume && (
               <Button type="button" variant="outline" className="gap-2" onClick={onResume}>
-                Bearbeitung fortsetzen
+                Fall fortsetzen
               </Button>
             )}
             {workSession?.exists && (
@@ -166,6 +167,24 @@ export function NavigatorLanding({
             )}
           </div>
         </div>
+      </section>
+
+      {/* Sprint 4.6J.2: Rückweg zum primären Einstieg. Wer hier ohne Session
+          landet (Deep Link, Neugier), soll den empfohlenen Weg über die freie
+          Fallschilderung kennen, ohne dass der strukturierte Einstieg
+          abgewertet wird. */}
+      <section className="rounded-2xl border border-border bg-card p-4">
+        <h2 className="text-sm font-semibold text-foreground">Lieber frei schildern?</h2>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Beschreiben Sie die Situation in eigenen Worten – RechtKompass strukturiert die
+          Angaben, stellt Rückfragen und übernimmt alles in die Fallbearbeitung.
+        </p>
+        <Link
+          to="/assistent"
+          className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-4 py-2 text-xs font-medium hover:border-accent hover:text-accent"
+        >
+          Fall schildern <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+        </Link>
       </section>
 
       <AlertDialog open={pendingReset !== null} onOpenChange={(o) => !o && setPendingReset(null)}>

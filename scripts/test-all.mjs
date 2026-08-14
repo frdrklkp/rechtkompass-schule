@@ -27,14 +27,17 @@ function findTestFiles(dir, out = []) {
     const full = join(dir, entry);
     const st = statSync(full);
     if (st.isDirectory()) findTestFiles(full, out);
-    else if (entry.endsWith(".test.ts")) out.push(full);
+    // .test.tsx mit erfassen (Fund Sprint 4.6J.2, 2026-08-14: die UI-Tests
+    // wie assistantUi.test.tsx wurden vom Runner bisher still uebersprungen,
+    // weil nur .test.ts gesammelt wurde).
+    else if (entry.endsWith(".test.ts") || entry.endsWith(".test.tsx")) out.push(full);
   }
   return out;
 }
 
 const files = findTestFiles(ROOT).sort();
 if (files.length === 0) {
-  console.error("Keine *.test.ts-Dateien gefunden.");
+  console.error("Keine *.test.ts(x)-Dateien gefunden.");
   process.exit(1);
 }
 

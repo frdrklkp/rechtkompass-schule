@@ -335,39 +335,47 @@ function Home() {
         </section>
       )}
 
-      {/* Entscheidungsnavigator */}
-      <Link
-        to="/navigator"
-        className="group mt-8 flex items-start gap-4 rounded-2xl border border-accent/40 bg-card p-4 transition-all hover:-translate-y-0.5"
+      {/* Einen Fall klären – primärer Einstieg in die Fallbearbeitung.
+          Sprint 4.6J.2: ersetzt die zwei zuvor gleichrangigen Karten
+          (Entscheidungsnavigator/Entscheidungsassistent). Die Suche oben
+          bleibt der Einstieg fürs NACHSCHLAGEN; diese Karte ist der eine
+          Einstieg fürs BEARBEITEN eines konkreten Falls. Bewusst nur ein
+          CTA-Button und kein zweites Freitextfeld neben der Suche. */}
+      <section
+        aria-labelledby="fall-klaeren-heading"
+        className="mt-8 rounded-2xl border border-accent/40 bg-gradient-to-br from-accent/10 via-accent/5 to-transparent p-5"
       >
-        <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-accent text-accent-foreground shadow-lg">
-          <Compass className="h-5 w-5" />
+        <div className="flex items-start gap-4">
+          <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-accent text-accent-foreground shadow-lg">
+            <Compass className="h-5 w-5" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <h2 id="fall-klaeren-heading" className="text-base font-semibold text-foreground">
+              Einen Fall klären
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Schildern Sie die Situation in eigenen Worten. RechtKompass stellt gezielte
+              Rückfragen und führt Sie anschließend Schritt für Schritt durch Bewertung,
+              Maßnahmen, Rechtsgrundlagen und Dokumentation.
+            </p>
+            <Link
+              to="/assistent"
+              className="mt-4 inline-flex items-center gap-2 rounded-full bg-accent px-5 py-2.5 text-sm font-semibold text-accent-foreground hover:opacity-90"
+            >
+              Fall schildern <ArrowRight className="h-4 w-4" />
+            </Link>
+            <p className="mt-3 text-xs text-muted-foreground">
+              Ohne freie Schilderung arbeiten?{" "}
+              <Link
+                to="/navigator"
+                className="font-medium underline underline-offset-2 hover:text-accent"
+              >
+                Fall direkt strukturiert erfassen
+              </Link>
+            </p>
+          </div>
         </div>
-        <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold text-foreground">Entscheidungsnavigator</p>
-          <p className="mt-0.5 text-xs text-muted-foreground">
-            Vorgang strukturiert erfassen – neue Bearbeitung oder Demo starten.
-          </p>
-        </div>
-        <ArrowRight className="mt-2 h-4 w-4 shrink-0 text-accent transition-transform group-hover:translate-x-1" />
-      </Link>
-
-      {/* Entscheidungsassistent */}
-      <Link
-        to="/assistent"
-        className="group mt-8 flex items-start gap-4 rounded-2xl border border-accent/40 bg-gradient-to-br from-accent/10 via-accent/5 to-transparent p-4 transition-all hover:-translate-y-0.5"
-      >
-        <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-accent text-accent-foreground shadow-lg">
-          <Compass className="h-5 w-5" />
-        </div>
-        <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold text-foreground">
-            Lieber Schritt für Schritt geführt werden?
-          </p>
-          <p className="mt-0.5 text-xs text-muted-foreground">Entscheidungsassistent starten.</p>
-        </div>
-        <ArrowRight className="mt-2 h-4 w-4 shrink-0 text-accent transition-transform group-hover:translate-x-1" />
-      </Link>
+      </section>
 
       {/* Trust */}
       <section className="mt-8 rounded-2xl border border-border bg-card p-4">

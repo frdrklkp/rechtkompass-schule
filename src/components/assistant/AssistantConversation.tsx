@@ -41,7 +41,7 @@ export function AssistantConversation({ session }: AssistantConversationProps) {
   if (session.handoffAt) {
     turns.push({
       label: "Übergabe",
-      text: `An den Navigator übergeben am ${new Date(session.handoffAt).toLocaleString("de-DE")}.`,
+      text: `Zur Fallbearbeitung übergeben am ${new Date(session.handoffAt).toLocaleString("de-DE")}.`,
     });
   }
 

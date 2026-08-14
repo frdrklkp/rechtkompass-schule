@@ -102,8 +102,8 @@ export function AssistantConfirmation({
       )}
 
       <p className="mt-3 text-xs text-muted-foreground">
-        Die erfassten Angaben werden vollständig in den Entscheidungsnavigator übernommen. Sie
-        müssen dort nichts erneut eingeben. Der Navigator öffnet sich bei der Analyse.
+        Die erfassten Angaben werden vollständig übernommen. Sie müssen nichts erneut
+        eingeben. Die Bearbeitung beginnt direkt bei der Analyse.
       </p>
 
       {missingRequired.length > 0 && (
@@ -122,7 +122,7 @@ export function AssistantConfirmation({
           onClick={onHandoff}
           className="inline-flex items-center gap-2 rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-accent-foreground"
         >
-          In den Navigator übernehmen <ArrowRight className="h-4 w-4" />
+          Fall bearbeiten <ArrowRight className="h-4 w-4" />
         </button>
         {openQuestionCount > 0 && (
           <button

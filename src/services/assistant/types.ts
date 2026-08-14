@@ -83,7 +83,7 @@ export const ASSISTANT_PHASE_LABELS: Record<AssistantPhase, string> = {
   struktur: "Erfasste Angaben",
   treffer: "Passende Praxisfälle",
   rueckfragen: "Rückfragen",
-  uebergabe: "Übergabe an den Navigator",
+  uebergabe: "Fall bearbeiten",
 };
 
 export type AssistantStatus = "idle" | "running" | "paused" | "handedOff" | "cancelled";
@@ -92,7 +92,7 @@ export const ASSISTANT_STATUS_LABELS: Record<AssistantStatus, string> = {
   idle: "bereit",
   running: "in Bearbeitung",
   paused: "pausiert",
-  handedOff: "an den Navigator übergeben",
+  handedOff: "zur Fallbearbeitung übergeben",
   cancelled: "abgebrochen",
 };
 

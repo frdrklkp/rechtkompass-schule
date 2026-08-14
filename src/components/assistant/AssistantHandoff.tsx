@@ -18,18 +18,20 @@ export function AssistantHandoff({ session, onReset }: AssistantHandoffProps) {
         Angaben übernommen
       </h2>
       <p className="mt-1 text-xs text-muted-foreground">
-        Der Entscheidungsnavigator wurde mit Ihrem Sachverhalt gestartet
+        Ihre Angaben werden übernommen
         {session.handoffAt
           ? ` (${new Date(session.handoffAt).toLocaleString("de-DE")})`
           : ""}
-        . Die Phasen „Start“ und „Situation“ gelten als abgeschlossen.
+        {" "}– Sie müssen den Fall nicht erneut eingeben. Die Schritte „Start“ und
+        „Situation“ sind bereits erledigt.
       </p>
       <div className="mt-4 flex flex-wrap gap-2">
         <Link
           to="/navigator"
+          search={{ fortsetzen: true }}
           className="inline-flex items-center gap-2 rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-accent-foreground"
         >
-          Zum Navigator <ArrowRight className="h-4 w-4" />
+          Fall bearbeiten <ArrowRight className="h-4 w-4" />
         </Link>
         <button
           type="button"

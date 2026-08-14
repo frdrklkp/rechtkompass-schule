@@ -187,7 +187,7 @@ export function DecisionAssistant({ c, open, onOpenChange, overrideTree }: Props
         <DialogHeader className="border-b border-border px-5 py-4">
           <DialogTitle className="flex items-center gap-2 text-base">
             <Zap className="h-4 w-4 text-accent" />
-            Entscheidungsassistent
+            Kurz-Check zu diesem Fall
           </DialogTitle>
           <DialogDescription className="text-xs">
             Beantworten Sie wenige Fragen zu Ihrer konkreten Situation.

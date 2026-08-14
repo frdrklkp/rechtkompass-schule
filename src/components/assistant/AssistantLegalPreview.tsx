@@ -58,7 +58,7 @@ export function AssistantLegalPreview({ preview, onOpenNavigator }: AssistantLeg
         onClick={onOpenNavigator}
         className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-accent hover:underline"
       >
-        Im Navigator ansehen <ArrowRight className="h-3 w-3" aria-hidden="true" />
+        In der Fallbearbeitung ansehen <ArrowRight className="h-3 w-3" aria-hidden="true" />
       </button>
     </div>
   );

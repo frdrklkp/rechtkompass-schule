@@ -423,7 +423,7 @@ function CaseDetail({ c }: { c: CaseData }) {
                   onClick={() => setAssistantOpen(true)}
                   className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full bg-accent px-4 py-2.5 text-sm font-semibold text-accent-foreground hover:opacity-90 sm:w-auto"
                 >
-                  Entscheidungsassistent starten
+                  Kurz-Check starten
                   <ArrowRight className="h-4 w-4" />
                 </button>
               </div>

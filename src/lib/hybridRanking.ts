@@ -91,23 +91,59 @@ function normalizeTopic(s: string): string {
 }
 
 /**
+ * Themen-Seltenheits-Gewichtung (IDF), analog zur Begriffs-IDF in
+ * intelligentSearch.ts (Fund 2026-08-14): ein Kategorie-Alignment auf ein
+ * riesiges Thema wie "Prüfungen" (in diesem Corpus sehr viele Fälle)
+ * unterscheidet Fälle kaum voneinander, während ein Alignment auf ein
+ * seltenes Thema (wenige Fälle dieser Kategorie) ein starkes, treffsicheres
+ * Signal ist. Gleiche geglättete Formel wie in intelligentSearch.ts, hier
+ * auf Kategorie-Häufigkeit statt Begriffs-Häufigkeit angewendet.
+ */
+function computeTopicIdf(allCases: CaseData[], topics: string[]): Map<string, number> {
+  const n = allCases.length;
+  const weights = new Map<string, number>();
+  if (n === 0) return weights;
+  const catNorms = allCases.map((c) => normalizeTopic(c.category ?? ""));
+  for (const topic of topics) {
+    const tn = normalizeTopic(topic);
+    if (!tn) continue;
+    const df = catNorms.filter((catN) => catN && (catN === tn || catN.includes(tn) || tn.includes(catN))).length;
+    weights.set(topic, Math.log((1 + n) / (1 + df)) + 1);
+  }
+  return weights;
+}
+
+/**
  * Themenscore basiert auf der Anzahl erkannter Themen und einem
  * allgemeingültigen Kategorie-Alignment-Bonus: Wenn die Kategorie des
  * Falls einem der in der Query erkannten Themen entspricht, ist der Fall
- * thematisch stärker gebunden. Bewusst klein gehalten (keine
- * Query-/Test-spezifischen Regeln, keine Gewichtsänderung).
+ * thematisch stärker gebunden. Der Alignment-Bonus wird zusätzlich mit der
+ * Themen-IDF gewichtet, damit seltene, treffsichere Themen stärker zählen
+ * als riesige Standardkategorien.
  */
-function topicsScore(r: SearchResult, c: CaseData): number {
+function topicsScore(r: SearchResult, c: CaseData, topicIdf: Map<string, number>, totalCases: number): number {
   if (r.matchedTopics.length === 0) return 0;
   const base = 0.3 + 0.15 * Math.min(3, r.matchedTopics.length);
   const catN = normalizeTopic(c.category ?? "");
-  const aligned =
-    !!catN &&
-    r.matchedTopics.some((t) => {
-      const tn = normalizeTopic(t);
-      return tn && (catN === tn || catN.includes(tn) || tn.includes(catN));
-    });
-  return clamp01(base + (aligned ? 0.35 : 0));
+  const alignedTopic = catN
+    ? r.matchedTopics.find((t) => {
+        const tn = normalizeTopic(t);
+        return tn && (catN === tn || catN.includes(tn) || tn.includes(catN));
+      })
+    : undefined;
+  if (!alignedTopic) return clamp01(base);
+
+  // idf liegt zwischen 1 (Thema deckt praktisch den ganzen Corpus ab) und
+  // ln(N+1)+1 (Thema kommt so gut wie nirgends sonst vor). Auf [0,1]
+  // normalisieren und den Alignment-Bonus zwischen 0.20 (häufigstes Thema -
+  // etwas weniger als der bisherige feste Bonus 0.35) und 0.50 (seltenstes
+  // Thema - deutlich mehr als vorher) spreizen, statt ihn wie bisher pauschal
+  // auf 0.35 zu setzen.
+  const idf = topicIdf.get(alignedTopic) ?? 1;
+  const maxIdf = Math.log(1 + totalCases) + 1;
+  const t = maxIdf > 1 ? clamp01((idf - 1) / (maxIdf - 1)) : 0;
+  const bonus = 0.2 + 0.3 * t;
+  return clamp01(base + bonus);
 }
 
 function legalContextScore(c: CaseData): number {
@@ -162,6 +198,12 @@ export function combineHybrid(
   const structById = new Map<string, SearchResult>();
   for (const r of structuredResults) structById.set(r.case.id, r);
 
+  // matchedTopics ist pro Suchlauf für alle Ergebnisse identisch (kommt aus
+  // derselben detectTopics()-Erkennung in intelligentSearch.ts) - einmal
+  // sammeln reicht, statt es pro Kandidat neu zu bilden.
+  const allTopics = [...new Set(structuredResults.flatMap((r) => r.matchedTopics))];
+  const topicIdf = computeTopicIdf(allCases, allTopics);
+
   const ids = new Set<string>([...structById.keys(), ...semById.keys()]);
   const out: HybridCandidate[] = [];
 
@@ -172,7 +214,7 @@ export function combineHybrid(
     const r = structById.get(id);
     const semantic = semById.get(id) ?? 0;
     const structured = r ? normalizeStructuredScore(r.relevanceScore) : 0;
-    const topics = r ? topicsScore(r, c) : 0;
+    const topics = r ? topicsScore(r, c, topicIdf, allCases.length) : 0;
     const legal = legalContextScore(c);
     const quality = qualityScore(c);
 

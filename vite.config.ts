@@ -62,7 +62,32 @@ export default defineConfig(({ command, mode }) => {
         server: { entry: "server" },
       }),
       viteReact(),
-      ...(command === "build" ? [nitro({ defaultPreset: "cloudflare-module" })] : []),
+      ...(command === "build"
+        ? [
+            nitro({
+              defaultPreset: "cloudflare-module",
+              // Fund 2026-08-24: ohne dieses Flag kopiert Cloudflare Workers
+              // gebundene Vars/Secrets NICHT nach process.env - jeder
+              // readEnvVar()-Aufruf (AIProviderFactory, Supabase-Service-
+              // Role-Key, Resend) liest dort in Produktion leer, obwohl der
+              // Wert im Dashboard korrekt als Secret gesetzt ist. Für
+              // AIProviderFactory führte das zum stillen Fallback auf den
+              // MockProvider (erkennbar an "value"/"reason"/"confidence"
+              // im Response-Payload) statt eines echten Anthropic-Aufrufs.
+              cloudflare: {
+                wrangler: {
+                  // Fest verdrahtet: Nitro leitet den Namen sonst aus dem
+                  // Git-Remote ab und würde bei jedem Build einen neuen,
+                  // vom Custom Domain losgelösten Worker erzeugen statt den
+                  // bestehenden, an www.rechtkompass-schule.de gebundenen
+                  // Worker "tanstack-start-ts" zu aktualisieren.
+                  name: "tanstack-start-ts",
+                  compatibility_flags: ["nodejs_compat", "nodejs_compat_populate_process_env"],
+                },
+              },
+            }),
+          ]
+        : []),
     ],
   };
 

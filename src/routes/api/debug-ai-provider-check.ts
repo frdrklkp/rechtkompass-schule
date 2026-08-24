@@ -1,6 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AIProviderFactory } from "@/services/editorial/ai/providers/AIProviderFactory";
 
+// Trigger für frischen Build nach Deploy-Command-Änderung (wrangler secret put
+// pro Secret nach dem eigentlichen Deploy) - siehe Worker Settings → Build.
+
 export const Route = createFileRoute("/api/debug-ai-provider-check")({
   server: {
     handlers: {

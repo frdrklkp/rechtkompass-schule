@@ -12,10 +12,13 @@ export const Route = createFileRoute("/api/debug-ai-provider-check")({
           JSON.stringify({
             resolvedProviderId: provider.id,
             hasProcessEnv: !!processEnv,
-            processEnvKeyCount: processEnv ? Object.keys(processEnv).length : 0,
+            processEnvKeys: processEnv ? Object.keys(processEnv) : [],
             hasAnthropicKeyViaProcessEnv: !!processEnv?.ANTHROPIC_API_KEY,
             hasCfEnvGlobal: !!cfEnv,
-            cfEnvKeyCount: cfEnv ? Object.keys(cfEnv).length : 0,
+            cfEnvKeys: cfEnv ? Object.keys(cfEnv) : [],
+            globalThisKeysContainingEnv: Object.keys(globalThis as object).filter((k) =>
+              /env/i.test(k),
+            ),
           }),
           { headers: { "Content-Type": "application/json" } },
         );

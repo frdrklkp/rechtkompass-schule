@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AIProviderFactory } from "@/services/editorial/ai/providers/AIProviderFactory";
 
-export const Route = createFileRoute("/api/_debug-ai-provider")({
+export const Route = createFileRoute("/api/debug-ai-provider-check")({
   server: {
     handlers: {
       GET: async () => {

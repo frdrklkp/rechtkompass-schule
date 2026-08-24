@@ -67,7 +67,6 @@ import { Route as ApiAiValidateLegalClaimsRouteImport } from './routes/api/ai-va
 import { Route as ApiCaseGenerationJobsRouteImport } from './routes/api/case-generation-jobs'
 import { Route as ApiCopilotTrackRouteImport } from './routes/api/copilot-track'
 import { Route as ApiCrawlLegalSourceRouteImport } from './routes/api/crawl-legal-source'
-import { Route as ApiDebugAiProviderCheckRouteImport } from './routes/api/debug-ai-provider-check'
 import { Route as ApiEnrichLegalSectionRouteImport } from './routes/api/enrich-legal-section'
 import { Route as ApiGenerateCaseDocumentRouteImport } from './routes/api/generate-case-document'
 import { Route as ApiImportLegalSourceRouteImport } from './routes/api/import-legal-source'
@@ -431,11 +430,6 @@ const ApiCopilotTrackRoute = ApiCopilotTrackRouteImport.update({
 const ApiCrawlLegalSourceRoute = ApiCrawlLegalSourceRouteImport.update({
   id: '/api/crawl-legal-source',
   path: '/api/crawl-legal-source',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiDebugAiProviderCheckRoute = ApiDebugAiProviderCheckRouteImport.update({
-  id: '/api/debug-ai-provider-check',
-  path: '/api/debug-ai-provider-check',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiEnrichLegalSectionRoute = ApiEnrichLegalSectionRouteImport.update({
@@ -885,7 +879,6 @@ export interface FileRoutesByFullPath {
   '/api/case-generation-jobs': typeof ApiCaseGenerationJobsRouteWithChildren
   '/api/copilot-track': typeof ApiCopilotTrackRoute
   '/api/crawl-legal-source': typeof ApiCrawlLegalSourceRoute
-  '/api/debug-ai-provider-check': typeof ApiDebugAiProviderCheckRoute
   '/api/enrich-legal-section': typeof ApiEnrichLegalSectionRoute
   '/api/generate-case-document': typeof ApiGenerateCaseDocumentRoute
   '/api/import-legal-source': typeof ApiImportLegalSourceRoute
@@ -1011,7 +1004,6 @@ export interface FileRoutesByTo {
   '/api/case-generation-jobs': typeof ApiCaseGenerationJobsRouteWithChildren
   '/api/copilot-track': typeof ApiCopilotTrackRoute
   '/api/crawl-legal-source': typeof ApiCrawlLegalSourceRoute
-  '/api/debug-ai-provider-check': typeof ApiDebugAiProviderCheckRoute
   '/api/enrich-legal-section': typeof ApiEnrichLegalSectionRoute
   '/api/generate-case-document': typeof ApiGenerateCaseDocumentRoute
   '/api/import-legal-source': typeof ApiImportLegalSourceRoute
@@ -1142,7 +1134,6 @@ export interface FileRoutesById {
   '/api/case-generation-jobs': typeof ApiCaseGenerationJobsRouteWithChildren
   '/api/copilot-track': typeof ApiCopilotTrackRoute
   '/api/crawl-legal-source': typeof ApiCrawlLegalSourceRoute
-  '/api/debug-ai-provider-check': typeof ApiDebugAiProviderCheckRoute
   '/api/enrich-legal-section': typeof ApiEnrichLegalSectionRoute
   '/api/generate-case-document': typeof ApiGenerateCaseDocumentRoute
   '/api/import-legal-source': typeof ApiImportLegalSourceRoute
@@ -1275,7 +1266,6 @@ export interface FileRouteTypes {
     | '/api/case-generation-jobs'
     | '/api/copilot-track'
     | '/api/crawl-legal-source'
-    | '/api/debug-ai-provider-check'
     | '/api/enrich-legal-section'
     | '/api/generate-case-document'
     | '/api/import-legal-source'
@@ -1401,7 +1391,6 @@ export interface FileRouteTypes {
     | '/api/case-generation-jobs'
     | '/api/copilot-track'
     | '/api/crawl-legal-source'
-    | '/api/debug-ai-provider-check'
     | '/api/enrich-legal-section'
     | '/api/generate-case-document'
     | '/api/import-legal-source'
@@ -1531,7 +1520,6 @@ export interface FileRouteTypes {
     | '/api/case-generation-jobs'
     | '/api/copilot-track'
     | '/api/crawl-legal-source'
-    | '/api/debug-ai-provider-check'
     | '/api/enrich-legal-section'
     | '/api/generate-case-document'
     | '/api/import-legal-source'
@@ -1637,7 +1625,6 @@ export interface RootRouteChildren {
   ApiCaseGenerationJobsRoute: typeof ApiCaseGenerationJobsRouteWithChildren
   ApiCopilotTrackRoute: typeof ApiCopilotTrackRoute
   ApiCrawlLegalSourceRoute: typeof ApiCrawlLegalSourceRoute
-  ApiDebugAiProviderCheckRoute: typeof ApiDebugAiProviderCheckRoute
   ApiEnrichLegalSectionRoute: typeof ApiEnrichLegalSectionRoute
   ApiGenerateCaseDocumentRoute: typeof ApiGenerateCaseDocumentRoute
   ApiImportLegalSourceRoute: typeof ApiImportLegalSourceRoute
@@ -2071,13 +2058,6 @@ declare module '@tanstack/react-router' {
       path: '/api/crawl-legal-source'
       fullPath: '/api/crawl-legal-source'
       preLoaderRoute: typeof ApiCrawlLegalSourceRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/debug-ai-provider-check': {
-      id: '/api/debug-ai-provider-check'
-      path: '/api/debug-ai-provider-check'
-      fullPath: '/api/debug-ai-provider-check'
-      preLoaderRoute: typeof ApiDebugAiProviderCheckRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/enrich-legal-section': {
@@ -2928,7 +2908,6 @@ const rootRouteChildren: RootRouteChildren = {
   ApiCaseGenerationJobsRoute: ApiCaseGenerationJobsRouteWithChildren,
   ApiCopilotTrackRoute: ApiCopilotTrackRoute,
   ApiCrawlLegalSourceRoute: ApiCrawlLegalSourceRoute,
-  ApiDebugAiProviderCheckRoute: ApiDebugAiProviderCheckRoute,
   ApiEnrichLegalSectionRoute: ApiEnrichLegalSectionRoute,
   ApiGenerateCaseDocumentRoute: ApiGenerateCaseDocumentRoute,
   ApiImportLegalSourceRoute: ApiImportLegalSourceRoute,

@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AIProviderFactory } from "@/services/editorial/ai/providers/AIProviderFactory";
 import { AIError } from "@/services/editorial/ai/types";
+import { completeWithValidation, CompletionValidationError } from "@/services/editorial/ai/runtime/completionGuard";
 import { requireApiAuth } from "@/integrations/supabase/apiAuthGuard";
 
 /**
@@ -114,16 +115,28 @@ export const Route = createFileRoute("/api/ai-refine-case-field")({
         let parsed: { value?: unknown };
         try {
           const provider = AIProviderFactory.get("anthropic-native");
-          const result = await provider.complete({
-            model: "anthropic/claude-haiku-4-5",
-            messages: [
-              { role: "system", content: system },
-              { role: "user", content: JSON.stringify(user) },
-            ],
-            jsonSchema: { name: "refined_field", schema },
-          });
-          parsed = (result.json ?? {}) as { value?: unknown };
+          parsed = (await completeWithValidation(
+            async () => {
+              const result = await provider.complete({
+                model: "anthropic/claude-haiku-4-5",
+                messages: [
+                  { role: "system", content: system },
+                  { role: "user", content: JSON.stringify(user) },
+                ],
+                jsonSchema: { name: "refined_field", schema },
+                maxTokens: 8000,
+              });
+              return result.json ?? {};
+            },
+            schema,
+          )) as { value?: unknown };
         } catch (err) {
+          if (err instanceof CompletionValidationError) {
+            return new Response(
+              JSON.stringify({ error: "KI-Antwort war fehlerhaft strukturiert (auch nach Wiederholung).", detail: err.errors.join("; ") }),
+              { status: 502, headers: { "Content-Type": "application/json" } },
+            );
+          }
           if (err instanceof AIError) {
             return new Response(
               JSON.stringify({ error: err.userMessage, detail: err.detail }),

@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AIProviderFactory } from "@/services/editorial/ai/providers/AIProviderFactory";
 import { AIError } from "@/services/editorial/ai/types";
+import { completeWithValidation, CompletionValidationError } from "@/services/editorial/ai/runtime/completionGuard";
 
 
 type LegalSectionRef = {
@@ -244,16 +245,34 @@ export const Route = createFileRoute("/api/generate-case-document")({
         let parsed: any;
         try {
           const provider = AIProviderFactory.get("anthropic-native");
-          const result = await provider.complete({
-            model: generationModel,
-            messages: [
-              { role: "system", content: system },
-              { role: "user", content: JSON.stringify(user) },
-            ],
-            jsonSchema: { name: "case_document", schema },
-          });
-          parsed = result.json;
+          parsed = await completeWithValidation(
+            async () => {
+              const result = await provider.complete({
+                model: generationModel,
+                messages: [
+                  { role: "system", content: system },
+                  { role: "user", content: JSON.stringify(user) },
+                ],
+                jsonSchema: { name: "case_document", schema },
+                // Fund 2026-08-24 (Live-Bug nach Cloudflare-Deployment): ohne
+                // Validierung/höheres Limit lieferte diese Route gelegentlich
+                // ein leeres 'content'-Feld zurück, das die Qualitätsprüfung
+                // unten NICHT erkannte (kein Check auf content.length) - der
+                // Dialog zeigte fälschlich "vollständig" bei leerem Entwurf.
+                // Selbe Klasse Bug wie bei ai-draft-batch-item.ts.
+                maxTokens: 8000,
+              });
+              return result.json;
+            },
+            schema,
+          );
         } catch (err) {
+          if (err instanceof CompletionValidationError) {
+            return new Response(
+              JSON.stringify({ error: "KI-Entwurf war fehlerhaft strukturiert (auch nach Wiederholung).", detail: err.errors.join("; ") }),
+              { status: 502, headers: { "Content-Type": "application/json" } },
+            );
+          }
           if (err instanceof AIError) {
             return new Response(
               JSON.stringify({ error: err.userMessage, detail: err.detail }),

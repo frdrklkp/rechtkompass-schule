@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AIProviderFactory } from "@/services/editorial/ai/providers/AIProviderFactory";
 import { AIError } from "@/services/editorial/ai/types";
+import { completeWithValidation, CompletionValidationError } from "@/services/editorial/ai/runtime/completionGuard";
 
 type TemplateRef = {
   id: string;
@@ -98,16 +99,28 @@ export const Route = createFileRoute("/api/ai-match-templates")({
         let parsed: any;
         try {
           const provider = AIProviderFactory.get("anthropic-native");
-          const result = await provider.complete({
-            model: "anthropic/claude-haiku-4-5",
-            messages: [
-              { role: "system", content: system },
-              { role: "user", content: JSON.stringify(user) },
-            ],
-            jsonSchema: { name: "template_match", schema },
-          });
-          parsed = result.json;
+          parsed = await completeWithValidation(
+            async () => {
+              const result = await provider.complete({
+                model: "anthropic/claude-haiku-4-5",
+                messages: [
+                  { role: "system", content: system },
+                  { role: "user", content: JSON.stringify(user) },
+                ],
+                jsonSchema: { name: "template_match", schema },
+                maxTokens: 8000,
+              });
+              return result.json;
+            },
+            schema,
+          );
         } catch (err) {
+          if (err instanceof CompletionValidationError) {
+            return new Response(
+              JSON.stringify({ error: "KI-Antwort war fehlerhaft strukturiert (auch nach Wiederholung).", detail: err.errors.join("; ") }),
+              { status: 502, headers: { "Content-Type": "application/json" } },
+            );
+          }
           if (err instanceof AIError) {
             return new Response(
               JSON.stringify({ error: err.userMessage, detail: err.detail }),

@@ -20,6 +20,7 @@ import {
   Radar,
   ListChecks,
   Flag,
+  Users,
 } from "lucide-react";
 import { signIn, signOut, useAdminAuth, ADMIN_WRITE_ENABLED, ADMIN_WRITE_NOTICE } from "@/lib/adminAuth";
 import { Button } from "@/components/ui/button";
@@ -31,6 +32,7 @@ export const Route = createFileRoute("/admin")({
 
 const NAV: { to: string; label: string; icon: typeof LayoutDashboard; exact?: boolean }[] = [
   { to: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
+  { to: "/admin/pilot", label: "Pilotphase · Zugang", icon: Users },
   { to: "/admin/editorial", label: "Editorial · Dashboard", icon: ShieldCheck, exact: true },
   { to: "/admin/editorial/faelle", label: "Editorial · Fälle", icon: BookOpen },
   { to: "/admin/editorial/reviews", label: "Editorial · Reviews", icon: Flag },

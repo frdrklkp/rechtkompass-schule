@@ -12,6 +12,7 @@ import {
   HelpCircle,
 } from "lucide-react";
 import { Disclaimer } from "../components/Disclaimer";
+import { AssistantCaseGenerationOffer } from "@/components/assistant/AssistantCaseGenerationOffer";
 import { usePublishedCases } from "../lib/casesFromDb";
 import { useProfile } from "../lib/profile";
 import {
@@ -23,6 +24,7 @@ import {
 import { searchPracticeCasesHybrid, type HybridSearchResponse } from "../lib/hybridSearch";
 import { useQuery } from "@tanstack/react-query";
 import type { CaseData } from "../data/cases";
+import { getChecklist } from "../lib/caseEnrichment";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -62,7 +64,7 @@ function ampelDot(a: string) {
 function ResultCard({ result, primary }: { result: SearchResult; primary?: boolean }) {
   const c = result.case;
   const label = confidenceLabelText(result.confidenceLabel);
-  const top3 = (c.checklist ?? []).slice(0, 3);
+  const top3 = getChecklist(c).slice(0, 3);
   return (
     <Link
       to="/fall/$id"
@@ -118,11 +120,11 @@ function Home() {
     queryKey: ["hybrid-search", submitted, cases.length],
     enabled: submitted.length > 0 && cases.length > 0,
     staleTime: 30_000,
-    queryFn: () => searchPracticeCasesHybrid(submitted, cases, { limit: 5 }),
+    queryFn: () => searchPracticeCasesHybrid(submitted, cases, { limit: 7 }),
   });
 
   const response = useMemo<HybridSearchResponse | IntelligentSearchResponse>(
-    () => hybridData ?? searchPublishedPracticeCases(submitted, cases, { limit: 5 }),
+    () => hybridData ?? searchPublishedPracticeCases(submitted, cases, { limit: 7 }),
     [hybridData, submitted, cases],
   );
 
@@ -292,6 +294,12 @@ function Home() {
                   Themen durchsuchen
                 </Link>
               </div>
+              <div className="mt-4 border-t border-border pt-4">
+                <p className="text-xs font-semibold text-foreground">
+                  Kein passender Fall gefunden? Dann gib ihn hier ein.
+                </p>
+                <AssistantCaseGenerationOffer sketch={submitted} />
+              </div>
             </div>
           ) : (
             <div className="space-y-4">
@@ -330,6 +338,13 @@ function Home() {
                   </span>
                 )}
               </div>
+
+              <div className="border-t border-border pt-4">
+                <p className="text-xs font-semibold text-foreground">
+                  Kein passender Fall dabei? Dann gib ihn hier ein.
+                </p>
+                <AssistantCaseGenerationOffer sketch={submitted} />
+              </div>
             </div>
           )}
         </section>
@@ -340,42 +355,48 @@ function Home() {
           (Entscheidungsnavigator/Entscheidungsassistent). Die Suche oben
           bleibt der Einstieg fürs NACHSCHLAGEN; diese Karte ist der eine
           Einstieg fürs BEARBEITEN eines konkreten Falls. Bewusst nur ein
-          CTA-Button und kein zweites Freitextfeld neben der Suche. */}
-      <section
-        aria-labelledby="fall-klaeren-heading"
-        className="mt-8 rounded-2xl border border-accent/40 bg-gradient-to-br from-accent/10 via-accent/5 to-transparent p-5"
-      >
-        <div className="flex items-start gap-4">
-          <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-accent text-accent-foreground shadow-lg">
-            <Compass className="h-5 w-5" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <h2 id="fall-klaeren-heading" className="text-base font-semibold text-foreground">
-              Einen Fall klären
-            </h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Schildern Sie die Situation in eigenen Worten. RechtKompass stellt gezielte
-              Rückfragen und führt Sie anschließend Schritt für Schritt durch Bewertung,
-              Maßnahmen, Rechtsgrundlagen und Dokumentation.
-            </p>
-            <Link
-              to="/assistent"
-              className="mt-4 inline-flex items-center gap-2 rounded-full bg-accent px-5 py-2.5 text-sm font-semibold text-accent-foreground hover:opacity-90"
-            >
-              Fall schildern <ArrowRight className="h-4 w-4" />
-            </Link>
-            <p className="mt-3 text-xs text-muted-foreground">
-              Ohne freie Schilderung arbeiten?{" "}
+          CTA-Button und kein zweites Freitextfeld neben der Suche.
+          Fund 2026-08-20: sobald Suchergebnisse (inkl. Fallgenerierung)
+          angezeigt werden, konkurriert diese Karte sichtbar mit dem
+          eigentlichen Ergebnis und wirkt dort nur noch als Ablenkung –
+          daher nur im Ausgangszustand vor einer Sucheingabe sichtbar. */}
+      {!submitted && (
+        <section
+          aria-labelledby="fall-klaeren-heading"
+          className="mt-8 rounded-2xl border border-accent/40 bg-gradient-to-br from-accent/10 via-accent/5 to-transparent p-5"
+        >
+          <div className="flex items-start gap-4">
+            <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-accent text-accent-foreground shadow-lg">
+              <Compass className="h-5 w-5" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <h2 id="fall-klaeren-heading" className="text-base font-semibold text-foreground">
+                Einen Fall klären
+              </h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Schildern Sie die Situation in eigenen Worten. RechtKompass stellt gezielte
+                Rückfragen und führt Sie anschließend Schritt für Schritt durch Bewertung,
+                Maßnahmen, Rechtsgrundlagen und Dokumentation.
+              </p>
               <Link
-                to="/navigator"
-                className="font-medium underline underline-offset-2 hover:text-accent"
+                to="/assistent"
+                className="mt-4 inline-flex items-center gap-2 rounded-full bg-accent px-5 py-2.5 text-sm font-semibold text-accent-foreground hover:opacity-90"
               >
-                Fall direkt strukturiert erfassen
+                Fall schildern <ArrowRight className="h-4 w-4" />
               </Link>
-            </p>
+              <p className="mt-3 text-xs text-muted-foreground">
+                Ohne freie Schilderung arbeiten?{" "}
+                <Link
+                  to="/navigator"
+                  className="font-medium underline underline-offset-2 hover:text-accent"
+                >
+                  Fall direkt strukturiert erfassen
+                </Link>
+              </p>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* Trust */}
       <section className="mt-8 rounded-2xl border border-border bg-card p-4">

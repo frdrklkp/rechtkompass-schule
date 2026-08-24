@@ -65,6 +65,13 @@ function extractBody(row: DocumentationTemplateRow): string {
 }
 
 function extractDocumentType(row: DocumentationTemplateRow): string | null {
+  // Sprint 4.6M: KEIN Fallback auf row.template_type - das ist ein
+  // Dokumentformat-Label ("Notiz", "Protokoll", "Anschreiben"), keine
+  // Fallkategorie. Fund: da praktisch jede Zeile ein template_type gesetzt
+  // hat, machte dieser Fallback jede Vorlage fälschlich "spezifisch" -
+  // keine einzige der 117 Vorlagen wurde je als generisch erkannt oder
+  // passte zufällig exakt zur Fallkategorie, wodurch Phase "Dokumente
+  // erstellen" (vormals "Dokumentation") IMMER 0 passende Vorlagen zeigte.
   if (typeof row.document_type === "string" && row.document_type.trim() !== "") {
     return row.document_type;
   }
@@ -75,9 +82,6 @@ function extractDocumentType(row: DocumentationTemplateRow): string | null {
       return f.document_type;
     }
     if (typeof f.type === "string" && f.type.trim() !== "") return f.type;
-  }
-  if (typeof row.template_type === "string" && row.template_type.trim() !== "") {
-    return row.template_type;
   }
   return null;
 }

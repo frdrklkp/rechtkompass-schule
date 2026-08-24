@@ -2,7 +2,7 @@
  * Sprint 4.6C – Phase „Bewertung“. Die Komponente stellt ausschließlich dar;
  * jede Einstufung stammt aus der Assessment Engine.
  */
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AssessmentOverview } from "./AssessmentOverview";
 import { AssessmentStaleNotice } from "./AssessmentStaleNotice";
 import { useAssessment } from "@/hooks/navigator/useAssessment";
@@ -21,8 +21,6 @@ export function AssessmentStepPanel({
   workflowId,
   context,
   onPatchContext,
-  canGoBack,
-  onBack,
 }: AssessmentStepPanelProps) {
   const assessment = useAssessment({ navigatorId, workflowId, context, onPatchContext });
   const [didRun, setDidRun] = useState(false);
@@ -31,6 +29,16 @@ export function AssessmentStepPanel({
     assessment.run();
     setDidRun(true);
   };
+
+  // Bewertung ist eine reine, synchrone Regelauswertung ohne Netzwerkzugriff -
+  // beim Betreten der Phase automatisch anstoßen, statt einen manuellen Klick
+  // zu verlangen, den man leicht vergisst (Fund 2026-08-19, UX-Review).
+  useEffect(() => {
+    if (assessment.validation.valid && !assessment.hasResult) {
+      handleRun();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [assessment.validation.valid, assessment.hasResult]);
 
   if (!assessment.validation.valid) {
     return (
@@ -42,15 +50,6 @@ export function AssessmentStepPanel({
           ))}
         </ul>
         <div className="mt-3 flex flex-wrap gap-2">
-          {canGoBack && (
-            <button
-              type="button"
-              onClick={onBack}
-              className="rounded-lg border border-border px-3 py-2 text-sm font-medium text-foreground hover:bg-muted"
-            >
-              Zurück zur Situation
-            </button>
-          )}
           <button
             type="button"
             onClick={assessment.reset}
@@ -90,15 +89,6 @@ export function AssessmentStepPanel({
               className="rounded-lg border border-border px-3 py-2 text-sm font-medium text-foreground hover:bg-muted"
             >
               Ergebnis zurücksetzen
-            </button>
-          )}
-          {canGoBack && (
-            <button
-              type="button"
-              onClick={onBack}
-              className="rounded-lg border border-border px-3 py-2 text-sm font-medium text-foreground hover:bg-muted"
-            >
-              Zurück zur Situation
             </button>
           )}
         </div>

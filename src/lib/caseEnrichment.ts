@@ -81,16 +81,39 @@ function toBullets(input: string[] | string | null | undefined): string[] {
 }
 
 /* ------------------------------------------------------------------ */
+/* Ebenen-Label-Präfix ("[Rechtlich erforderlich] Text")               */
+/* Fund 2026-08-20: die KI kennzeichnet einzelne Do's/Don'ts/Checklist-  */
+/* Punkte mit einem Präfix, um "rechtlich vorgegeben" von "organisatorisch */
+/* empfohlen" sichtbar zu trennen, ohne das DB-Schema zu ändern. Ältere  */
+/* Fälle ohne Präfix bekommen label: null (kein Badge, unverändert       */
+/* dargestellt) statt kaputt auszusehen.                                */
+/* ------------------------------------------------------------------ */
+
+export interface TieredItem {
+  label: string | null;
+  text: string;
+}
+
+export function parseTieredItem(raw: string): TieredItem {
+  const m = /^\[([^\]]+)\]\s*(.+)$/s.exec(raw.trim());
+  if (!m) return { label: null, text: raw.trim() };
+  return { label: m[1].trim(), text: m[2].trim() };
+}
+
+/* ------------------------------------------------------------------ */
 /* Häufige Fehler (Don'ts)                                            */
 /* Quelle: ausschließlich common_mistakes aus dem Core Builder.        */
 /* ------------------------------------------------------------------ */
 
-export function getCommonMistakes(c: CaseData): string[] {
+export function getCommonMistakesTiered(c: CaseData): TieredItem[] {
   // Bevorzugt Rohwert (Array oder Text), fällt auf bereits normalisiertes
   // `risks` (string[]) zurück – beide stammen aus common_mistakes.
   const fromDb = toBullets(c.commonMistakesRaw ?? c.risks ?? null);
-  if (fromDb.length > 0) return fromDb;
-  return [];
+  return fromDb.map(parseTieredItem);
+}
+
+export function getCommonMistakes(c: CaseData): string[] {
+  return getCommonMistakesTiered(c).map((t) => t.text);
 }
 
 /* ------------------------------------------------------------------ */
@@ -98,8 +121,58 @@ export function getCommonMistakes(c: CaseData): string[] {
 /* Quelle: ausschließlich practice_tip aus dem Core Builder.          */
 /* ------------------------------------------------------------------ */
 
+export function getPracticeTipsTiered(c: CaseData): TieredItem[] {
+  return toBullets(c.practiceTip ?? null).map(parseTieredItem);
+}
+
 export function getPracticeTips(c: CaseData): string[] {
-  return toBullets(c.practiceTip ?? null);
+  return getPracticeTipsTiered(c).map((t) => t.text);
+}
+
+/* ------------------------------------------------------------------ */
+/* Checkliste                                                          */
+/* Quelle: checklist aus dem Core Builder.                             */
+/* ------------------------------------------------------------------ */
+
+export function getChecklistTiered(c: CaseData): TieredItem[] {
+  return (c.checklist ?? []).map(parseTieredItem);
+}
+
+export function getChecklist(c: CaseData): string[] {
+  return getChecklistTiered(c).map((t) => t.text);
+}
+
+/* ------------------------------------------------------------------ */
+/* Dokumentation                                                       */
+/* Quelle: documentation aus dem Core Builder.                        */
+/* ------------------------------------------------------------------ */
+
+export function getDocumentationTiered(c: CaseData): TieredItem[] {
+  return toBullets(c.documentation ?? null).map(parseTieredItem);
+}
+
+export function getDocumentation(c: CaseData): string[] {
+  return getDocumentationTiered(c).map((t) => t.text);
+}
+
+/* ------------------------------------------------------------------ */
+/* Rechtlich vorgegeben vs. rechtliche Einordnung                      */
+/* Quelle: legal_explanation, per fest benannten Markern getrennt.     */
+/* Fehlen die Marker (ältere Fälle), landet der gesamte Text unter     */
+/* `vorgegeben` - keine Information geht verloren.                     */
+/* ------------------------------------------------------------------ */
+
+export interface LegalExplanationParts {
+  vorgegeben: string;
+  einordnung: string;
+}
+
+export function splitLegalExplanation(text: string | null | undefined): LegalExplanationParts {
+  const t = (text ?? "").trim();
+  if (!t) return { vorgegeben: "", einordnung: "" };
+  const m = /^RECHTLICH VORGEGEBEN:\s*(.*?)\s*RECHTLICHE EINORDNUNG:\s*(.*)$/s.exec(t);
+  if (!m) return { vorgegeben: t, einordnung: "" };
+  return { vorgegeben: m[1].trim(), einordnung: m[2].trim() };
 }
 
 

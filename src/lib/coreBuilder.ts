@@ -1,4 +1,4 @@
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/supabase/contextAwareClient";
 import { assertAdminWrite } from "@/lib/adminAuth";
 import type { Tables, TablesInsert, TablesUpdate } from "@/integrations/supabase/types";
 
@@ -110,11 +110,22 @@ export const STATUS_TONE: Record<string, string> = {
 const AMPEL_TO_TL: Record<string, string> = { gruen: "green", gelb: "yellow", rot: "red" };
 const TL_TO_AMPEL: Record<string, string> = { green: "gruen", yellow: "gelb", red: "rot" };
 
+/**
+ * Fund 2026-08-20: die Spalte `practice_cases.ampel` hat einen DB-seitigen
+ * Default `'gruen'` (siehe db/schema.lock.json). Wurde `ampel` hier aus dem
+ * Payload entfernt und nur nach `traffic_light` übersetzt, füllte Postgres
+ * die rohe `ampel`-Spalte beim INSERT automatisch mit diesem Default auf -
+ * unabhängig vom tatsächlich gewünschten Wert. Das ließ frisch angelegte
+ * Fälle dauerhaft mit `ampel="gruen"` stehen, selbst wenn `traffic_light`
+ * korrekt z. B. "yellow" gesetzt war (zwei Spalten, die auseinanderliefen).
+ * Beide Spalten werden daher jetzt synchron beschrieben.
+ */
 function toDbCasePayload<T extends Record<string, unknown>>(payload: T): Record<string, unknown> {
   const { ampel, ...rest } = payload as Record<string, unknown>;
   if (ampel != null) {
     const key = String(ampel);
     (rest as Record<string, unknown>).traffic_light = AMPEL_TO_TL[key] ?? key;
+    (rest as Record<string, unknown>).ampel = key;
   }
   return rest;
 }
@@ -849,6 +860,37 @@ export async function deleteLegalLink(id: string) {
   assertAdminWrite();
   const { error } = await supabase.from("case_legal_links").delete().eq("id", id);
   if (error) throwQueryError("case_legal_links", { id }, error);
+}
+
+/**
+ * Fund 2026-08-20: `case_legal_review_flags` (db/2026-07-25_editorial_schema.sql)
+ * existierte bereits inkl. bereits verdrahteter Blocker-Regel
+ * ("legal.no_open_flags", src/services/editorial/quality/rules.ts), aber
+ * keine Stelle im Code schrieb je eine Zeile hinein. Wird jetzt von der
+ * Fallerstellungs-Pipeline genutzt, um Unsicherheiten aus dem KI-Entwurf
+ * (`open_questions`) sichtbar zu machen und die Veröffentlichung
+ * automatisch zu sperren, bis die Redaktion sie auflöst.
+ */
+export async function createLegalReviewFlag(
+  caseId: string,
+  reason: string,
+  legalSectionId?: string | null,
+) {
+  assertAdminWrite();
+  const filter = { case_id: caseId };
+  const payload: Record<string, unknown> = {
+    case_id: caseId,
+    reason,
+    legal_section_id: legalSectionId ?? null,
+  };
+  console.debug("[db] insert case_legal_review_flags", filter);
+  const { data, error } = await (supabase as any).from("case_legal_review_flags")
+    .insert(payload)
+    .select("*");
+  const rows = data?.length ?? 0;
+  logQuery("case_legal_review_flags", filter, rows, error);
+  if (error) throwQueryError("case_legal_review_flags", filter, error, rows);
+  return (data ?? [])[0] ?? null;
 }
 
 export async function updateLegalLink(

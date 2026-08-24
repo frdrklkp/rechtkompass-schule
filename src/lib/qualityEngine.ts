@@ -18,7 +18,7 @@
  * Core Builder Qualitätsübersicht.
  */
 
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/supabase/contextAwareClient";
 import { countBullets } from "@/lib/caseCompleteness";
 
 export type CaseEvalInput = {
@@ -312,6 +312,7 @@ export function evaluateCase(c: CaseEvalInput, ctx: CaseEvalContext): EvalResult
 
   // ── Hard Blocker (unabhängig vom Score) ──
   if (doCount < 5) hardBlockers.push(`Weniger als 5 Do's (${doCount})`);
+  if (dontCount < 2) hardBlockers.push(`Weniger als 2 Don'ts (${dontCount}) - vermutlich zusammengequetscht statt als Liste`);
   if (legalCount < 1) hardBlockers.push("Keine belastbare Rechtsgrundlage");
   if (ctx.invalidLegalSectionIds.length > 0) hardBlockers.push("Nicht existierende Rechtsgrundlage zugeordnet");
   if (strongDuplicate) hardBlockers.push(`Starke Falldublette (Ähnlichkeit ${(ctx.strongestSimilarity * 100).toFixed(0)}%)`);

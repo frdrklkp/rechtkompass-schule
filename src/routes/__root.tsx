@@ -13,6 +13,7 @@ import type { ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { BottomNav } from "../components/BottomNav";
 import { OnboardingModal } from "../components/OnboardingModal";
+import { PilotGate } from "../components/PilotGate";
 
 function NotFoundComponent() {
   return (
@@ -134,9 +135,18 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <div className="min-h-screen bg-background text-foreground">
-        <Outlet />
-        <BottomNav />
-        {!isAdmin && <OnboardingModal />}
+        {isAdmin ? (
+          <>
+            <Outlet />
+            <BottomNav />
+          </>
+        ) : (
+          <PilotGate>
+            <Outlet />
+            <BottomNav />
+            <OnboardingModal />
+          </PilotGate>
+        )}
       </div>
     </QueryClientProvider>
   );

@@ -3,7 +3,7 @@
  * Container: Die Fachlogik liegt vollständig in useLegalContext und den
  * Services des Legal Context; diese Komponente wählt nur die Darstellung.
  */
-import { ArrowLeft } from "lucide-react";
+import { useEffect } from "react";
 import { LoadingState } from "@/components/DataStates";
 import { useLegalContext } from "@/hooks/legal-context/useLegalContext";
 import { LegalContextView } from "./LegalContextView";
@@ -15,6 +15,7 @@ export interface LegalContextStepPanelProps {
   onPatchContext: (patch: Record<string, unknown>) => void;
   canGoBack: boolean;
   onBack: () => void;
+  onNext?: () => void;
 }
 
 export function LegalContextStepPanel({
@@ -22,40 +23,25 @@ export function LegalContextStepPanel({
   workflowId,
   context,
   onPatchContext,
-  canGoBack,
-  onBack,
+  onNext,
 }: LegalContextStepPanelProps) {
   const legal = useLegalContext({ navigatorId, workflowId, context, onPatchContext });
 
-  /* Generischer Fallback: kein bestätigter Praxisfall – keine Ersatznormen. */
+  // Fund 2026-08-19 (UX-Review): für die meisten Fälle (kein bestätigter
+  // Praxisfall) war diese Phase eine leere Pflicht-Station. Die Phase kann
+  // im aktuellen Ablauf-Modell nicht aus der Zählung entfernt werden
+  // (Sichtbarkeit ist statisch pro Ablauf-Definition, nicht laufzeit-
+  // abhängig vom Fall) - stattdessen wird automatisch weitergesprungen,
+  // sobald feststeht, dass es nichts anzuzeigen gibt, statt den leeren
+  // Platzhalter überhaupt sichtbar zu machen.
+  useEffect(() => {
+    if (legal.hasCase === false && onNext) {
+      onNext();
+    }
+  }, [legal.hasCase, onNext]);
+
   if (!legal.hasCase) {
-    return (
-      <section
-        className="rounded-2xl border border-border bg-card p-5"
-        aria-label="Rechtsgrundlagen – allgemeine Bearbeitung"
-      >
-        <h3 className="text-base font-semibold text-foreground">Rechtsgrundlagen</h3>
-        <p className="mt-2 text-sm text-foreground/85">
-          Für diese Bearbeitung wurde kein kuratierter Praxisfall bestätigt.
-        </p>
-        <p className="mt-1 text-sm text-foreground/85">
-          Daher stehen aktuell keine fallspezifisch geprüften Rechtsgrundlagen zur Verfügung.
-        </p>
-        <p className="mt-3 text-xs text-muted-foreground">
-          Es werden keine Ersatznormen ergänzt. Die übrigen Phasen der Bearbeitung sind davon
-          nicht betroffen.
-        </p>
-        {canGoBack && (
-          <button
-            type="button"
-            onClick={onBack}
-            className="mt-4 inline-flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm font-medium text-foreground hover:bg-muted"
-          >
-            <ArrowLeft className="h-4 w-4" aria-hidden="true" /> Zurück zur vorherigen Phase
-          </button>
-        )}
-      </section>
-    );
+    return null;
   }
 
   /* Gespeicherter Stand hat Vorrang; ohne Stand wird geladen. */

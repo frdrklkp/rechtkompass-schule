@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AIProviderFactory } from "@/services/editorial/ai/providers/AIProviderFactory";
 import { AIError } from "@/services/editorial/ai/types";
+import { completeWithValidation, CompletionValidationError } from "@/services/editorial/ai/runtime/completionGuard";
 
 type SectionRef = {
   id: string;
@@ -101,9 +102,12 @@ export const Route = createFileRoute("/api/ai-match-legal-sections")({
           " 3) Kontextuell: nur wenn sie einen tatsächlichen fachlichen Mehrwert besitzen.",
           "KEINE künstliche Auffüllung. Wenn weniger als drei Normen fachlich belastbar sind, gib nur so viele zurück, wie fachlich passen.",
           "§ 53 SchulG NRW ist KEIN Standard-Fallback. Ordne § 53 SchulG NRW ausschließlich zu, wenn der Sachverhalt fachlich einen der folgenden Bezüge hat: Fehlverhalten eines Schülers, erzieherische Einwirkungen, Ordnungsmaßnahmen, Verhältnismäßigkeit einer Maßnahme, Ausschluss vom Unterricht oder ähnliche Disziplinarreaktion. Keyword-Übereinstimmung allein reicht NICHT.",
+          "BILDUNGSGANG-PRÜFUNG: Wenn 'bildungsgang' im Sachverhalt einen bestimmten Schultyp/Bildungsgang nennt (z. B. Berufskolleg, gymnasiale Oberstufe), prüfe bei JEDER Zuordnung, ob der Titel/Inhalt des Rechtsabschnitts tatsächlich zu diesem Bildungsgang passt - nicht nur, ob 'source_short' plausibel klingt (Quellenkennzeichnungen im Katalog können fehlerhaft sein). Eine Verordnung für die gymnasiale Oberstufe (z. B. APO-GOSt) ist für einen Berufskolleg-Sachverhalt NICHT einschlägig, selbst wenn Titel/Paragraf ähnlich klingen (z. B. beide 'Nachprüfung'). Im Zweifel: nicht zuordnen und stattdessen 'missing_area' setzen.",
+          "VERFAHRENSART-PRÜFUNG (unabhängig vom Bildungsgang): prüfe zusätzlich, ob die Quelle für GENAU DIESES Verfahren gilt (z. B. Nachprüfung vs. Abschlussprüfung vs. Externenprüfung vs. Wiederholungsprüfung vs. Ordnungsmaßnahme). 'Funktional analog' oder 'bietet Orientierung' ist KEINE ausreichende Begründung, um eine Norm aus einem ERKENNBAR ANDEREN Prüfungsverfahren zuzuordnen (z. B. eine Regelung für Externenprüfungen/Abiturprüfung für eine Nachprüfung im Berufskolleg) - auch wenn beide Verfahren ähnliche Dokumentationsanforderungen haben könnten. Passt eine Quelle nur thematisch, aber nicht zum konkreten Verfahren, NICHT zuordnen.",
           "Für jede Zuordnung: id, confidence (0-100), relevance_stars (1-5), relevance_tier ('primary' | 'supporting' | 'contextual'), signals (kurze Stichworte), reason (max. 2 Sätze, sachlich).",
           "Berücksichtige 'bestaetigte_muster' als schwaches Signal.",
           "Wenn du für einen erkennbaren Rechtsbereich keinen passenden Abschnitt findest, setze 'missing_area' auf einen kurzen Hinweis.",
+          "QUELLENKONFLIKTE SICHTBAR MACHEN: wenn im Katalog mehrere Abschnitte zum selben Paragrafen/Thema mit erkennbar unterschiedlichem Stand/Fassung vorkommen (z. B. gleicher Paragraf, unterschiedlicher Wortlaut), nicht kommentarlos einen davon auswählen - in 'reason' kurz benennen, dass mehrere Fassungen vorliegen und welche gewählt wurde und warum.",
           "Gib 'detected_signals' als flache Liste kurzer Begriffe zurück.",
         ].join(" ");
 
@@ -160,16 +164,27 @@ export const Route = createFileRoute("/api/ai-match-legal-sections")({
         let parsed: any;
         try {
           const provider = AIProviderFactory.get("anthropic-native");
-          const result = await provider.complete({
-            model: "anthropic/claude-haiku-4-5",
-            messages: [
-              { role: "system", content: system },
-              { role: "user", content: JSON.stringify(user) },
-            ],
-            jsonSchema: { name: "legal_match", schema },
-          });
-          parsed = result.json;
+          parsed = await completeWithValidation(
+            async () => {
+              const result = await provider.complete({
+                model: "anthropic/claude-haiku-4-5",
+                messages: [
+                  { role: "system", content: system },
+                  { role: "user", content: JSON.stringify(user) },
+                ],
+                jsonSchema: { name: "legal_match", schema },
+              });
+              return result.json;
+            },
+            schema,
+          );
         } catch (err) {
+          if (err instanceof CompletionValidationError) {
+            return new Response(
+              JSON.stringify({ error: "KI-Zuordnung war fehlerhaft strukturiert (auch nach Wiederholung).", detail: err.errors.join("; ") }),
+              { status: 502, headers: { "Content-Type": "application/json" } },
+            );
+          }
           if (err instanceof AIError) {
             return new Response(
               JSON.stringify({ error: err.userMessage, detail: err.detail }),

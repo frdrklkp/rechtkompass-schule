@@ -1717,12 +1717,12 @@ export function PracticeCaseWizard({ forcedId }: { forcedId?: string } = {}) {
               />
             </div>
             <div>
-              <Label className="mb-1.5 block text-xs">Ausführliche Situationsbeschreibung</Label>
+              <Label className="mb-1.5 block text-xs">Rechtsgrundlagen – Wortlaut &amp; Einordnung</Label>
               <Textarea
                 rows={6}
                 value={form.legal_explanation}
                 onChange={(e) => set("legal_explanation", e.target.value)}
-                placeholder="Ausgangslage, beteiligte Personen, Rahmenbedingungen …"
+                placeholder="Was die zitierte(n) Norm(en) regeln, gefolgt von der rechtlichen Einordnung für diesen Fall …"
               />
             </div>
           </div>

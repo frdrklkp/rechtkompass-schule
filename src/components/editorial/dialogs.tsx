@@ -27,6 +27,7 @@ import {
   useArchive,
   usePublish,
   useReactivate,
+  useRevertToDraft,
   useSubmitForReview,
   useDecideReview,
 } from "@/hooks/editorial/useWorkflowActions";
@@ -264,6 +265,49 @@ export function ReactivateDialog({
           </Button>
           <Button onClick={handle} disabled={reactivate.isPending}>
             {reactivate.isPending ? "Reaktiviere…" : "Reaktivieren"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// -------- Revert to Draft --------
+
+export function RevertToDraftDialog({
+  caseId,
+  open,
+  onOpenChange,
+}: {
+  caseId: string;
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+}) {
+  const revert = useRevertToDraft();
+  async function handle() {
+    await revert
+      .mutateAsync({ caseId })
+      .then(() => onOpenChange(false))
+      .catch(() => {});
+  }
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Genehmigung zurückziehen</DialogTitle>
+          <DialogDescription>
+            Der Fall wird auf Entwurf zurückgesetzt und muss erneut zur
+            Prüfung eingereicht werden, bevor er veröffentlicht werden kann.
+            Der Zeitpunkt der bisherigen Genehmigung bleibt im Verlauf
+            erhalten.
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button variant="ghost" onClick={() => onOpenChange(false)}>
+            Abbrechen
+          </Button>
+          <Button variant="destructive" onClick={handle} disabled={revert.isPending}>
+            {revert.isPending ? "Setze zurück…" : "Auf Entwurf zurücksetzen"}
           </Button>
         </DialogFooter>
       </DialogContent>

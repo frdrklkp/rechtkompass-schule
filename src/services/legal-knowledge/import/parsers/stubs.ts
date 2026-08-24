@@ -106,12 +106,21 @@ export const courtDecisionParser = makeStub({
 });
 
 export const preparedParsers = [
-  bassNrwParser,
+  // Fund 2026-08-18: bassNrwParser.canParse() springt auf JEDES
+  // bass.schule.nrw-Dokument mit "§ N"-Zeilen an - das trifft auch auf
+  // APO-BK, VV- und VwVfG-Dokumente zu, die eigene, strukturell genauere
+  // Parser haben (z.B. kennt nur apoBkNrwParser "Anlage A/B/C..." und
+  // verschachtelt die dortigen §§ korrekt darunter). Da preparedParsers
+  // per .find() beim ersten Treffer stoppt, MÜSSEN die dedizierten,
+  // spezifischeren Parser vor dem generischen bassNrwParser stehen, sonst
+  // gewinnt dieser immer und liefert eine flache, mehrdeutige Struktur
+  // (z.B. "§ 1" sechsfach ohne Anlagen-Zuordnung statt "Anlage A.§ 1").
   apoBkNrwParser,
   verwaltungsvorschriftNrwParser,
   vwvfgNrwParser,
   grundgesetzParser,
   dsgvoParser,
+  bassNrwParser,
   erlassParser,
   faqParser,
   courtDecisionParser,

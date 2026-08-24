@@ -24,15 +24,31 @@ function label(map: Record<string, string>, key: string): string {
   return map[key] ?? key;
 }
 
+/**
+ * Mindestanzahl an Profil-Tokens, ab der ein Text-Dimension (Kategorie,
+ * Unterkategorie, Schlagwörter) als hinreichend spezifisch gilt. Ohne diese
+ * Schwelle reicht ein einzelnes, sehr generisches Token (z. B. "unterricht")
+ * für einen rechnerisch perfekten Treffer (1 von 1), obwohl es praktisch
+ * nichts über die tatsächliche Ähnlichkeit aussagt. Gilt bewusst nicht für
+ * roles/signals/location: das sind kleine, feste Vokabulare, bei denen 1-2
+ * Einträge ein normales, vollständiges Profil sind, keine Kürze.
+ */
+const MIN_MEANINGFUL_TEXT_TOKENS = 3;
+
 function dimension(
   dim: MatchDimensionScore["dimension"],
   expected: string[],
   present: string[],
+  options?: { discountSparseProfiles?: boolean },
 ): MatchDimensionScore {
   const set = new Set(present);
   const matched = expected.filter((item) => set.has(item));
   const missed = expected.filter((item) => !set.has(item));
-  const ratio = expected.length === 0 ? 0 : matched.length / expected.length;
+  const rawRatio = expected.length === 0 ? 0 : matched.length / expected.length;
+  const specificity = options?.discountSparseProfiles
+    ? Math.min(1, expected.length / MIN_MEANINGFUL_TEXT_TOKENS)
+    : 1;
+  const ratio = rawRatio * specificity;
   return {
     dimension: dim,
     weight: MATCH_WEIGHTS[dim],
@@ -88,9 +104,9 @@ export class PracticeCaseMatchScorer {
     ]);
 
     const dimensions: MatchDimensionScore[] = [
-      dimension("category", categoryTokens, situationTokens),
-      dimension("subcategory", subcategoryTokens, situationTokens),
-      dimension("keywords", keywordTokens, situationTokens),
+      dimension("category", categoryTokens, situationTokens, { discountSparseProfiles: true }),
+      dimension("subcategory", subcategoryTokens, situationTokens, { discountSparseProfiles: true }),
+      dimension("keywords", keywordTokens, situationTokens, { discountSparseProfiles: true }),
       dimension("roles", profile.roles, features.roles),
       dimension("signals", profile.expectedSignals, features.signals),
       dimension("location", profile.locationTypes, features.locationTypes),

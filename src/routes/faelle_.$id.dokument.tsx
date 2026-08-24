@@ -92,7 +92,7 @@ function CaseDocumentWorkflowRoute() {
           </p>
         </div>
         <Link
-          to="/faelle/$id"
+          to="/fall/$id"
           params={{ id: c.id }}
           className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground/80 hover:border-accent hover:text-accent"
         >

@@ -13,7 +13,7 @@ export interface AnalysisStepPanelProps {
   onNext?: () => void;
 }
 
-export function AnalysisStepPanel({ context, canGoBack, onBack, onNext }: AnalysisStepPanelProps) {
+export function AnalysisStepPanel({ context, onNext }: AnalysisStepPanelProps) {
   const situation = (context[SITUATION_CONTEXT_KEY] ?? null) as SituationCase | null;
   const overview = useMemo(
     () => (situation && typeof situation === "object" ? buildSituationOverview(situation) : null),
@@ -27,15 +27,6 @@ export function AnalysisStepPanel({ context, canGoBack, onBack, onNext }: Analys
         <p className="mt-2 text-sm text-foreground/85">
           Es wurden noch keine Angaben erfasst. Bitte zunächst die Phase „Situation“ ausfüllen.
         </p>
-        {canGoBack && (
-          <button
-            type="button"
-            onClick={onBack}
-            className="mt-3 rounded-lg border border-border px-3 py-2 text-sm font-medium text-foreground hover:bg-muted"
-          >
-            Zurück zur Situation
-          </button>
-        )}
       </section>
     );
   }
@@ -136,15 +127,6 @@ export function AnalysisStepPanel({ context, canGoBack, onBack, onNext }: Analys
       </p>
 
       <div className="flex flex-wrap gap-2">
-        {canGoBack && (
-          <button
-            type="button"
-            onClick={onBack}
-            className="rounded-lg border border-border px-3 py-2 text-sm font-medium text-foreground hover:bg-muted"
-          >
-            Zurück
-          </button>
-        )}
         {onNext && (
           <button
             type="button"

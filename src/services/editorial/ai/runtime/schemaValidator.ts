@@ -47,6 +47,11 @@ function validate(node: unknown, schema: Schema, path: string, errs: string[]): 
       if (!(req in obj)) errs.push(`${path || "root"}: missing required "${req}"`);
     }
     for (const [k, v] of Object.entries(obj)) {
+      // Fund 2026-08-21: Modelle liefern für ein optionales Feld ohne Wert
+      // häufig `null` statt die Eigenschaft ganz wegzulassen - für ein NICHT
+      // erforderliches Feld ist das funktional gleichbedeutend mit Abwesenheit,
+      // kein echter Typfehler.
+      if (v === null && !required.includes(k)) continue;
       if (props[k]) validate(v, props[k], `${path}.${k}`, errs);
       else if (schema.additionalProperties === false) {
         errs.push(`${path || "root"}: unexpected property "${k}"`);

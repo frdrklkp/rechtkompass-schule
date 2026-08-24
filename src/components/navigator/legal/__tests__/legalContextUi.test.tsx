@@ -131,19 +131,27 @@ test("Phase „rechtsgrundlagen“ ist produktiv verfügbar (kein Platzhalter)",
 test("Rechtsgrundlagenphase wird über den zentralen Step Renderer gerendert", () => {
   const html = render(
     withClient(
-      <NavigatorStepRenderer stepId="rechtsgrundlagen" context={{}} patchContext={() => {}} {...PANEL_PROPS} />,
+      <NavigatorStepRenderer
+        stepId="rechtsgrundlagen"
+        context={{ [ASSISTANT_SELECTED_CASE_KEY]: SELECTED_CASE }}
+        patchContext={() => {}}
+        {...PANEL_PROPS}
+      />,
     ),
   );
-  assert.ok(html.includes("Rechtsgrundlagen"));
+  assert.ok(html.includes("Rechtsgrundlagen werden geladen") || html.includes("Rechtsgrundlagen"));
   assert.ok(!html.includes("Noch nicht verfügbar"));
 });
 
-test("Generischer Fallback: kein Praxisfall → transparente Meldung, keine erfundene Norm", () => {
+test("Kein bestätigter Praxisfall → kein leerer Platzhalter mehr (Serverseitig: leeres Rendering)", () => {
+  // Fund 2026-08-19: die Phase war für die meisten Fälle (kein Praxisfall)
+  // eine leere Pflicht-Station. Statt eines sichtbaren Platzhaltertexts
+  // rendert die Komponente jetzt nichts; ein useEffect löst automatisch
+  // onNext aus, sobald feststeht, dass es nichts anzuzeigen gibt. Effects
+  // laufen bei renderToString (SSR) nicht - das automatische Weiterspringen
+  // wird daher hier nicht mitgetestet, nur das leere Rendering selbst.
   const html = render(withClient(<LegalContextStepPanel context={{}} {...PANEL_PROPS} />));
-  assert.ok(html.includes("Für diese Bearbeitung wurde kein kuratierter Praxisfall bestätigt."));
-  assert.ok(html.includes("keine fallspezifisch geprüften Rechtsgrundlagen"));
-  assert.ok(!html.includes("§ 53"));
-  assert.ok(!html.includes("SchulG"));
+  assert.equal(html.trim(), "");
 });
 
 test("Bestätigter Praxisfall lädt den LegalContext (Ladezustand ohne Cache)", () => {

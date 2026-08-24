@@ -30,12 +30,33 @@ import { EmbeddingProviderFactory } from "../src/services/legal-knowledge/embedd
 
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL!;
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+const PUBLISHABLE_KEY = process.env.VITE_SUPABASE_PUBLISHABLE_KEY!;
 const EMBED_MODEL = "openai/text-embedding-3-small";
 const MAX_EMBED_CHARS = 20000;
 const EMBED_BATCH_SIZE = 20;
 const API_BASE = "http://127.0.0.1:8080";
+const ADMIN_EMAIL = "admin@rechtkompass.local";
 
 const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, { auth: { persistSession: false } });
+
+/**
+ * Bearer-Token für /api/legal-source-crawl - der Endpunkt wurde nach dem
+ * ursprünglichen BASS-Vollimport mit requireApiAuth() gehärtet (Fund
+ * 12.08.2026), das Skript rief bis dahin ungeschützt auf. Beliebiges
+ * gültiges Supabase-JWT genügt (keine Rollenprüfung in requireApiAuth).
+ */
+async function getAuthToken(): Promise<string> {
+  const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, { auth: { persistSession: false } });
+  const { data, error } = await admin.auth.admin.generateLink({ type: "magiclink", email: ADMIN_EMAIL });
+  if (error) throw new Error(`generateLink fehlgeschlagen: ${error.message}`);
+  const anon = createClient(SUPABASE_URL, PUBLISHABLE_KEY, { auth: { persistSession: false } });
+  const { data: verified, error: verifyErr } = await anon.auth.verifyOtp({
+    token_hash: data.properties!.hashed_token,
+    type: "magiclink",
+  });
+  if (verifyErr || !verified.session) throw new Error(`verifyOtp fehlgeschlagen: ${verifyErr?.message}`);
+  return verified.session.access_token;
+}
 
 function deterministicUuid(seed: string): string {
   const h = sha1(seed).slice(0, 32);
@@ -86,7 +107,23 @@ function chooseLeafKind(root: LegalNode): LeafKind {
   return best;
 }
 
-function collectParagraphs(node: LegalNode, ancestry: string[], out: FlatParagraph[], leafKind: LeafKind): void {
+/**
+ * Fund 2026-08-18 (Nutzerrückmeldung, Aufsicht-Rechtsquelle): Blattknoten wie
+ * "item" tragen selbst nie eine Überschrift (nur Nummer + Text) - bislang
+ * landete dort immer title=null, obwohl der übergeordnete Abschnitt oft
+ * eine erkennbare Überschrift hat. Ererbt die nächstgelegene Vorfahren-
+ * Überschrift, wenn der Blattknoten selbst keine eigene hat (80% der
+ * 17.557 importierten Abschnitte betroffen, v.a. Runderlasse/Verwaltungs-
+ * vorschriften mit dezimaler statt §-Gliederung).
+ */
+function collectParagraphs(
+  node: LegalNode,
+  ancestry: string[],
+  out: FlatParagraph[],
+  leafKind: LeafKind,
+  inheritedHeading: string | null = null,
+): void {
+  const currentHeading = node.heading?.trim() || inheritedHeading;
   const isBlock =
     leafKind === "paragraph" ? node.kind === "paragraph" || node.kind === "article"
     : leafKind === "subsection" ? node.kind === "subsection"
@@ -102,10 +139,19 @@ function collectParagraphs(node: LegalNode, ancestry: string[], out: FlatParagra
       : ancestry;
   if (isBlock && collectText(node).trim()) {
     // "text"-Fallback-Knoten haben kein number-Feld - synthetische Referenz vergeben.
-    const reference = node.number ?? `Abs. ${out.length + 1}`;
-    out.push({ path: [...ancestry, reference].join("/"), reference, title: node.heading ?? null, fullText: collectText(node) });
+    const localReference = node.number ?? `Abs. ${out.length + 1}`;
+    // Vollständiger Ancestry-Pfad statt lokalem Zähler, damit sich pro
+    // Dokument mehrfach neu beginnende Unterlisten (z.B. "1,2,3 / 1,2,3")
+    // eindeutig unterscheiden lassen.
+    const fullReference = [...ancestry, localReference].join(".");
+    out.push({
+      path: [...ancestry, localReference].join("/"),
+      reference: fullReference,
+      title: node.heading?.trim() || inheritedHeading || null,
+      fullText: collectText(node),
+    });
   }
-  for (const child of node.children) collectParagraphs(child, isBlock ? ancestry : nextAncestry, out, leafKind);
+  for (const child of node.children) collectParagraphs(child, isBlock ? ancestry : nextAncestry, out, leafKind, currentHeading);
 }
 
 async function sourceAlreadyImported(sourceRowId: string): Promise<boolean> {
@@ -125,8 +171,16 @@ async function upsertSource(sourceKey: string, title: string, shortName: string 
   return id;
 }
 
-async function upsertSections(sourceId: string, sourceKey: string, versionLabel: string | null, paragraphs: FlatParagraph[]): Promise<Map<string, string>> {
+async function upsertSections(
+  sourceId: string,
+  sourceKey: string,
+  versionLabel: string | null,
+  paragraphs: FlatParagraph[],
+  parserId: string,
+  officialUrl: string,
+): Promise<Map<string, string>> {
   const idByPath = new Map<string, string>();
+  const importedAt = new Date().toISOString();
   const rows = paragraphs.map((p) => {
     const id = deterministicUuid(`legal_section:${sourceKey}:${p.path}`);
     idByPath.set(p.path, id);
@@ -134,6 +188,8 @@ async function upsertSections(sourceId: string, sourceKey: string, versionLabel:
       id, source_id: sourceId, reference: p.reference, title: p.title, content: p.fullText,
       full_text: p.fullText || p.title || p.reference, section_number: p.reference, status: "active",
       version_label: versionLabel, metadata: {},
+      parser_method: parserId, parser_confidence: p.title ? 0.9 : 0.6,
+      import_url: officialUrl, imported_at: importedAt, source_hash: sha1(p.fullText).slice(0, 16),
     };
   });
   for (let i = 0; i < rows.length; i += 200) {
@@ -300,13 +356,32 @@ const bassGenericFallbackParser: LegalImportParser = {
   },
 };
 
-async function importOne(url: string, label: string): Promise<"imported" | "skipped" | "empty" | "error"> {
+/**
+ * Löscht alle abgeleiteten Daten einer Quelle (Abschnitte, Chunks,
+ * Embeddings) vor einem erzwungenen Re-Import - notwendig, weil sich mit
+ * dem Titel-Fallback-Fix auch section_number/reference geändert haben und
+ * die alten, kaputten Zeilen sonst als zusätzliche Duplikate stehen bleiben
+ * würden statt überschrieben zu werden.
+ */
+async function purgeSource(sourceRowId: string): Promise<void> {
+  await supabase.from("legal_chunk_embeddings").delete().eq("source_id", sourceRowId);
+  await supabase.from("legal_chunks").delete().eq("source_id", sourceRowId);
+  await supabase.from("legal_sections").delete().eq("source_id", sourceRowId);
+}
+
+async function importOne(url: string, label: string, force = false, authToken?: string): Promise<"imported" | "skipped" | "empty" | "error"> {
   const sourceKey = sourceKeyFromUrl(url);
   const sourceRowId = deterministicUuid(`legal_source:${sourceKey}`);
-  if (await sourceAlreadyImported(sourceRowId)) return "skipped";
+  const exists = await sourceAlreadyImported(sourceRowId);
+  if (exists && !force) return "skipped";
+  if (exists && force) await purgeSource(sourceRowId);
 
   const crawlRes = await fetch(`${API_BASE}/api/legal-source-crawl`, {
-    method: "POST", headers: { "Content-Type": "application/json" },
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+    },
     // source_id nur für die Host-Whitelist des Crawlers (bass.schule.nrw
     // ist dort hinterlegt) - NICHT für die Parserwahl, siehe unten.
     body: JSON.stringify({ source_id: "bass-nrw", url, max_pages: 1, max_depth: 0 }),
@@ -348,7 +423,7 @@ async function importOne(url: string, label: string): Promise<"imported" | "skip
 
   const title = document.source.title && document.source.title !== "BASS" ? document.source.title : label;
   const rowId = await upsertSource(sourceKey, title, document.source.shortName, url, document.version.label);
-  const sectionIdByPath = await upsertSections(rowId, sourceKey, document.version.label, paragraphs);
+  const sectionIdByPath = await upsertSections(rowId, sourceKey, document.version.label, paragraphs, parser.id, url);
   await upsertChunks(rowId, sourceKey, title, paragraphs, sectionIdByPath);
   await embedChunks(rowId);
   return "imported";
@@ -360,21 +435,39 @@ async function main() {
   const limit = limitIdx >= 0 ? Number(args[limitIdx + 1]) : Infinity;
   const startIdx = args.indexOf("--start-at");
   const startAt = startIdx >= 0 ? Number(args[startIdx + 1]) : 0;
+  const force = args.includes("--force");
+  const onlyUrlsIdx = args.indexOf("--only-urls");
 
-  const tsv = await Bun.file("/tmp/bass-documents.tsv").text();
-  const rows = tsv.trim().split("\n").map((line) => {
-    const [url, label] = line.split("\t");
-    return { url, label: label ?? url };
-  });
+  let rows: { url: string; label: string }[];
+  if (onlyUrlsIdx >= 0) {
+    // Gezielter Re-Import einer festen URL-Liste (z.B. bereits kaputt
+    // importierte Quellen) statt der vollen TSV-Discovery-Liste.
+    const path = args[onlyUrlsIdx + 1];
+    const content = await Bun.file(path).text();
+    rows = content.trim().split("\n").filter(Boolean).map((line) => {
+      const [url, label] = line.split("\t");
+      return { url: url.trim(), label: (label ?? url).trim() };
+    });
+  } else {
+    const tsv = await Bun.file("/tmp/bass-documents.tsv").text();
+    rows = tsv.trim().split("\n").map((line) => {
+      const [url, label] = line.split("\t");
+      return { url, label: label ?? url };
+    });
+  }
   const slice = rows.slice(startAt, startAt + limit);
-  console.log(`${slice.length} von ${rows.length} Dokumenten werden verarbeitet (ab Index ${startAt}).`);
+  console.log(`${slice.length} von ${rows.length} Dokumenten werden verarbeitet (ab Index ${startAt}, force=${force}).`);
+
+  console.log("Bootstrapping Auth-Token für /api/legal-source-crawl...");
+  const authToken = await getAuthToken();
+  console.log("Token bereit.\n");
 
   const stats = { imported: 0, skipped: 0, empty: 0, error: 0 };
   for (let i = 0; i < slice.length; i++) {
     const { url, label } = slice[i];
     const progress = `[${startAt + i + 1}/${rows.length}]`;
     try {
-      const result = await importOne(url, label);
+      const result = await importOne(url, label, force, authToken);
       stats[result]++;
       if (result !== "skipped") console.log(`${progress} ${result.toUpperCase()}: ${label.slice(0, 70)}`);
     } catch (e) {

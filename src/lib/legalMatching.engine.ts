@@ -16,7 +16,7 @@
  *  - KI darf keine IDs erfinden – Filter gegen Section-Katalog.
  */
 
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/supabase/contextAwareClient";
 import { matchLegalSections, type LegalMatch } from "@/lib/legalMatching";
 import { createLegalLink, deleteLegalLink, listCaseLegalLinks } from "@/lib/coreBuilder";
 import { guardLegalMatches, isSchulG53Relevant, type SectionLike } from "@/lib/legalGuards";
@@ -140,10 +140,15 @@ async function fetchSectionMeta(ids: string[]): Promise<Map<string, { id: string
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   for (const r of (res.data ?? []) as any[]) {
     const has_card = Boolean(r.practice_relevance || r.common_mistakes || r.recommendation);
+    // Fund 2026-08-20: siehe casePipeline.completion.ts - `short_name` ist bei
+    // ca. 45 Quellen fälschlich pauschal "SchulG NRW" statt der echten
+    // Verordnung. `name` vorrangig verwenden, damit KI-Rückprüfungen
+    // bestehender Links nicht auf denselben falschen Quellennamen
+    // hereinfallen wie die Erstzuordnung.
     map.set(r.id, {
       id: r.id,
       section_number: r.section_number ?? null,
-      source_short: r.legal_sources?.short_name ?? r.legal_sources?.name ?? null,
+      source_short: r.legal_sources?.name ?? r.legal_sources?.short_name ?? null,
       title: r.title ?? null,
       summary: r.summary ?? null,
       has_card,

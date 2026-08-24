@@ -41,6 +41,7 @@ export const Route = createFileRoute("/api/ai-reclassify-ampel")({
           "Verwende KEINE Markdown-Formatierung - reiner Fließtext.",
           "AMPEL-KRITERIEN (verbindlich): 'gruen' NUR bei einfacher Alltagssituation ohne Anhörungspflicht, ohne drohende Ordnungsmaßnahme, ohne Meldepflicht, eigenständig durch die Lehrkraft lösbar. 'gelb' bei formalen Verfahrensschritten (Anhörung nach § 66 VwVfG NRW, Dokumentationspflicht, mögliche Ordnungsmaßnahme, Rücksprache mit vorgesetzter Stelle nötig) OHNE akute Gefährdung. 'rot' bei akuter Gefährdung, Straftatverdacht, Meldepflicht an externe Stellen (Jugendamt, Polizei) oder sofortiger Eskalation.",
           "Prüfe insbesondere: enthalten Handlungsempfehlung, Sofortentscheidung oder Entscheidungsbaum-Fragen eine förmliche Anhörung oder eine Schulleitungsentscheidung? Dann ist 'gruen' falsch.",
+          "Fülle ZUERST 'reasoning' aus (welches Kriterium trifft zu) und leite DANN 'ampel' aus dieser Begründung ab - nicht umgekehrt.",
           "Wenn die korrekte Einstufung 'gruen' ist, aber 'responsibilities' unnötig Schulleitung nennt: liefere eine korrigierte Fassung, die stattdessen Lehrkraft, Klassenleitung, Abteilungsleitung oder Ausbildungskoordination nennt - inhaltlich sonst unverändert. Wenn 'responsibilities' bereits passt oder die Einstufung nicht 'gruen' ist: liefere null für responsibilities_correction.",
           "Antworte AUSSCHLIESSLICH als JSON gemäß Schema.",
         ].join(" ");
@@ -65,11 +66,11 @@ export const Route = createFileRoute("/api/ai-reclassify-ampel")({
           type: "object",
           additionalProperties: false,
           properties: {
-            ampel: { type: "string", enum: ["gruen", "gelb", "rot"] },
             reasoning: { type: "string" },
+            ampel: { type: "string", enum: ["gruen", "gelb", "rot"] },
             responsibilities_correction: { type: ["string", "null"] },
           },
-          required: ["ampel", "reasoning", "responsibilities_correction"],
+          required: ["reasoning", "ampel", "responsibilities_correction"],
         };
 
         let parsed: unknown;

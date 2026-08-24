@@ -33,6 +33,8 @@ import { createClient } from "@supabase/supabase-js";
 
 const ADMIN_EMAIL = "admin@rechtkompass.local";
 const DRY = process.argv.includes("--dry");
+const sinceArg = process.argv.find((a) => a.startsWith("--since="));
+const SINCE = sinceArg ? new Date(sinceArg.split("=")[1]) : null;
 
 async function bootstrapSession(): Promise<void> {
   const url = process.env.VITE_SUPABASE_URL!;
@@ -59,10 +61,11 @@ async function main() {
 
   const { data: rows, error } = await supabase
     .from("practice_cases")
-    .select("id,title,ampel,category,subcategory,short_description,short_answer,immediate_actions,recommendation,responsibilities,decision_tree");
+    .select("id,title,ampel,category,subcategory,short_description,short_answer,immediate_actions,recommendation,responsibilities,decision_tree,created_at");
   if (error) throw error;
-  const cases = (rows ?? []) as any[];
-  console.log(`${cases.length} Fälle werden neu bewertet.\n`);
+  let cases = (rows ?? []) as any[];
+  if (SINCE) cases = cases.filter((c) => new Date(c.created_at) >= SINCE);
+  console.log(`${cases.length} Fälle werden neu bewertet.${SINCE ? ` (nur ab ${SINCE.toISOString()})` : ""}\n`);
 
   const stats = { unchanged: 0, ampelChanged: 0, responsibilitiesFixed: 0, errors: 0 };
   const byAmpel: Record<string, number> = { gruen: 0, gelb: 0, rot: 0 };

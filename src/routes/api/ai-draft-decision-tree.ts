@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { AIProviderFactory } from "@/services/editorial/ai/providers/AIProviderFactory";
 import { AIError } from "@/services/editorial/ai/types";
 import { parseCuratedTree, validateCuratedTree } from "@/lib/decisionTree";
+import { completeWithValidation, CompletionValidationError } from "@/services/editorial/ai/runtime/completionGuard";
 
 /**
  * KI-Entwurfsmaschine für fallspezifische Entscheidungsbäume.
@@ -172,18 +173,30 @@ async function generateOnce(
 
   let stepsResult: { start: string; steps: Record<string, { options?: Array<{ result?: string }> }>; meta: unknown };
   try {
-    const result = await provider.complete({
-      model: "anthropic/claude-haiku-4-5",
-      messages: [
-        { role: "system", content: systemSteps },
-        { role: "user", content: JSON.stringify(userSteps) },
-      ],
-      jsonSchema: { name: "curated_decision_tree_steps", schema: stepsSchema },
-      maxTokens: 8192,
-    });
-    stepsResult = result.json as typeof stepsResult;
+    stepsResult = await completeWithValidation(
+      async () => {
+        const result = await provider.complete({
+          model: "anthropic/claude-haiku-4-5",
+          messages: [
+            { role: "system", content: systemSteps },
+            { role: "user", content: JSON.stringify(userSteps) },
+          ],
+          jsonSchema: { name: "curated_decision_tree_steps", schema: stepsSchema },
+          maxTokens: 8192,
+        });
+        return result.json as typeof stepsResult;
+      },
+      stepsSchema,
+    );
   } catch (err) {
     if (err instanceof AIError) throw err;
+    if (err instanceof CompletionValidationError) {
+      throw new AIError({
+        code: "invalid_response",
+        userMessage: "AI-Antwort (Fragen) war fehlerhaft strukturiert (auch nach Wiederholung).",
+        detail: err.errors.join("; "),
+      });
+    }
     throw new AIError({
       code: "invalid_response",
       userMessage: "AI-Antwort (Fragen) konnte nicht als JSON gelesen werden.",
@@ -257,18 +270,30 @@ async function generateOnce(
 
   let resultsResult: { results: unknown };
   try {
-    const result = await provider.complete({
-      model: "anthropic/claude-haiku-4-5",
-      messages: [
-        { role: "system", content: systemResults },
-        { role: "user", content: JSON.stringify(userResults) },
-      ],
-      jsonSchema: { name: "curated_decision_tree_results", schema: resultsSchema },
-      maxTokens: 8192,
-    });
-    resultsResult = result.json as typeof resultsResult;
+    resultsResult = await completeWithValidation(
+      async () => {
+        const result = await provider.complete({
+          model: "anthropic/claude-haiku-4-5",
+          messages: [
+            { role: "system", content: systemResults },
+            { role: "user", content: JSON.stringify(userResults) },
+          ],
+          jsonSchema: { name: "curated_decision_tree_results", schema: resultsSchema },
+          maxTokens: 8192,
+        });
+        return result.json as typeof resultsResult;
+      },
+      resultsSchema,
+    );
   } catch (err) {
     if (err instanceof AIError) throw err;
+    if (err instanceof CompletionValidationError) {
+      throw new AIError({
+        code: "invalid_response",
+        userMessage: "AI-Antwort (Ergebnisse) war fehlerhaft strukturiert (auch nach Wiederholung).",
+        detail: err.errors.join("; "),
+      });
+    }
     throw new AIError({
       code: "invalid_response",
       userMessage: "AI-Antwort (Ergebnisse) konnte nicht als JSON gelesen werden.",

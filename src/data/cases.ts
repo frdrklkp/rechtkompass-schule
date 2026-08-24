@@ -19,6 +19,12 @@ export interface LegalSectionCard {
   last_reviewed_at?: string | null;
   status?: string | null;
   explanation?: string | null;
+  /** Legal Export Quality Gate: kompakte, fallbezogene Kurzfassung statt vollem Normtext (case_legal_links.content_summary). */
+  contentSummary?: string | null;
+  /** "wortlaut" = nahezu wörtliches Kurzzitat, "zusammengefasst" = eigene Zusammenfassung (case_legal_links.content_summary_kind). */
+  contentSummaryKind?: "wortlaut" | "zusammengefasst" | null;
+  /** Kleinste im Quelltext tatsächlich erkennbare Gliederungsangabe, z. B. "Abs. 2 Satz 1" (case_legal_links.precise_reference). */
+  preciseReference?: string | null;
   source?: {
     id: string;
     name: string;
@@ -52,12 +58,21 @@ export interface CaseData {
   practiceTip?: string | null;
   /** Rohwert aus DB-Feld common_mistakes (Core Builder → Typische Fehler / Don'ts). */
   commonMistakesRaw?: string[] | string | null;
+  /** Legal Export Quality Gate (src/routes/api/ai-validate-legal-claims.ts): Gesamturteil. */
+  legalReviewStatus?: "gruen" | "gelb" | "rot" | null;
+  legalReviewReasoning?: string | null;
   /**
    * Rohwert aus DB-Feld practice_cases.decision_tree (jsonb).
    * Struktur siehe src/lib/decisionTree.ts (CuratedDecisionTree).
    * Kann leer / null / ungültig sein – dann greift die Fallback-Logik.
    */
   decisionTreeRaw?: unknown;
+  /**
+   * Sprint 4.6K – Redaktioneller Workflow-Status (practice_cases.workflow_status:
+   * draft | in_review | approved | published | archived). Nur bei aus der DB
+   * geladenen Fällen gesetzt; statische Demo-Fälle (CASES) lassen es undefiniert.
+   */
+  workflowStatus?: string;
 }
 
 

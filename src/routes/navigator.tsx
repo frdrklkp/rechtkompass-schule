@@ -87,8 +87,11 @@ function NavigatorPage() {
 
   const showNavigator = mode !== null && nav.active;
 
+  // pb erhöht: unterhalb von md ist NavigatorFooter zusätzlich zur globalen
+  // BottomNav angeheftet (siehe NavigatorFooter.tsx), der Seiteninhalt
+  // braucht entsprechend mehr Platz am Ende, um nicht darunter zu verschwinden.
   return (
-    <main className="mx-auto w-full max-w-3xl px-4 py-8 pb-28">
+    <main className="mx-auto w-full max-w-3xl px-4 py-8 pb-56 md:pb-8">
       {showNavigator ? (
         <DecisionNavigator
           nav={nav}

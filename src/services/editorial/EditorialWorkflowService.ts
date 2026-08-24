@@ -5,7 +5,7 @@
 // supabase.rpc(...) für Workflowfelder verwenden.
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/supabase/contextAwareClient";
 import { mapSupabaseError } from "./errorMapper";
 import type {
   CorrelationOptions,
@@ -65,6 +65,10 @@ export interface ArchiveInput extends CorrelationOptions {
 }
 
 export interface ReactivateInput extends CorrelationOptions {
+  caseId: string;
+}
+
+export interface RevertToDraftInput extends CorrelationOptions {
   caseId: string;
 }
 
@@ -154,6 +158,15 @@ export const EditorialWorkflowService = {
     const cid = input.correlationId ?? newCorrelationId();
     return callRpc<unknown>(
       "reactivate_case",
+      { p_case_id: input.caseId },
+      cid,
+    );
+  },
+
+  async revertToDraft(input: RevertToDraftInput) {
+    const cid = input.correlationId ?? newCorrelationId();
+    return callRpc<unknown>(
+      "revert_case_to_draft",
       { p_case_id: input.caseId },
       cid,
     );

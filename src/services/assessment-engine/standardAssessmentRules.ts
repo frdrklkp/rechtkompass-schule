@@ -180,7 +180,7 @@ export const STANDARD_ASSESSMENT_RULES: AssessmentRule[] = [
     version: 1,
     title: "Angabe zur Gefahrenlage ausdrücklich unbekannt",
     description:
-      "Die Angabe zur akuten Gefahr wurde ausdrücklich als unbekannt markiert oder nicht beantwortet.",
+      "Die Angabe zur akuten Gefahr wurde ausdrücklich als unbekannt markiert oder nicht beantwortet. Schwächt die Datengrundlage (Hinweis bleibt sichtbar), verändert die Ampel seit 2026-08-19 jedoch nicht mehr allein.",
     category: "completeness",
     priority: "high",
     enabled: true,
@@ -213,12 +213,14 @@ export const STANDARD_ASSESSMENT_RULES: AssessmentRule[] = [
     reasonTemplate: "Es ist nicht bekannt, ob eine akute Gefahr gemeldet wurde.",
     requiredFields: [],
     stopProcessing: false,
+    metadata: { affectsTrafficLight: false, qualityIndicator: true },
   }),
   rule({
     id: "ongoing-question-unanswered",
     version: 1,
     title: "Angabe zum Andauern fehlt",
-    description: "Es wurde nicht beantwortet, ob die Situation weiterhin andauert.",
+    description:
+      "Es wurde nicht beantwortet, ob die Situation weiterhin andauert. Schwächt die Datengrundlage (Hinweis bleibt sichtbar), verändert die Ampel seit 2026-08-19 jedoch nicht mehr allein.",
     category: "completeness",
     priority: "high",
     enabled: true,
@@ -252,12 +254,14 @@ export const STANDARD_ASSESSMENT_RULES: AssessmentRule[] = [
     reasonTemplate: "Die Frage, ob die Situation weiterhin andauert, wurde nicht beantwortet.",
     requiredFields: [],
     stopProcessing: false,
+    metadata: { affectsTrafficLight: false, qualityIndicator: true },
   }),
   rule({
     id: "incident-time-unknown",
     version: 1,
     title: "Zeitpunkt des Vorfalls nicht erfasst",
-    description: "Der Zeitpunkt des Vorfalls wurde nicht beantwortet oder ist unbekannt.",
+    description:
+      "Der Zeitpunkt des Vorfalls wurde nicht beantwortet oder ist unbekannt. Schwächt die Datengrundlage (Hinweis bleibt sichtbar), verändert die Ampel seit 2026-08-19 jedoch nicht mehr allein.",
     category: "completeness",
     priority: "normal",
     enabled: true,
@@ -288,6 +292,18 @@ export const STANDARD_ASSESSMENT_RULES: AssessmentRule[] = [
     reasonTemplate: "Der Zeitpunkt des Vorfalls wurde nicht erfasst.",
     requiredFields: [],
     stopProcessing: false,
+    // Fund 2026-08-19 (Live-Test): ein unbekanntes Datum ist bei
+    // wiederkehrendem statt einmaligem Fehlverhalten eine plausible,
+    // ehrliche Antwort - zusammen mit der jetzt verkleinerten Pflichtangaben-
+    // Menge (siehe standardSituationSchema.ts) führte das bislang IMMER zu
+    // "Unklar - Bewertung nicht möglich", unabhängig von tatsächlich
+    // vorhandenen Gefahren-/Wiederholungs-Signalen. Gleiches Muster wie
+    // "documentation-available"/"evidence-available" unten: der Hinweis
+    // bleibt als Bewertungsgrund sichtbar, blockiert aber die Ampel nicht
+    // mehr allein - eine tatsächlich vorhandene rote/gelbe Einstufung
+    // gewinnt weiterhin, ein unbekanntes Datum allein erzwingt kein "Unklar"
+    // mehr.
+    metadata: { affectsTrafficLight: false, qualityIndicator: true },
   }),
   rule({
     id: "no-critical-features",

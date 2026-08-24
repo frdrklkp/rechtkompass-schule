@@ -44,13 +44,6 @@ export function buildStandardFlow(): NavigatorFlowDefinition {
         type: "entscheidung",
       },
       {
-        id: "dokumentation",
-        title: "Dokumentation",
-        description: "Festhalten des Vorgangs.",
-        type: "dokumentation",
-        optional: true,
-      },
-      {
         id: "rechtsgrundlagen",
         title: "Rechtsgrundlagen",
         description: "Anzeige der tragenden Quellen.",
@@ -59,15 +52,16 @@ export function buildStandardFlow(): NavigatorFlowDefinition {
       },
       {
         id: "vorlagen",
-        title: "Vorlagen",
-        description: "Passende Schriftstücke und Formulare.",
+        title: "Dokumente erstellen",
+        description:
+          "Passende Dokumente aus den erfassten Angaben erzeugen, prüfen und exportieren.",
         type: "vorlage",
         optional: true,
       },
       {
         id: "abschluss",
-        title: "Abschluss",
-        description: "Zusammenfassung und Abschluss des Vorgangs.",
+        title: "Ergebnis & Abschluss",
+        description: "Zusammenfassung des Falls und bewusster Abschluss der Bearbeitung.",
         type: "abschluss",
       },
     ],

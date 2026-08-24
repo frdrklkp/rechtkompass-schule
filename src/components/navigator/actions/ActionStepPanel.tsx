@@ -3,6 +3,7 @@
  * Die Komponente stellt ausschließlich dar; alle Schritte stammen aus der
  * Action Engine. Es erfolgt keine Rechtsauslegung und keine KI-Nutzung.
  */
+import { useEffect } from "react";
 import { ActionGroupSection } from "./ActionGroupSection";
 import {
   ActionConflictList,
@@ -27,11 +28,19 @@ export function ActionStepPanel({
   workflowId,
   context,
   onPatchContext,
-  canGoBack,
-  onBack,
 }: ActionStepPanelProps) {
   const controller = useActionPlan({ navigatorId, workflowId, context, onPatchContext });
   const { plan } = controller;
+
+  // Erzeugung ist eine reine, synchrone Regelauswertung ohne Netzwerkzugriff -
+  // beim Betreten der Phase automatisch anstoßen, statt einen manuellen Klick
+  // zu verlangen (Fund 2026-08-19, UX-Review).
+  useEffect(() => {
+    if (controller.validation.valid && !plan) {
+      controller.generate();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [controller.validation.valid, plan]);
 
   if (!controller.validation.valid && !plan) {
     return (
@@ -44,15 +53,6 @@ export function ActionStepPanel({
             <li key={issue.code + issue.message}>{issue.message}</li>
           ))}
         </ul>
-        {canGoBack && (
-          <button
-            type="button"
-            onClick={onBack}
-            className="mt-3 rounded-lg border border-border px-3 py-2 text-sm font-medium text-foreground hover:bg-muted"
-          >
-            Zurück zur Bewertung
-          </button>
-        )}
       </section>
     );
   }
@@ -81,15 +81,6 @@ export function ActionStepPanel({
               className="rounded-lg border border-border px-3 py-2 text-sm font-medium text-foreground hover:bg-muted"
             >
               Plan zurücksetzen
-            </button>
-          )}
-          {canGoBack && (
-            <button
-              type="button"
-              onClick={onBack}
-              className="rounded-lg border border-border px-3 py-2 text-sm font-medium text-foreground hover:bg-muted"
-            >
-              Zurück zur Bewertung
             </button>
           )}
         </div>

@@ -84,7 +84,7 @@ async function main() {
   await bootstrapSession();
   console.log("Session bereit.\n");
 
-  const { createCase, listCategories, listKeywords, listTemplates, listSections, listCases, listCaseLegalLinks, updateCase } =
+  const { createCase, listCategories, listKeywords, listTemplates, listSections, listCases, listCaseLegalLinks, updateCase, createLegalReviewFlag } =
     await import("../src/lib/coreBuilder");
   const { completePracticeCase } = await import("../src/lib/casePipeline.completion");
   const { loadCaseForEvaluation, deriveQualityTasks } = await import("../src/lib/qualityEngine");
@@ -145,6 +145,21 @@ async function main() {
   const caseId = row.id;
   console.log(`Angelegt: ${caseId}\n`);
 
+  // ---- 2b) Offene Fragen aus dem Entwurf als Legal-Review-Flags eintragen ----
+  // Sperrt die Veröffentlichung automatisch über die bestehende Blocker-Regel
+  // "legal.no_open_flags", bis die Redaktion sie auflöst.
+  const openQuestions = Array.isArray((draft as any).open_questions) ? (draft as any).open_questions : [];
+  if (openQuestions.length > 0) {
+    console.log(`=== 2b/9: ${openQuestions.length} offene Frage(n) aus dem Entwurf als Legal-Review-Flag eingetragen ===`);
+    for (const oq of openQuestions) {
+      if (!oq || typeof oq.question !== "string" || !oq.question.trim()) continue;
+      const field = typeof oq.field === "string" && oq.field.trim() ? oq.field.trim() : "unbekanntes Feld";
+      await createLegalReviewFlag(caseId, `[${field}] ${oq.question.trim()}`);
+      console.log(`  - [${field}] ${oq.question.trim()}`);
+    }
+    console.log("");
+  }
+
   // ---- 3) Vernetzung ----
   console.log("=== 3/9: Rechtsgrundlagen/Schlagwörter/Vorlagen/Ähnlichkeit ===");
   await completePracticeCase(caseId, {
@@ -186,6 +201,181 @@ async function main() {
   for (const l of links as any[]) {
     const s = sectionById.get(l.legal_section_id);
     console.log(`  - ${s?.legal_sources?.name ?? ""} ${s?.section_number ?? ""} ${s?.title ?? ""}`.trim() || `  - (Rechtsgrundlage ${l.legal_section_id})`);
+  }
+  console.log();
+
+  // ---- 4.5) Legal Export Quality Gate: Claim-zu-Quelle-Validierung ----
+  // Zweiter, unabhängiger KI-Durchlauf: prüft jedes gelabelte Element
+  // (Checkliste/Do's/Don'ts) und die Rechtlich-vorgegeben/Einordnung-Absätze
+  // GEGEN den tatsächlichen Volltext der verlinkten Rechtsgrundlagen.
+  // Reklassifiziert statt neu zu formulieren (kein Risiko neuer
+  // Halluzination beim "Verbessern").
+  console.log("=== 4.5/9: Legal Export Quality Gate (Claim-Validierung) ===");
+  let qualityColor: "gruen" | "gelb" | "rot" = "gruen";
+  {
+    const { parseTieredItem, splitLegalExplanation } = await import("../src/lib/caseEnrichment");
+
+    const { data: fullSectionRows } = sectionIds.length
+      ? await (supabase.from("legal_sections") as any)
+          .select("id, section_number, title, full_text, legal_sources(name)")
+          .in("id", sectionIds)
+      : { data: [] };
+    const sources = ((fullSectionRows ?? []) as any[]).map((s) => ({
+      id: s.id, reference: s.section_number ?? "", title: s.title ?? null,
+      full_text: s.full_text ?? null, source_name: s.legal_sources?.name ?? null,
+    }));
+
+    const { data: caseRows2 } = await supabase.from("practice_cases").select("*").eq("id", caseId).limit(1);
+    const caseRow2 = (caseRows2 ?? [])[0] as any;
+    const split = splitLegalExplanation(caseRow2.legal_explanation);
+
+    const toArray = (v: unknown): string[] =>
+      Array.isArray(v) ? v.filter((x): x is string => typeof x === "string" && x.trim().length > 0)
+        : typeof v === "string" && v.trim() ? v.split(/\r?\n/).map((s) => s.replace(/^[-*]\s*/, "").trim()).filter(Boolean)
+        : [];
+
+    const checklistRaw = toArray(caseRow2.checklist);
+    const practiceTipRaw = toArray(caseRow2.practice_tip);
+    const commonMistakesRaw = toArray(caseRow2.common_mistakes);
+    const documentationRaw = toArray(caseRow2.documentation);
+
+    const checklistItems = checklistRaw.map((text, i) => ({ id: `checklist-${i}`, ...parseTieredItem(text) }));
+    const practiceTipItems = practiceTipRaw.map((text, i) => ({ id: `practice_tip-${i}`, ...parseTieredItem(text) }));
+    const commonMistakesItems = commonMistakesRaw.map((text, i) => ({ id: `common_mistakes-${i}`, ...parseTieredItem(text) }));
+    const documentationItems = documentationRaw.map((text, i) => ({ id: `documentation-${i}`, ...parseTieredItem(text) }));
+
+    const valRes = await fetch(`${_API_ORIGIN}/api/ai-validate-legal-claims`, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        title: caseRow2.title, category: caseRow2.category,
+        legal_vorgegeben: split.vorgegeben, legal_einordnung: split.einordnung,
+        short_answer: caseRow2.short_answer,
+        recommendation: caseRow2.recommendation,
+        checklist: checklistItems, practice_tip: practiceTipItems, common_mistakes: commonMistakesItems,
+        documentation: documentationItems,
+        sources,
+      }),
+    });
+    if (!valRes.ok) throw new Error(`ai-validate-legal-claims fehlgeschlagen: ${await valRes.text()}`);
+    const val = (await valRes.json()) as {
+      legal_explanation_revision: { changed: boolean; vorgegeben?: string; einordnung?: string };
+      short_answer_revision: { changed: boolean; text?: string };
+      consistency_conflicts: string[];
+      source_summaries: Array<{ id: string; kind: "wortlaut" | "zusammengefasst"; text: string; preciseReference?: string }>;
+      item_verdicts: Array<{ id: string; verdict: string; new_label?: string; note?: string }>;
+      new_open_questions: string[];
+      quality_color: "gruen" | "gelb" | "rot";
+      quality_reasoning: string;
+      release_gate_blockers: string[];
+      release_gate_flags: Array<{ claimId: string; flagType: string; message: string }>;
+      claims: Array<{ id: string; section: string; text: string; classification: string; isCentral: boolean; sourceId?: string | null }>;
+      model_quality_color: "gruen" | "gelb" | "rot";
+    };
+
+    const verdictById = new Map(val.item_verdicts.map((v) => [v.id, v]));
+    const openQuestionTexts: string[] = [...val.new_open_questions];
+
+    function applyVerdicts(items: Array<{ id: string; label: string | null; text: string }>): string[] {
+      const out: string[] = [];
+      for (const it of items) {
+        const v = verdictById.get(it.id);
+        if (!v || v.verdict === "bestaetigt") {
+          out.push(it.label ? `[${it.label}] ${it.text}` : it.text);
+        } else if (v.verdict === "herabgestuft") {
+          out.push(`[${v.new_label ?? it.label ?? "Organisatorisch empfohlen"}] ${it.text}`);
+        } else if (v.verdict === "offene_frage") {
+          openQuestionTexts.push(v.note?.trim() || it.text);
+        } // "entfernen": Element wird ausgelassen.
+      }
+      return out;
+    }
+
+    const newChecklist = applyVerdicts(checklistItems);
+    const newPracticeTipLines = applyVerdicts(practiceTipItems).map((s) => `- ${s}`);
+    const newCommonMistakes = applyVerdicts(commonMistakesItems);
+    const newDocumentation = applyVerdicts(documentationItems);
+
+    const downgraded = val.item_verdicts.filter((v) => v.verdict === "herabgestuft").length;
+    const openFromItems = val.item_verdicts.filter((v) => v.verdict === "offene_frage").length;
+    const removed = val.item_verdicts.filter((v) => v.verdict === "entfernen").length;
+    // Fund 2026-08-21 (Legal Export Release Blocker): der Status kommt jetzt
+    // deterministisch aus computeReleaseGate() (siehe ai-validate-legal-claims.ts),
+    // nicht mehr aus der Modell-Selbstauskunft. val.model_quality_color wird
+    // nur noch als Vergleichswert geloggt.
+    console.log(`Urteil: ${val.quality_color.toUpperCase()} - ${val.quality_reasoning}`);
+    if (val.model_quality_color !== val.quality_color) {
+      console.log(`  (Modell selbst schätzte ${val.model_quality_color.toUpperCase()} - maßgeblich ist die deterministische Berechnung.)`);
+    }
+    console.log(`  ${downgraded} herabgestuft, ${openFromItems + val.new_open_questions.length} offene Frage(n), ${removed} entfernt.`);
+    if (val.consistency_conflicts.length > 0) {
+      console.log(`  ${val.consistency_conflicts.length} Konsistenzkonflikt(e) zwischen Aussagen gefunden:`);
+      for (const c of val.consistency_conflicts) console.log(`    - ${c}`);
+    }
+    if (val.release_gate_blockers.length > 0) {
+      console.log(`  ${val.release_gate_blockers.length} Release-Blocker (Legal Claim Audit):`);
+      for (const b of val.release_gate_blockers) console.log(`    - ${b}`);
+    }
+
+    const updatePayload: Record<string, unknown> = {
+      checklist: newChecklist,
+      practice_tip: newPracticeTipLines.join("\n"),
+      common_mistakes: newCommonMistakes,
+      documentation: newDocumentation,
+      legal_review_status: val.quality_color,
+      legal_review_reasoning: val.quality_reasoning,
+    };
+    if (val.legal_explanation_revision.changed) {
+      updatePayload.legal_explanation =
+        `RECHTLICH VORGEGEBEN: ${val.legal_explanation_revision.vorgegeben}\n\nRECHTLICHE EINORDNUNG: ${val.legal_explanation_revision.einordnung}`;
+      console.log("  legal_explanation wurde vorsichtiger neu gefasst.");
+    }
+    if (val.short_answer_revision.changed && val.short_answer_revision.text) {
+      updatePayload.short_answer = val.short_answer_revision.text;
+      console.log("  short_answer wurde vorsichtiger neu gefasst.");
+    }
+    await updateCase(caseId, updatePayload as any);
+
+    // Kompakte, gekennzeichnete Rechtsquellen-Kurzfassung je Fall-Quelle-
+    // Verknüpfung speichern (ersetzt die Anzeige des vollen Normtexts im
+    // Export durch eine gezielte, aber ehrlich gekennzeichnete Fassung).
+    for (const s of val.source_summaries) {
+      await (supabase.from("case_legal_links") as any)
+        .update({
+          content_summary: s.text,
+          content_summary_kind: s.kind,
+          precise_reference: s.preciseReference ?? null,
+        })
+        .eq("case_id", caseId)
+        .eq("legal_section_id", s.id);
+    }
+
+    for (const q of openQuestionTexts) {
+      if (!q.trim()) continue;
+      await createLegalReviewFlag(caseId, q.trim());
+    }
+    for (const c of val.consistency_conflicts) {
+      await createLegalReviewFlag(caseId, `[Konsistenzkonflikt] ${c}`);
+    }
+
+    // Legal Export Release Blocker, Regel 20/21: konkrete, strukturierte
+    // Flags statt generischer Meldungen - je Blocker Claim/Status/Quelle/
+    // Problem/Empfohlene Aktion, damit die Redaktion direkt sieht, was zu
+    // tun ist, statt nur "Rechtslage prüfen".
+    const claimById = new Map(val.claims.map((c) => [c.id, c]));
+    for (const flag of val.release_gate_flags) {
+      const claim = claimById.get(flag.claimId);
+      const reviewText = claim
+        ? [
+            `[${flag.flagType}] Claim: ${claim.text}`,
+            `Status: ${claim.classification}`,
+            `Quelle: ${claim.sourceId ?? "keine"}`,
+            `Problem: ${flag.message}`,
+          ].join(" | ")
+        : `[${flag.flagType}] ${flag.message}`;
+      await createLegalReviewFlag(caseId, reviewText);
+    }
+
+    qualityColor = val.quality_color;
   }
   console.log();
 
@@ -245,8 +435,36 @@ async function main() {
       comment: `Automatisiert erstellt und geprüft: Score ${ev.score}/100, ${links.length} Rechtsgrundlage(n) verknüpft, Entscheidungsbaum ${currentTreeOk ? "freigegeben" : "unvollständig"}.`,
     });
   }
-  await EditorialWorkflowService.publish({ caseId, publicationTier: "internal" });
-  console.log("Veröffentlicht (Tier: internal).\n");
+
+  // Veröffentlichungs-Sperre: die Blocker-Regel "legal.no_open_flags"
+  // (src/services/editorial/quality/rules.ts) wird nur in der Admin-UI
+  // (PublishReadinessDialog) geprüft, nicht in der publish_case-RPC selbst.
+  // Das Skript muss den Check daher selbst vornehmen, sonst würde es offene
+  // Unsicherheiten aus 2b) stillschweigend übergehen.
+  const { data: openFlags } = await (supabase.from("case_legal_review_flags") as any)
+    .select("id, reason").eq("case_id", caseId).is("resolved_at", null);
+  const hasOpenFlags = (openFlags?.length ?? 0) > 0;
+  const isRot = qualityColor === "rot";
+  let published = false;
+  // Technischer Release-Block (Legal Export Release Blocker, Regel 19): bei
+  // Rot keine Kennzeichnung "geprüft"/"rechtssicher"/"freigegeben", keine
+  // automatische Veröffentlichung, kein Publish ohne Warnung.
+  if (hasOpenFlags || isRot) {
+    console.log("Veröffentlichung blockiert: zentrale Rechtsclaims nicht hinreichend belegt.");
+    if (isRot) console.log("  - Legal Claim Audit: Status ROT.");
+    if (hasOpenFlags) {
+      console.log(`  - ${openFlags!.length} offene Rechts-Review-Hinweis(e):`);
+      for (const f of openFlags as any[]) console.log(`    - ${f.reason}`);
+    }
+    console.log("Fall bleibt im Status 'genehmigt', bis dies redaktionell aufgelöst ist.\n");
+  } else {
+    if (qualityColor === "gelb") {
+      console.log("Hinweis: Status GELB - fachliche Prüfung empfohlen. Export/Veröffentlichung möglich, aber NICHT als vollständig geprüfter Praxisfall gekennzeichnet.");
+    }
+    await EditorialWorkflowService.publish({ caseId, publicationTier: "internal" });
+    published = true;
+    console.log("Veröffentlicht (Tier: internal).\n");
+  }
 
   // ---- 9) Abschlussbericht ----
   const finalEv = await loadCaseForEvaluation(caseId);
@@ -256,7 +474,11 @@ async function main() {
   console.log(`Score: ${finalEv.score}/100`);
   console.log(`Rechtsgrundlagen: ${links.length}`);
   console.log(`Entscheidungsbaum: ${currentTreeOk ? "vollständig, freigegeben" : "unvollständig"}`);
-  console.log(`Status: veröffentlicht (internal)`);
+  console.log(`Legal Export Quality Gate: ${qualityColor.toUpperCase()}`);
+  console.log(`Status: ${published ? "veröffentlicht (internal)" : "genehmigt, NICHT veröffentlicht (offene Rechts-Review-Hinweise oder Quality Gate ROT)"}`);
+  if (openQuestions.length > 0) {
+    console.log(`Offene Fragen aus dem Entwurf: ${openQuestions.length}`);
+  }
   if (finalEv.score < TARGET_SCORE) {
     console.log(`\nScore ${TARGET_SCORE} nicht vollständig erreicht. Verbleibende Gründe:`);
     for (const r of finalEv.reasons) {

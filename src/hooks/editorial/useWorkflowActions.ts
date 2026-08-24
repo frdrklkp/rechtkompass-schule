@@ -30,6 +30,7 @@ import type {
   DecideReviewInput,
   PublishInput,
   ReactivateInput,
+  RevertToDraftInput,
   SubmitForReviewInput,
 } from "@/services/editorial/EditorialWorkflowService";
 
@@ -210,5 +211,18 @@ export function useReactivate() {
       toast.success("Fall reaktiviert.");
     },
     onError: (err) => handleError(err, "Reaktivierung fehlgeschlagen."),
+  });
+}
+
+export function useRevertToDraft() {
+  const invalidate = useWorkflowInvalidation();
+  return useMutation({
+    mutationFn: (input: RevertToDraftInput) =>
+      EditorialWorkflowService.revertToDraft(input),
+    onSuccess: async (_d, vars) => {
+      await invalidate(vars.caseId);
+      toast.success("Fall auf Entwurf zurückgesetzt.");
+    },
+    onError: (err) => handleError(err, "Zurücksetzen fehlgeschlagen."),
   });
 }

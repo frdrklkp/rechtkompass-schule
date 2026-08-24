@@ -6,7 +6,6 @@
 import { NavigationButtons } from "./NavigationButtons";
 import { NavigatorFooter } from "./NavigatorFooter";
 import { NavigatorHeader } from "./NavigatorHeader";
-import { NavigatorProgressBar } from "./NavigatorProgress";
 import { NavigatorSessionControls } from "./NavigatorSessionControls";
 import { NavigatorStep } from "./NavigatorStep";
 import { getStepView, NavigatorStepRenderer } from "./NavigatorStepRenderer";
@@ -38,7 +37,6 @@ export function DecisionNavigator({ nav, onLeave, onResetSession }: DecisionNavi
     );
   }
 
-  const index = nav.steps.findIndex((s) => s.id === nav.currentStep!.id);
   const finished = nav.state.status === "finished" || nav.state.status === "cancelled";
   const isSituationStep = nav.currentStep.id === "situation";
   const situationComplete = isSituationComplete(nav.context);
@@ -64,8 +62,12 @@ export function DecisionNavigator({ nav, onLeave, onResetSession }: DecisionNavi
         </p>
       )}
 
-      <NavigatorProgressBar progress={nav.state.progress} stepIndex={index} />
-      <NavigatorStepper steps={nav.steps} currentStepId={nav.currentStep.id} />
+      <NavigatorStepper
+        steps={nav.steps}
+        currentStepId={nav.currentStep.id}
+        progress={nav.state.progress}
+        onSelect={nav.goTo}
+      />
 
       <NavigatorSessionControls
         status={nav.state.status}
@@ -94,6 +96,7 @@ export function DecisionNavigator({ nav, onLeave, onResetSession }: DecisionNavi
         canGoBack={nav.canGoBack}
         onBack={nav.back}
         onNext={nav.next}
+        onGoTo={nav.goTo}
       />
       {!stepView.available && (
         <p className="text-xs text-muted-foreground">

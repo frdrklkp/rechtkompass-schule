@@ -161,7 +161,12 @@ export function ActionCard({ action, controller, readOnly = false }: ActionCardP
             </>
           )}
 
-          <div className="flex flex-wrap gap-2">
+          {/* Fund 2026-08-19 (UX-Review): drei gleichrangige Buttons ohne
+              erkennbare Hauptaktion. "Als erledigt markieren" ist jetzt
+              deutlich größer/kräftiger, die selteneren Nebenaktionen bleiben
+              direkt antippbar (kein verstecktes Menü - auf dem Handy wäre
+              das selbst ein zu kleines Ziel), aber optisch klar zweitrangig. */}
+          <div className="flex flex-wrap items-center gap-3">
             {!closed && (
               <button
                 type="button"
@@ -173,7 +178,7 @@ export function ActionCard({ action, controller, readOnly = false }: ActionCardP
                     confirmation: action.confirmationRequired ? confirmed : true,
                   })
                 }
-                className="rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:opacity-90 disabled:opacity-50"
+                className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-50"
               >
                 Als erledigt markieren
               </button>
@@ -182,7 +187,7 @@ export function ActionCard({ action, controller, readOnly = false }: ActionCardP
               <button
                 type="button"
                 onClick={() => controller.skipAction(action.actionKey, justification)}
-                className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted"
+                className="rounded-lg px-2 py-2 text-xs font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
               >
                 Überspringen
               </button>
@@ -191,7 +196,7 @@ export function ActionCard({ action, controller, readOnly = false }: ActionCardP
               <button
                 type="button"
                 onClick={() => controller.markNotApplicable(action.actionKey, justification)}
-                className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted"
+                className="rounded-lg px-2 py-2 text-xs font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
               >
                 Trifft nicht zu
               </button>

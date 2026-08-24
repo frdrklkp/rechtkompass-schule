@@ -81,7 +81,7 @@ export async function searchPracticeCasesHybrid(
     return { ...structured, usedSemantic: false, semanticFallbackReason };
   }
 
-  const combined = combineHybrid(structured.results, semanticHits, cases).slice(0, limit);
+  const combined = combineHybrid(structured.results, semanticHits, cases, { query: q }).slice(0, limit);
   const asResults = combined.map(toSearchResult);
   const bestMatch = asResults[0] ?? null;
   const alternatives = asResults.slice(1);
@@ -142,7 +142,7 @@ export async function searchPracticeCasesHybridDetailed(
     };
   }
 
-  const candidates = combineHybrid(structured.results, semanticHits, cases);
+  const candidates = combineHybrid(structured.results, semanticHits, cases, { query: q });
   const top = candidates.slice(0, limit);
   const asResults = top.map(toSearchResult);
   const bestMatch = asResults[0] ?? null;

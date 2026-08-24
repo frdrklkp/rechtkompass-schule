@@ -68,7 +68,7 @@ const STOPWORDS = new Set([
   "ich","du","er","sie","es","wir","ihr","was","wer","wie","wo","warum","darf","kann","muss","soll",
   "ein","eine","einen","einem","einer","der","die","das","den","dem","des","und","oder","aber","mit","ohne",
   "in","im","an","am","auf","aus","zu","zum","zur","für","fuer","von","vom","bei","über","ueber","nach",
-  "nicht","kein","keine","mein","dein","sein","ihre","ihr","ihrer","ihm","ihn","mich","dir","mir",
+  "nicht","kein","keine","mein","dein","sein","ihre","ihr","ihrer","ihm","ihn","mich","dir","mir","sich","uns","euch",
   "jetzt","heute","gerade","mal","noch","wieder","schon","auch","nur","sehr","echt","bitte",
   "machen","tun","gehen","kommen","sagen","haben","sein","werden","habe","hat","hatte","bin","ist","sind","wird",
 ]);
@@ -260,6 +260,11 @@ function scoreCase(
 function isVague(q: string, tokens: string[]): boolean {
   const qn = q.trim().toLowerCase();
   if (qn.length < 6) return true;
+  // Ein einzelnes, hinreichend langes/spezifisches Wort (z.B. "Werkzeugmaschine",
+  // "Klassenfahrt") ist meist kein vages Anliegen - nur sehr kurze 1-Wort-
+  // Anfragen sind es. Verhindert, dass eine eindeutige Kurzsuche in eine
+  // Rückfrage statt ins Ergebnis läuft (Nutzerrückmeldung 2026-08-18).
+  if (tokens.length === 1 && tokens[0].length >= 6) return false;
   if (tokens.length < 2) return true;
   return VAGUE_PHRASES.some((p) => qn.includes(p)) && tokens.length < 3;
 }
@@ -294,10 +299,26 @@ function buildClarificationQuestions(topics: string[]): ClarificationQuestion[] 
   return questions;
 }
 
-function confidenceLabel(score: number, best: number): SearchResult["confidenceLabel"] {
+/**
+ * Fund 2026-08-20: `ratio = score / best` ist für den Treffer, der selbst
+ * `best` ist, immer exakt 1 - das Label des Spitzenreiters hing dadurch
+ * praktisch nur an einer niedrigen absoluten Score-Schwelle (8 bzw. 15).
+ * Ein einzelner generischer Begriff (z. B. "unterricht", der in fast jedem
+ * Fall vorkommt) konnte durch Mehrfachtreffer über mehrere Felder hinweg
+ * diese Schwelle allein erreichen und wurde dann als "Hohe Übereinstimmung"
+ * ausgegeben, obwohl inhaltlich nichts Passendes vorlag. Zusätzlich zur
+ * Score-Schwelle wird jetzt verlangt, dass mehrere UNTERSCHIEDLICHE
+ * Suchbegriffe zum Treffer beigetragen haben - ein einzelnes generisches
+ * Wort reicht dann nicht mehr für eine hohe Kennzeichnung.
+ */
+function confidenceLabel(
+  score: number,
+  best: number,
+  matchedTermCount: number,
+): SearchResult["confidenceLabel"] {
   const ratio = best > 0 ? score / best : 0;
-  if (ratio >= 0.9 && score >= 15) return "sehr-hoch";
-  if (ratio >= 0.6 && score >= 8) return "hoch";
+  if (ratio >= 0.9 && score >= 15 && matchedTermCount >= 3) return "sehr-hoch";
+  if (ratio >= 0.6 && score >= 8 && matchedTermCount >= 2) return "hoch";
   return "moeglich";
 }
 
@@ -358,7 +379,7 @@ export function searchPublishedPracticeCases(
   const results: SearchResult[] = scored.slice(0, limit).map((r) => ({
     case: r.case,
     relevanceScore: r.score,
-    confidenceLabel: confidenceLabel(r.score, best),
+    confidenceLabel: confidenceLabel(r.score, best, r.matched.length),
     matchedTerms: r.matched,
     matchedTopics: topics,
     matchReasons: r.reasons,

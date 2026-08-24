@@ -133,7 +133,11 @@ export function buildStandardSituationSchema(): SituationSchemaDefinition {
         section: "zeit-ort",
         title: "Art des Ortes",
         type: "singleChoice",
-        required: true,
+        // Fund 2026-08-19: nicht von der Bewertungs-Regel-Engine gelesen -
+        // kein Pflichtfeld mehr, bleibt sichtbar/ausfüllbar. (Ursprünglich
+        // in der Planung übersehen, gehört aber zur selben Kategorie wie
+        // die anderen hier demovierten Fragen.)
+        required: false,
         visible: true,
         order: 5,
         options: [
@@ -162,7 +166,11 @@ export function buildStandardSituationSchema(): SituationSchemaDefinition {
         title: "Beteiligte Personen erfassen",
         description: "Erfassen Sie die beteiligten Personen ohne unnötige personenbezogene Details.",
         type: "participants",
-        required: true,
+        // Fund 2026-08-19: kein Pflichtfeld mehr - ein leerer Bestand ist für
+        // die Bewertung (dangerInformation.affectedPersons, projiziert aus
+        // participants[].isAffected) ein gültiges Signal ("keine bekannten
+        // Betroffenen"), keine fehlende Angabe. Bleibt sichtbar/ausfüllbar.
+        required: false,
         visible: true,
         order: 1,
       },
@@ -171,7 +179,10 @@ export function buildStandardSituationSchema(): SituationSchemaDefinition {
         section: "betroffene",
         title: "Gibt es unmittelbar betroffene Personen?",
         type: "boolean",
-        required: true,
+        // Fund 2026-08-19: wird nie in die Bewertung projiziert (die
+        // Regel-Engine liest stattdessen participants[].isAffected aus
+        // Abschnitt "Beteiligte") - kein Pflichtfeld mehr.
+        required: false,
         visible: true,
         order: 1,
       },
@@ -192,7 +203,9 @@ export function buildStandardSituationSchema(): SituationSchemaDefinition {
         section: "zeugen",
         title: "Gab es Zeugen?",
         type: "boolean",
-        required: true,
+        // Fund 2026-08-19: nicht von der Bewertungs-Regel-Engine gelesen -
+        // kein Pflichtfeld mehr, bleibt sichtbar/ausfüllbar.
+        required: false,
         visible: true,
         order: 1,
       },
@@ -283,7 +296,10 @@ export function buildStandardSituationSchema(): SituationSchemaDefinition {
         section: "nachweise",
         title: "Liegen Nachweise oder Unterlagen vor?",
         type: "boolean",
-        required: true,
+        // Fund 2026-08-19: die Regel-Engine liest situationCase.evidence[]
+        // direkt (befüllt über addEvidence()), nicht diese Frage - kein
+        // Pflichtfeld mehr, bleibt sichtbar/ausfüllbar.
+        required: false,
         visible: true,
         order: 1,
       },
@@ -304,7 +320,9 @@ export function buildStandardSituationSchema(): SituationSchemaDefinition {
         section: "massnahmen",
         title: "Wurden bereits Maßnahmen durchgeführt?",
         type: "boolean",
-        required: true,
+        // Fund 2026-08-19: nicht von der Bewertungs-Regel-Engine gelesen -
+        // kein Pflichtfeld mehr, bleibt sichtbar/ausfüllbar.
+        required: false,
         visible: true,
         order: 1,
       },
@@ -324,7 +342,9 @@ export function buildStandardSituationSchema(): SituationSchemaDefinition {
         section: "informierte",
         title: "Wer wurde bereits informiert?",
         type: "multiChoice",
-        required: true,
+        // Fund 2026-08-19: nicht von der Bewertungs-Regel-Engine gelesen -
+        // kein Pflichtfeld mehr, bleibt sichtbar/ausfüllbar.
+        required: false,
         visible: true,
         order: 1,
         options: [
@@ -351,7 +371,9 @@ export function buildStandardSituationSchema(): SituationSchemaDefinition {
         section: "dokumentation",
         title: "Existiert bereits ein Vorfallsbericht?",
         type: "boolean",
-        required: true,
+        // Fund 2026-08-19: nicht von der Bewertungs-Regel-Engine gelesen -
+        // kein Pflichtfeld mehr, bleibt sichtbar/ausfüllbar.
+        required: false,
         visible: true,
         order: 2,
       },

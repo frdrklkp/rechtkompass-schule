@@ -225,15 +225,25 @@ export function DecisionAssistant({ c, open, onOpenChange, overrideTree }: Props
           </Button>
           <div className="flex items-center gap-2">
             {result && (
-              <Link
-                to="/faelle/$id/dokument"
-                params={{ id: c.id }}
-                className="inline-flex items-center gap-2 rounded-full bg-accent px-3 py-1.5 text-xs font-semibold text-accent-foreground hover:opacity-90"
-                onClick={() => onOpenChange(false)}
-              >
-                <FileText className="h-3.5 w-3.5" />
-                Passendes Dokument erstellen
-              </Link>
+              <>
+                <Link
+                  to="/navigator"
+                  className="inline-flex items-center gap-2 rounded-full border border-border px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-muted"
+                  onClick={() => onOpenChange(false)}
+                >
+                  <ArrowRight className="h-3.5 w-3.5" />
+                  Fall strukturiert weiterbearbeiten
+                </Link>
+                <Link
+                  to="/faelle/$id/dokument"
+                  params={{ id: c.id }}
+                  className="inline-flex items-center gap-2 rounded-full bg-accent px-3 py-1.5 text-xs font-semibold text-accent-foreground hover:opacity-90"
+                  onClick={() => onOpenChange(false)}
+                >
+                  <FileText className="h-3.5 w-3.5" />
+                  Passendes Dokument erstellen
+                </Link>
+              </>
             )}
             <Button
               type="button"

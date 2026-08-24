@@ -6,8 +6,9 @@ import { CASES as STATIC_CASES } from "../data/cases";
 import { PageShell } from "../components/PageShell";
 import { Breadcrumbs } from "../components/Breadcrumbs";
 import { matches } from "../lib/synonyms";
+import { resolveCategoryGroup } from "../lib/caseCategoryGroups";
 import { usePublishedCases } from "../lib/casesFromDb";
-import { LoadingState, ErrorState } from "../components/DataStates";
+import { ErrorState } from "../components/DataStates";
 
 const searchSchema = z.object({
   cat: z.string().optional(),
@@ -24,6 +25,33 @@ const ampelColors: Record<string, string> = {
   gelb: "bg-warning",
   rot: "bg-danger",
 };
+
+/**
+ * Skeleton statt Text-Loader (Nutzer-Anforderung 2026-08-21): ein Platzhalter
+ * in der tatsächlichen Kartenform reduziert die wahrgenommene Wartezeit
+ * gegenüber reinem Ladetext (u. a. durch Facebook/YouTube-Studien zu
+ * "perceived performance" belegt) und vermeidet einen Layout-Sprung beim
+ * Nachladen der echten Karten.
+ */
+function CaseListSkeleton() {
+  return (
+    <ul className="space-y-3" aria-hidden="true">
+      {Array.from({ length: 6 }, (_, i) => (
+        <li
+          key={i}
+          className="flex animate-pulse items-start gap-3 rounded-xl border border-border bg-card p-4"
+        >
+          <span className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-muted" />
+          <div className="min-w-0 flex-1 space-y-2">
+            <div className="h-2.5 w-1/3 rounded bg-muted" />
+            <div className="h-3.5 w-4/5 rounded bg-muted" />
+            <div className="h-2.5 w-full rounded bg-muted" />
+          </div>
+        </li>
+      ))}
+    </ul>
+  );
+}
 
 function FaellePage() {
   const { cat, ampel } = Route.useSearch();
@@ -42,8 +70,10 @@ function FaellePage() {
     [cases],
   );
 
+  const catGroup = useMemo(() => (cat ? resolveCategoryGroup(cat) : null), [cat]);
+
   const filtered = cases.filter((c) => {
-    if (cat && c.category !== cat) return false;
+    if (catGroup && !catGroup.includes(c.category)) return false;
     if (ampel && c.ampel !== ampel) return false;
     if (q) {
       const hay = [
@@ -91,7 +121,7 @@ function FaellePage() {
               })
             }
             data-active={ampel === a}
-            className={`inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-xs font-medium data-[active=true]:border-accent`}
+            className={`inline-flex min-h-11 items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-xs font-medium data-[active=true]:border-accent`}
           >
             <span className={`h-2 w-2 rounded-full ${ampelColors[a]}`} />
             {a === "gruen" ? "Grün" : a === "gelb" ? "Gelb" : "Rot"}
@@ -108,7 +138,7 @@ function FaellePage() {
               })
             }
             data-active={!cat}
-            className="shrink-0 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground/80 data-[active=true]:border-accent data-[active=true]:bg-accent data-[active=true]:text-accent-foreground"
+            className="flex min-h-11 shrink-0 items-center rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground/80 data-[active=true]:border-accent data-[active=true]:bg-accent data-[active=true]:text-accent-foreground"
           >
             Alle Kategorien
           </button>
@@ -121,7 +151,7 @@ function FaellePage() {
                 })
               }
               data-active={cat === c}
-              className="shrink-0 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground/80 data-[active=true]:border-accent data-[active=true]:bg-accent data-[active=true]:text-accent-foreground"
+              className="flex min-h-11 shrink-0 items-center rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground/80 data-[active=true]:border-accent data-[active=true]:bg-accent data-[active=true]:text-accent-foreground"
             >
               {c}
             </button>
@@ -130,7 +160,7 @@ function FaellePage() {
       </div>
 
       {isLoading && !dbCases ? (
-        <LoadingState label="Praxisfälle werden geladen…" />
+        <CaseListSkeleton />
       ) : error ? (
         <ErrorState error={error} />
       ) : (

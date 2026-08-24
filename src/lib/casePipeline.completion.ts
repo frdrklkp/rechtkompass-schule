@@ -17,7 +17,7 @@
  *   - Sie orchestriert ausschließlich vorhandene Funktionen.
  */
 
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/supabase/contextAwareClient";
 import { matchCase, type Catalogs, type CaseMatchInput } from "@/lib/caseMatching";
 import {
   listCases,
@@ -178,9 +178,18 @@ async function loadCatalogsForCase(caseId: string): Promise<Catalogs> {
     const isCard = Boolean(
       s.practice_relevance || s.common_mistakes || s.recommendations || s.action_hint,
     );
+    // Fund 2026-08-20: `legal_sources.short_name` ist bei ca. 45 Quellen mit
+    // einem falschen Pauschal-Default ("SchulG NRW") befüllt, obwohl `name`
+    // korrekt die tatsächliche Verordnung nennt (z. B. APO-GOSt statt
+    // APO-BK). `short_name ?? name` griff dadurch nie auf `name` zurück, da
+    // `short_name` ja gesetzt (nur falsch) war - die KI bekam so einen
+    // plausibel klingenden, aber sachlich falschen Quellennamen und ordnete
+    // wiederholt fachfremde Normen zu. `name` ist in beiden bekannten Fällen
+    // korrekt; als vorrangige, verlässlichere Quelle für den KI-Kontext
+    // genutzt.
     return {
       id: s.id,
-      source_short: src?.short_name ?? src?.name ?? "",
+      source_short: src?.name ?? src?.short_name ?? "",
       section_number: s.section_number ?? "",
       title: s.title ?? "",
       summary: (s.summary ?? "").slice(0, 260),

@@ -11,7 +11,14 @@ const AMPEL_LABEL: Record<Ampel, string> = {
 export function mapDbCase(row: Record<string, unknown>): CaseData {
   const TL_TO_AMPEL: Record<string, Ampel> = { green: "gruen", yellow: "gelb", red: "rot" };
   const tl = row.traffic_light as string | undefined;
-  const raw = (row.ampel as string | undefined) ?? (tl ? TL_TO_AMPEL[tl] : undefined) ?? "gruen";
+  // Fund 2026-08-20: `practice_cases.ampel` hat einen DB-Default "gruen" und
+  // wurde von manchen Schreibpfaden (coreBuilder.ts vor dem dortigen Fix)
+  // beim Insert gar nicht gesetzt, sodass die Spalte klammheimlich auf
+  // "gruen" verfiel, während `traffic_light` den korrekten Wert trug.
+  // `traffic_light` gilt daher als kanonisch (siehe coreBuilder.ts-Kommentar
+  // "DB uses traffic_light"); rohes `ampel` ist nur Fallback für Zeilen ohne
+  // gesetztes traffic_light.
+  const raw = (tl ? TL_TO_AMPEL[tl] : undefined) ?? (row.ampel as string | undefined) ?? "gruen";
   const ampel = raw as Ampel;
   const arr = (v: unknown): string[] =>
     Array.isArray(v) ? (v as unknown[]).map((x) => String(x)) : [];
@@ -39,6 +46,9 @@ export function mapDbCase(row: Record<string, unknown>): CaseData {
     practiceTip: (row.practice_tip as string | null | undefined) ?? null,
     commonMistakesRaw: (row.common_mistakes as string[] | string | null | undefined) ?? null,
     decisionTreeRaw: row.decision_tree ?? null,
+    workflowStatus: (row.workflow_status as string | undefined) ?? undefined,
+    legalReviewStatus: (row.legal_review_status as "gruen" | "gelb" | "rot" | null | undefined) ?? null,
+    legalReviewReasoning: (row.legal_review_reasoning as string | null | undefined) ?? null,
   };
 }
 
@@ -84,12 +94,17 @@ async function fetchCaseById(id: string): Promise<CaseData | null> {
   // null zurückgibt - betraf u.a. genau diese Funktion (öffentliche
   // Falldetailseite zeigte dadurch nie Rechtsgrundlagen an).
   const { data: linkRows } = await (supabase.from("case_legal_links") as any)
-    .select("legal_section_id, explanation")
+    .select("legal_section_id, explanation, content_summary, content_summary_kind, precise_reference")
     .eq("case_id", id);
+  type LinkRow = {
+    legal_section_id: string;
+    explanation: string | null;
+    content_summary: string | null;
+    content_summary_kind: "wortlaut" | "zusammengefasst" | null;
+    precise_reference: string | null;
+  };
   const linkBySection = new Map(
-    ((linkRows ?? []) as Array<{ legal_section_id: string; explanation: string | null }>)
-      .filter((l) => l.legal_section_id)
-      .map((l) => [l.legal_section_id, l.explanation]),
+    ((linkRows ?? []) as LinkRow[]).filter((l) => l.legal_section_id).map((l) => [l.legal_section_id, l]),
   );
   const sectionIds = [...linkBySection.keys()];
   const { data: sectionRows } = sectionIds.length
@@ -119,7 +134,10 @@ async function fetchCaseById(id: string): Promise<CaseData | null> {
         valid_to: s.valid_to ?? null,
         last_reviewed_at: s.last_reviewed_at ?? null,
         status: s.status ?? null,
-        explanation: linkBySection.get(s.id) ?? null,
+        explanation: linkBySection.get(s.id)?.explanation ?? null,
+        contentSummary: linkBySection.get(s.id)?.content_summary ?? null,
+        contentSummaryKind: linkBySection.get(s.id)?.content_summary_kind ?? null,
+        preciseReference: linkBySection.get(s.id)?.precise_reference ?? null,
         source: src
           ? {
               id: src.id as string,
@@ -148,6 +166,91 @@ export function usePublishedCase(id: string) {
   return useQuery({
     queryKey: ["case-full", id],
     queryFn: () => fetchCaseById(id),
+    staleTime: 60_000,
+  });
+}
+
+export type RelatedCaseCard = Pick<CaseData, "id" | "title" | "category" | "subcategory" | "ampel">;
+
+/**
+ * Sprint 4.6L – Echte, verlinkte "Ähnliche Fälle" statt der bisherigen
+ * getRelatedCases() aus caseEnrichment.ts, die ausschließlich das kleine
+ * statische Demo-Array (src/data/cases.ts) durchsucht hat und für
+ * DB-Fälle daher leere oder inhaltslose Treffer lieferte.
+ *
+ * Liest zuerst explizite Verknüpfungen aus der bislang ungenutzten Tabelle
+ * case_related_cases (case_id/related_case_id, beide Richtungen), danach
+ * Auffüllung per Kategorie unter veröffentlichten Fällen. Zweistufig statt
+ * verschachteltem Embed: case_related_cases hat zwei Fremdschlüssel auf
+ * practice_cases (case_id UND related_case_id), was einen automatischen
+ * "practice_cases(...)"-Embed mehrdeutig macht (dieselbe Klasse Problem wie
+ * bei case_legal_links, Fund 2026-08-14).
+ */
+async function fetchRelatedCases(id: string, category: string, limit = 5): Promise<RelatedCaseCard[]> {
+  const { data: linkRows } = await (supabase as any)
+    .from("case_related_cases")
+    .select("case_id, related_case_id")
+    .or(`case_id.eq.${id},related_case_id.eq.${id}`);
+  const linkedIds = [
+    ...new Set(
+      ((linkRows ?? []) as Array<{ case_id: string | null; related_case_id: string | null }>)
+        .map((l) => (l.case_id === id ? l.related_case_id : l.case_id))
+        .filter((x): x is string => !!x && x !== id),
+    ),
+  ];
+
+  const out: RelatedCaseCard[] = [];
+  const seen = new Set<string>([id]);
+
+  if (linkedIds.length > 0) {
+    const { data: linked } = await supabase
+      .from("practice_cases")
+      .select("id,title,category,subcategory,ampel,status")
+      .in("id", linkedIds)
+      .eq("status", "published");
+    for (const r of (linked ?? []) as Array<Record<string, unknown>>) {
+      const rid = r.id as string;
+      if (seen.has(rid)) continue;
+      seen.add(rid);
+      out.push({
+        id: rid,
+        title: (r.title as string) ?? "",
+        category: (r.category as string) ?? "",
+        subcategory: (r.subcategory as string) ?? "",
+        ampel: ((r.ampel as string) ?? "gruen") as CaseData["ampel"],
+      });
+    }
+  }
+
+  if (out.length < limit && category) {
+    const { data: sameCategory } = await supabase
+      .from("practice_cases")
+      .select("id,title,category,subcategory,ampel,status")
+      .eq("status", "published")
+      .eq("category", category)
+      .limit(limit + seen.size);
+    for (const r of (sameCategory ?? []) as Array<Record<string, unknown>>) {
+      if (out.length >= limit) break;
+      const rid = r.id as string;
+      if (seen.has(rid)) continue;
+      seen.add(rid);
+      out.push({
+        id: rid,
+        title: (r.title as string) ?? "",
+        category: (r.category as string) ?? "",
+        subcategory: (r.subcategory as string) ?? "",
+        ampel: ((r.ampel as string) ?? "gruen") as CaseData["ampel"],
+      });
+    }
+  }
+
+  return out.slice(0, limit);
+}
+
+export function useRelatedCases(id: string, category: string, limit = 5) {
+  return useQuery({
+    queryKey: ["related-cases", id, category, limit],
+    queryFn: () => fetchRelatedCases(id, category, limit),
     staleTime: 60_000,
   });
 }

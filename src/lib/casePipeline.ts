@@ -10,7 +10,7 @@
  * nach Sprint 3.2 durch den Workflow-Guard-Trigger blockiert.
  */
 
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/supabase/contextAwareClient";
 import { assertAdminWrite } from "@/lib/adminAuth";
 import { apiFetch } from "@/lib/apiFetch";
 import { loadCaseForEvaluation, type EvalResult } from "@/lib/qualityEngine";

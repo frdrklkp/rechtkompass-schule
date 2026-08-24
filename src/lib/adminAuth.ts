@@ -165,11 +165,27 @@ export function isAuthed(): boolean {
   return !!snapshot.user && !!snapshot.role && ADMIN_ROLES.has(snapshot.role);
 }
 
+// Sprint 4.6K: Serverseitige Hintergrund-Jobs (z. B. automatische
+// Fallgenerierung) laufen mit einem eigenen, bereits authentifizierten
+// Editor-Client innerhalb eines AsyncLocalStorage-Kontexts, den der
+// Browser-Auth-Snapshot oben naturgemäß nicht sieht (kein onAuthStateChange
+// im Serverprozess). Diese Datei wird auch im Client-Bundle ausgeliefert und
+// darf daher NICHT direkt aus src/lib/server/** importieren (Vite-
+// importProtection). Stattdessen registriert ausschließlich serverseitiger
+// Code (siehe src/lib/server/wirePrivilegedWriteOverride.ts) hier einen
+// Override-Callback.
+let privilegedWriteOverride: (() => boolean) | null = null;
+export function __setPrivilegedWriteOverride(fn: (() => boolean) | null): void {
+  privilegedWriteOverride = fn;
+}
+
 export function canWrite(): boolean {
+  if (privilegedWriteOverride?.()) return true;
   return !!snapshot.role && WRITE_ROLES.has(snapshot.role);
 }
 
 export function assertAdminWrite(): void {
+  if (privilegedWriteOverride?.()) return;
   if (!snapshot.user) {
     throw new Error("Nicht angemeldet. Bitte erneut einloggen.");
   }
@@ -206,6 +222,22 @@ export async function signOut(): Promise<void> {
   await applyUser(null);
 }
 
+// Sprint 4.6K: Leichte Anmeldung für Lehrkräfte auf der öffentlichen Seite
+// (kein Passwort, kein Redaktionsbereich) - anders als signIn() oben wird
+// NICHT wieder abgemeldet, wenn die Rolle nicht admin/editor/reviewer ist;
+// die Standardrolle "teacher" ist hier ausdrücklich erwünscht.
+export async function signInWithMagicLink(
+  email: string,
+  redirectTo?: string,
+): Promise<{ ok: boolean; error?: string }> {
+  const { error } = await supabase.auth.signInWithOtp({
+    email: email.trim(),
+    options: redirectTo ? { emailRedirectTo: redirectTo } : undefined,
+  });
+  if (error) return { ok: false, error: error.message };
+  return { ok: true };
+}
+
 // Legacy-Hook für Reactivity in Nicht-Store-Aufrufern.
 export function useAuthReady(): boolean {
   const [ready, setReady] = useState(snapshot.ready);
@@ -214,4 +246,14 @@ export function useAuthReady(): boolean {
     return subscribe(() => setReady(snapshot.ready));
   }, []);
   return ready;
+}
+
+// Sprint 4.6K: rollenneutraler Sitzungszugriff (jede angemeldete Person, nicht
+// nur Redaktion/Admin) - für öffentliche Funktionen wie die Fallgenerierung.
+export function useAuthSession() {
+  useEffect(() => {
+    bootstrap();
+  }, []);
+  const s = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  return { ready: s.ready, user: s.user };
 }

@@ -183,6 +183,7 @@ export function useDecisionNavigator(options: UseDecisionNavigatorOptions = {}) 
     refreshSummary,
     next: () => run((e) => e.next()),
     back: () => run((e) => e.back()),
+    goTo: (stepId: string) => run((e) => e.goTo(stepId)),
     skip: () => run((e) => e.skip()),
     pause: () => run((e) => e.pause()),
     resume: () => run((e) => e.resume()),

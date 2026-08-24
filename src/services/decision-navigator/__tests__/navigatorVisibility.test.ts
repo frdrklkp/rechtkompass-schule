@@ -16,7 +16,6 @@ import {
   buildStandardFlow,
 } from "../index";
 import {
-  getStepView,
   isStepAvailable,
   NAVIGATOR_STEP_VIEWS,
 } from "../../../components/navigator/NavigatorStepRenderer";
@@ -94,15 +93,9 @@ test("Step Renderer kennzeichnet umgesetzte Phasen als verfügbar, spätere Phas
   assert.equal(isStepAvailable("sofortmassnahmen"), true);
   // Sprint 4.6G: Rechtsgrundlagen sind fachlich umgesetzt.
   assert.equal(isStepAvailable("rechtsgrundlagen"), true);
-  // Sprint 4.6H: Dokumentation ist fachlich umgesetzt.
-  assert.equal(isStepAvailable("dokumentation"), true);
-  for (const id of [
-    "vorlagen",
-    "abschluss",
-  ]) {
-    assert.equal(isStepAvailable(id), false, id);
-    assert.match(getStepView(id).status, /Sprint/);
-  }
+  // Sprint 4.6M: Dokumente erstellen (vorlagen) und Ergebnis & Abschluss sind fachlich umgesetzt.
+  assert.equal(isStepAvailable("vorlagen"), true);
+  assert.equal(isStepAvailable("abschluss"), true);
 });
 
 test("Situation wird im Navigator-Kontext gespeichert und nach Reload wiederhergestellt", () => {

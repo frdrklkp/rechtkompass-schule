@@ -10,8 +10,8 @@ import {
   RotateCcw,
   Search,
 } from "lucide-react";
-import { DecisionAssistant } from "@/components/assistant";
-import { useDecisionAssistant } from "@/hooks/assistant/useDecisionAssistant";
+import { TileIntakeContainer } from "@/components/assistant/tile-intake";
+import { useTileIntake } from "@/hooks/assistant/useTileIntake";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 
 import { TimeModeToggle } from "@/components/TimeModeToggle";
@@ -75,7 +75,7 @@ function caseMatchesQuery(c: CaseData, q: string): boolean {
 }
 
 function AssistentPage() {
-  const assistant = useDecisionAssistant();
+  const assistant = useTileIntake();
   const { data: cases, isLoading, error } = usePublishedCases();
 
   const [category, setCategory] = useState<string | null>(null);
@@ -167,7 +167,7 @@ function AssistentPage() {
         </div>
       </div>
 
-      <DecisionAssistant controller={assistant} />
+      <TileIntakeContainer controller={assistant} />
 
       <details className="mt-8 rounded-2xl border border-border bg-card p-4">
         <summary className="cursor-pointer text-sm font-semibold">

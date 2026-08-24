@@ -38,6 +38,7 @@ import { Route as AdminKiEntwurfsmaschineRouteImport } from './routes/admin.ki-e
 import { Route as AdminKnowledgeGraphRouteImport } from './routes/admin.knowledge-graph'
 import { Route as AdminLegalKnowledgeRouteImport } from './routes/admin.legal-knowledge'
 import { Route as AdminLegalTestmatrixRouteImport } from './routes/admin.legal-testmatrix'
+import { Route as AdminPilotRouteImport } from './routes/admin.pilot'
 import { Route as AdminPraxisfallMatchingRouteImport } from './routes/admin.praxisfall-matching'
 import { Route as AdminQualitaetRouteImport } from './routes/admin.qualitaet'
 import { Route as AdminQualitaetsmanagerRouteImport } from './routes/admin.qualitaetsmanager'
@@ -48,11 +49,13 @@ import { Route as AdminSuchindexRouteImport } from './routes/admin.suchindex'
 import { Route as AdminSuchtestRouteImport } from './routes/admin.suchtest'
 import { Route as AdminVerknuepfungenRouteImport } from './routes/admin.verknuepfungen'
 import { Route as AdminVorlagenRouteImport } from './routes/admin.vorlagen'
+import { Route as ApiAiCondenseCaseRouteImport } from './routes/api/ai-condense-case'
 import { Route as ApiAiDraftBatchItemRouteImport } from './routes/api/ai-draft-batch-item'
 import { Route as ApiAiDraftCaseRouteImport } from './routes/api/ai-draft-case'
 import { Route as ApiAiDraftDecisionTreeRouteImport } from './routes/api/ai-draft-decision-tree'
 import { Route as ApiAiDraftTopicsRouteImport } from './routes/api/ai-draft-topics'
 import { Route as ApiAiEditorialSuggestRouteImport } from './routes/api/ai-editorial-suggest'
+import { Route as ApiAiEnrichLegalSectionRouteImport } from './routes/api/ai-enrich-legal-section'
 import { Route as ApiAiMatchKeywordsRouteImport } from './routes/api/ai-match-keywords'
 import { Route as ApiAiMatchLegalSectionsRouteImport } from './routes/api/ai-match-legal-sections'
 import { Route as ApiAiMatchSimilarCasesRouteImport } from './routes/api/ai-match-similar-cases'
@@ -60,6 +63,8 @@ import { Route as ApiAiMatchTemplatesRouteImport } from './routes/api/ai-match-t
 import { Route as ApiAiReclassifyAmpelRouteImport } from './routes/api/ai-reclassify-ampel'
 import { Route as ApiAiReevaluateLegalLinksRouteImport } from './routes/api/ai-reevaluate-legal-links'
 import { Route as ApiAiRefineCaseFieldRouteImport } from './routes/api/ai-refine-case-field'
+import { Route as ApiAiValidateLegalClaimsRouteImport } from './routes/api/ai-validate-legal-claims'
+import { Route as ApiCaseGenerationJobsRouteImport } from './routes/api/case-generation-jobs'
 import { Route as ApiCopilotTrackRouteImport } from './routes/api/copilot-track'
 import { Route as ApiCrawlLegalSourceRouteImport } from './routes/api/crawl-legal-source'
 import { Route as ApiEnrichLegalSectionRouteImport } from './routes/api/enrich-legal-section'
@@ -85,6 +90,8 @@ import { Route as ApiWorkflowsRouteImport } from './routes/api/workflows'
 import { Route as FaelleIdRouteImport } from './routes/faelle.$id'
 import { Route as FallIdRouteImport } from './routes/fall.$id'
 import { Route as RechtsgrundlagenIdRouteImport } from './routes/rechtsgrundlagen.$id'
+import { Route as VorgaengeIndexRouteImport } from './routes/vorgaenge.index'
+import { Route as VorgaengeIdRouteImport } from './routes/vorgaenge.$id'
 import { Route as WorkflowsIndexRouteImport } from './routes/workflows.index'
 import { Route as WorkflowsTemplateIdRouteImport } from './routes/workflows.$templateId'
 import { Route as AdminEditorialIndexRouteImport } from './routes/admin.editorial.index'
@@ -111,6 +118,7 @@ import { Route as AdminLegalKnowledgeSucheRouteImport } from './routes/admin.leg
 import { Route as AdminLegalKnowledgeVeraltetRouteImport } from './routes/admin.legal-knowledge.veraltet'
 import { Route as AdminLegalKnowledgeVersionsRouteImport } from './routes/admin.legal-knowledge.versions'
 import { Route as AdminRechtsgrundlagenIdRouteImport } from './routes/admin.rechtsgrundlagen.$id'
+import { Route as ApiCaseGenerationJobsIdRouteImport } from './routes/api/case-generation-jobs.$id'
 import { Route as ApiWorkflowSessionsIdRouteImport } from './routes/api/workflow-sessions.$id'
 import { Route as ApiWorkflowsIdRouteImport } from './routes/api/workflows.$id'
 import { Route as FaelleIdDokumentRouteImport } from './routes/faelle_.$id.dokument'
@@ -277,6 +285,11 @@ const AdminLegalTestmatrixRoute = AdminLegalTestmatrixRouteImport.update({
   path: '/legal-testmatrix',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminPilotRoute = AdminPilotRouteImport.update({
+  id: '/pilot',
+  path: '/pilot',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminPraxisfallMatchingRoute = AdminPraxisfallMatchingRouteImport.update({
   id: '/praxisfall-matching',
   path: '/praxisfall-matching',
@@ -327,6 +340,11 @@ const AdminVorlagenRoute = AdminVorlagenRouteImport.update({
   path: '/vorlagen',
   getParentRoute: () => AdminRoute,
 } as any)
+const ApiAiCondenseCaseRoute = ApiAiCondenseCaseRouteImport.update({
+  id: '/api/ai-condense-case',
+  path: '/api/ai-condense-case',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiAiDraftBatchItemRoute = ApiAiDraftBatchItemRouteImport.update({
   id: '/api/ai-draft-batch-item',
   path: '/api/ai-draft-batch-item',
@@ -350,6 +368,11 @@ const ApiAiDraftTopicsRoute = ApiAiDraftTopicsRouteImport.update({
 const ApiAiEditorialSuggestRoute = ApiAiEditorialSuggestRouteImport.update({
   id: '/api/ai-editorial-suggest',
   path: '/api/ai-editorial-suggest',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAiEnrichLegalSectionRoute = ApiAiEnrichLegalSectionRouteImport.update({
+  id: '/api/ai-enrich-legal-section',
+  path: '/api/ai-enrich-legal-section',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiAiMatchKeywordsRoute = ApiAiMatchKeywordsRouteImport.update({
@@ -386,6 +409,17 @@ const ApiAiReevaluateLegalLinksRoute =
 const ApiAiRefineCaseFieldRoute = ApiAiRefineCaseFieldRouteImport.update({
   id: '/api/ai-refine-case-field',
   path: '/api/ai-refine-case-field',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAiValidateLegalClaimsRoute =
+  ApiAiValidateLegalClaimsRouteImport.update({
+    id: '/api/ai-validate-legal-claims',
+    path: '/api/ai-validate-legal-claims',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiCaseGenerationJobsRoute = ApiCaseGenerationJobsRouteImport.update({
+  id: '/api/case-generation-jobs',
+  path: '/api/case-generation-jobs',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiCopilotTrackRoute = ApiCopilotTrackRouteImport.update({
@@ -521,6 +555,16 @@ const RechtsgrundlagenIdRoute = RechtsgrundlagenIdRouteImport.update({
   id: '/$id',
   path: '/$id',
   getParentRoute: () => RechtsgrundlagenRoute,
+} as any)
+const VorgaengeIndexRoute = VorgaengeIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => VorgaengeRoute,
+} as any)
+const VorgaengeIdRoute = VorgaengeIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => VorgaengeRoute,
 } as any)
 const WorkflowsIndexRoute = WorkflowsIndexRouteImport.update({
   id: '/workflows/',
@@ -667,6 +711,11 @@ const AdminRechtsgrundlagenIdRoute = AdminRechtsgrundlagenIdRouteImport.update({
   path: '/$id',
   getParentRoute: () => AdminRechtsgrundlagenRoute,
 } as any)
+const ApiCaseGenerationJobsIdRoute = ApiCaseGenerationJobsIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => ApiCaseGenerationJobsRoute,
+} as any)
 const ApiWorkflowSessionsIdRoute = ApiWorkflowSessionsIdRouteImport.update({
   id: '/$id',
   path: '/$id',
@@ -785,7 +834,7 @@ export interface FileRoutesByFullPath {
   '/navigator': typeof NavigatorRoute
   '/praesentation': typeof PraesentationRoute
   '/rechtsgrundlagen': typeof RechtsgrundlagenRouteWithChildren
-  '/vorgaenge': typeof VorgaengeRoute
+  '/vorgaenge': typeof VorgaengeRouteWithChildren
   '/admin/aenderungen': typeof AdminAenderungenRoute
   '/admin/copilot': typeof AdminCopilotRoute
   '/admin/einstellungen': typeof AdminEinstellungenRoute
@@ -801,6 +850,7 @@ export interface FileRoutesByFullPath {
   '/admin/knowledge-graph': typeof AdminKnowledgeGraphRoute
   '/admin/legal-knowledge': typeof AdminLegalKnowledgeRouteWithChildren
   '/admin/legal-testmatrix': typeof AdminLegalTestmatrixRoute
+  '/admin/pilot': typeof AdminPilotRoute
   '/admin/praxisfall-matching': typeof AdminPraxisfallMatchingRoute
   '/admin/qualitaet': typeof AdminQualitaetRoute
   '/admin/qualitaetsmanager': typeof AdminQualitaetsmanagerRoute
@@ -811,11 +861,13 @@ export interface FileRoutesByFullPath {
   '/admin/suchtest': typeof AdminSuchtestRoute
   '/admin/verknuepfungen': typeof AdminVerknuepfungenRoute
   '/admin/vorlagen': typeof AdminVorlagenRoute
+  '/api/ai-condense-case': typeof ApiAiCondenseCaseRoute
   '/api/ai-draft-batch-item': typeof ApiAiDraftBatchItemRoute
   '/api/ai-draft-case': typeof ApiAiDraftCaseRoute
   '/api/ai-draft-decision-tree': typeof ApiAiDraftDecisionTreeRoute
   '/api/ai-draft-topics': typeof ApiAiDraftTopicsRoute
   '/api/ai-editorial-suggest': typeof ApiAiEditorialSuggestRoute
+  '/api/ai-enrich-legal-section': typeof ApiAiEnrichLegalSectionRoute
   '/api/ai-match-keywords': typeof ApiAiMatchKeywordsRoute
   '/api/ai-match-legal-sections': typeof ApiAiMatchLegalSectionsRoute
   '/api/ai-match-similar-cases': typeof ApiAiMatchSimilarCasesRoute
@@ -823,6 +875,8 @@ export interface FileRoutesByFullPath {
   '/api/ai-reclassify-ampel': typeof ApiAiReclassifyAmpelRoute
   '/api/ai-reevaluate-legal-links': typeof ApiAiReevaluateLegalLinksRoute
   '/api/ai-refine-case-field': typeof ApiAiRefineCaseFieldRoute
+  '/api/ai-validate-legal-claims': typeof ApiAiValidateLegalClaimsRoute
+  '/api/case-generation-jobs': typeof ApiCaseGenerationJobsRouteWithChildren
   '/api/copilot-track': typeof ApiCopilotTrackRoute
   '/api/crawl-legal-source': typeof ApiCrawlLegalSourceRoute
   '/api/enrich-legal-section': typeof ApiEnrichLegalSectionRoute
@@ -848,8 +902,10 @@ export interface FileRoutesByFullPath {
   '/faelle/$id': typeof FaelleIdRoute
   '/fall/$id': typeof FallIdRoute
   '/rechtsgrundlagen/$id': typeof RechtsgrundlagenIdRoute
+  '/vorgaenge/$id': typeof VorgaengeIdRoute
   '/workflows/$templateId': typeof WorkflowsTemplateIdRoute
   '/admin/': typeof AdminIndexRoute
+  '/vorgaenge/': typeof VorgaengeIndexRoute
   '/workflows/': typeof WorkflowsIndexRoute
   '/admin/editorial/faelle': typeof AdminEditorialFaelleRouteWithChildren
   '/admin/editorial/legal-quality': typeof AdminEditorialLegalQualityRoute
@@ -871,6 +927,7 @@ export interface FileRoutesByFullPath {
   '/admin/legal-knowledge/veraltet': typeof AdminLegalKnowledgeVeraltetRoute
   '/admin/legal-knowledge/versions': typeof AdminLegalKnowledgeVersionsRoute
   '/admin/rechtsgrundlagen/$id': typeof AdminRechtsgrundlagenIdRoute
+  '/api/case-generation-jobs/$id': typeof ApiCaseGenerationJobsIdRoute
   '/api/workflow-sessions/$id': typeof ApiWorkflowSessionsIdRouteWithChildren
   '/api/workflows/$id': typeof ApiWorkflowsIdRoute
   '/faelle/$id/dokument': typeof FaelleIdDokumentRoute
@@ -906,7 +963,6 @@ export interface FileRoutesByTo {
   '/navigator': typeof NavigatorRoute
   '/praesentation': typeof PraesentationRoute
   '/rechtsgrundlagen': typeof RechtsgrundlagenRouteWithChildren
-  '/vorgaenge': typeof VorgaengeRoute
   '/admin/aenderungen': typeof AdminAenderungenRoute
   '/admin/copilot': typeof AdminCopilotRoute
   '/admin/einstellungen': typeof AdminEinstellungenRoute
@@ -919,6 +975,7 @@ export interface FileRoutesByTo {
   '/admin/kategorien': typeof AdminKategorienRoute
   '/admin/knowledge-graph': typeof AdminKnowledgeGraphRoute
   '/admin/legal-testmatrix': typeof AdminLegalTestmatrixRoute
+  '/admin/pilot': typeof AdminPilotRoute
   '/admin/praxisfall-matching': typeof AdminPraxisfallMatchingRoute
   '/admin/qualitaet': typeof AdminQualitaetRoute
   '/admin/qualitaetsmanager': typeof AdminQualitaetsmanagerRoute
@@ -929,11 +986,13 @@ export interface FileRoutesByTo {
   '/admin/suchtest': typeof AdminSuchtestRoute
   '/admin/verknuepfungen': typeof AdminVerknuepfungenRoute
   '/admin/vorlagen': typeof AdminVorlagenRoute
+  '/api/ai-condense-case': typeof ApiAiCondenseCaseRoute
   '/api/ai-draft-batch-item': typeof ApiAiDraftBatchItemRoute
   '/api/ai-draft-case': typeof ApiAiDraftCaseRoute
   '/api/ai-draft-decision-tree': typeof ApiAiDraftDecisionTreeRoute
   '/api/ai-draft-topics': typeof ApiAiDraftTopicsRoute
   '/api/ai-editorial-suggest': typeof ApiAiEditorialSuggestRoute
+  '/api/ai-enrich-legal-section': typeof ApiAiEnrichLegalSectionRoute
   '/api/ai-match-keywords': typeof ApiAiMatchKeywordsRoute
   '/api/ai-match-legal-sections': typeof ApiAiMatchLegalSectionsRoute
   '/api/ai-match-similar-cases': typeof ApiAiMatchSimilarCasesRoute
@@ -941,6 +1000,8 @@ export interface FileRoutesByTo {
   '/api/ai-reclassify-ampel': typeof ApiAiReclassifyAmpelRoute
   '/api/ai-reevaluate-legal-links': typeof ApiAiReevaluateLegalLinksRoute
   '/api/ai-refine-case-field': typeof ApiAiRefineCaseFieldRoute
+  '/api/ai-validate-legal-claims': typeof ApiAiValidateLegalClaimsRoute
+  '/api/case-generation-jobs': typeof ApiCaseGenerationJobsRouteWithChildren
   '/api/copilot-track': typeof ApiCopilotTrackRoute
   '/api/crawl-legal-source': typeof ApiCrawlLegalSourceRoute
   '/api/enrich-legal-section': typeof ApiEnrichLegalSectionRoute
@@ -966,8 +1027,10 @@ export interface FileRoutesByTo {
   '/faelle/$id': typeof FaelleIdRoute
   '/fall/$id': typeof FallIdRoute
   '/rechtsgrundlagen/$id': typeof RechtsgrundlagenIdRoute
+  '/vorgaenge/$id': typeof VorgaengeIdRoute
   '/workflows/$templateId': typeof WorkflowsTemplateIdRoute
   '/admin': typeof AdminIndexRoute
+  '/vorgaenge': typeof VorgaengeIndexRoute
   '/workflows': typeof WorkflowsIndexRoute
   '/admin/editorial/legal-quality': typeof AdminEditorialLegalQualityRoute
   '/admin/editorial/publishing': typeof AdminEditorialPublishingRoute
@@ -988,6 +1051,7 @@ export interface FileRoutesByTo {
   '/admin/legal-knowledge/veraltet': typeof AdminLegalKnowledgeVeraltetRoute
   '/admin/legal-knowledge/versions': typeof AdminLegalKnowledgeVersionsRoute
   '/admin/rechtsgrundlagen/$id': typeof AdminRechtsgrundlagenIdRoute
+  '/api/case-generation-jobs/$id': typeof ApiCaseGenerationJobsIdRoute
   '/api/workflow-sessions/$id': typeof ApiWorkflowSessionsIdRouteWithChildren
   '/api/workflows/$id': typeof ApiWorkflowsIdRoute
   '/faelle/$id/dokument': typeof FaelleIdDokumentRoute
@@ -1025,7 +1089,7 @@ export interface FileRoutesById {
   '/navigator': typeof NavigatorRoute
   '/praesentation': typeof PraesentationRoute
   '/rechtsgrundlagen': typeof RechtsgrundlagenRouteWithChildren
-  '/vorgaenge': typeof VorgaengeRoute
+  '/vorgaenge': typeof VorgaengeRouteWithChildren
   '/admin/aenderungen': typeof AdminAenderungenRoute
   '/admin/copilot': typeof AdminCopilotRoute
   '/admin/einstellungen': typeof AdminEinstellungenRoute
@@ -1041,6 +1105,7 @@ export interface FileRoutesById {
   '/admin/knowledge-graph': typeof AdminKnowledgeGraphRoute
   '/admin/legal-knowledge': typeof AdminLegalKnowledgeRouteWithChildren
   '/admin/legal-testmatrix': typeof AdminLegalTestmatrixRoute
+  '/admin/pilot': typeof AdminPilotRoute
   '/admin/praxisfall-matching': typeof AdminPraxisfallMatchingRoute
   '/admin/qualitaet': typeof AdminQualitaetRoute
   '/admin/qualitaetsmanager': typeof AdminQualitaetsmanagerRoute
@@ -1051,11 +1116,13 @@ export interface FileRoutesById {
   '/admin/suchtest': typeof AdminSuchtestRoute
   '/admin/verknuepfungen': typeof AdminVerknuepfungenRoute
   '/admin/vorlagen': typeof AdminVorlagenRoute
+  '/api/ai-condense-case': typeof ApiAiCondenseCaseRoute
   '/api/ai-draft-batch-item': typeof ApiAiDraftBatchItemRoute
   '/api/ai-draft-case': typeof ApiAiDraftCaseRoute
   '/api/ai-draft-decision-tree': typeof ApiAiDraftDecisionTreeRoute
   '/api/ai-draft-topics': typeof ApiAiDraftTopicsRoute
   '/api/ai-editorial-suggest': typeof ApiAiEditorialSuggestRoute
+  '/api/ai-enrich-legal-section': typeof ApiAiEnrichLegalSectionRoute
   '/api/ai-match-keywords': typeof ApiAiMatchKeywordsRoute
   '/api/ai-match-legal-sections': typeof ApiAiMatchLegalSectionsRoute
   '/api/ai-match-similar-cases': typeof ApiAiMatchSimilarCasesRoute
@@ -1063,6 +1130,8 @@ export interface FileRoutesById {
   '/api/ai-reclassify-ampel': typeof ApiAiReclassifyAmpelRoute
   '/api/ai-reevaluate-legal-links': typeof ApiAiReevaluateLegalLinksRoute
   '/api/ai-refine-case-field': typeof ApiAiRefineCaseFieldRoute
+  '/api/ai-validate-legal-claims': typeof ApiAiValidateLegalClaimsRoute
+  '/api/case-generation-jobs': typeof ApiCaseGenerationJobsRouteWithChildren
   '/api/copilot-track': typeof ApiCopilotTrackRoute
   '/api/crawl-legal-source': typeof ApiCrawlLegalSourceRoute
   '/api/enrich-legal-section': typeof ApiEnrichLegalSectionRoute
@@ -1088,8 +1157,10 @@ export interface FileRoutesById {
   '/faelle/$id': typeof FaelleIdRoute
   '/fall/$id': typeof FallIdRoute
   '/rechtsgrundlagen/$id': typeof RechtsgrundlagenIdRoute
+  '/vorgaenge/$id': typeof VorgaengeIdRoute
   '/workflows/$templateId': typeof WorkflowsTemplateIdRoute
   '/admin/': typeof AdminIndexRoute
+  '/vorgaenge/': typeof VorgaengeIndexRoute
   '/workflows/': typeof WorkflowsIndexRoute
   '/admin/editorial/faelle': typeof AdminEditorialFaelleRouteWithChildren
   '/admin/editorial/legal-quality': typeof AdminEditorialLegalQualityRoute
@@ -1111,6 +1182,7 @@ export interface FileRoutesById {
   '/admin/legal-knowledge/veraltet': typeof AdminLegalKnowledgeVeraltetRoute
   '/admin/legal-knowledge/versions': typeof AdminLegalKnowledgeVersionsRoute
   '/admin/rechtsgrundlagen/$id': typeof AdminRechtsgrundlagenIdRoute
+  '/api/case-generation-jobs/$id': typeof ApiCaseGenerationJobsIdRoute
   '/api/workflow-sessions/$id': typeof ApiWorkflowSessionsIdRouteWithChildren
   '/api/workflows/$id': typeof ApiWorkflowsIdRoute
   '/faelle_/$id/dokument': typeof FaelleIdDokumentRoute
@@ -1165,6 +1237,7 @@ export interface FileRouteTypes {
     | '/admin/knowledge-graph'
     | '/admin/legal-knowledge'
     | '/admin/legal-testmatrix'
+    | '/admin/pilot'
     | '/admin/praxisfall-matching'
     | '/admin/qualitaet'
     | '/admin/qualitaetsmanager'
@@ -1175,11 +1248,13 @@ export interface FileRouteTypes {
     | '/admin/suchtest'
     | '/admin/verknuepfungen'
     | '/admin/vorlagen'
+    | '/api/ai-condense-case'
     | '/api/ai-draft-batch-item'
     | '/api/ai-draft-case'
     | '/api/ai-draft-decision-tree'
     | '/api/ai-draft-topics'
     | '/api/ai-editorial-suggest'
+    | '/api/ai-enrich-legal-section'
     | '/api/ai-match-keywords'
     | '/api/ai-match-legal-sections'
     | '/api/ai-match-similar-cases'
@@ -1187,6 +1262,8 @@ export interface FileRouteTypes {
     | '/api/ai-reclassify-ampel'
     | '/api/ai-reevaluate-legal-links'
     | '/api/ai-refine-case-field'
+    | '/api/ai-validate-legal-claims'
+    | '/api/case-generation-jobs'
     | '/api/copilot-track'
     | '/api/crawl-legal-source'
     | '/api/enrich-legal-section'
@@ -1212,8 +1289,10 @@ export interface FileRouteTypes {
     | '/faelle/$id'
     | '/fall/$id'
     | '/rechtsgrundlagen/$id'
+    | '/vorgaenge/$id'
     | '/workflows/$templateId'
     | '/admin/'
+    | '/vorgaenge/'
     | '/workflows/'
     | '/admin/editorial/faelle'
     | '/admin/editorial/legal-quality'
@@ -1235,6 +1314,7 @@ export interface FileRouteTypes {
     | '/admin/legal-knowledge/veraltet'
     | '/admin/legal-knowledge/versions'
     | '/admin/rechtsgrundlagen/$id'
+    | '/api/case-generation-jobs/$id'
     | '/api/workflow-sessions/$id'
     | '/api/workflows/$id'
     | '/faelle/$id/dokument'
@@ -1270,7 +1350,6 @@ export interface FileRouteTypes {
     | '/navigator'
     | '/praesentation'
     | '/rechtsgrundlagen'
-    | '/vorgaenge'
     | '/admin/aenderungen'
     | '/admin/copilot'
     | '/admin/einstellungen'
@@ -1283,6 +1362,7 @@ export interface FileRouteTypes {
     | '/admin/kategorien'
     | '/admin/knowledge-graph'
     | '/admin/legal-testmatrix'
+    | '/admin/pilot'
     | '/admin/praxisfall-matching'
     | '/admin/qualitaet'
     | '/admin/qualitaetsmanager'
@@ -1293,11 +1373,13 @@ export interface FileRouteTypes {
     | '/admin/suchtest'
     | '/admin/verknuepfungen'
     | '/admin/vorlagen'
+    | '/api/ai-condense-case'
     | '/api/ai-draft-batch-item'
     | '/api/ai-draft-case'
     | '/api/ai-draft-decision-tree'
     | '/api/ai-draft-topics'
     | '/api/ai-editorial-suggest'
+    | '/api/ai-enrich-legal-section'
     | '/api/ai-match-keywords'
     | '/api/ai-match-legal-sections'
     | '/api/ai-match-similar-cases'
@@ -1305,6 +1387,8 @@ export interface FileRouteTypes {
     | '/api/ai-reclassify-ampel'
     | '/api/ai-reevaluate-legal-links'
     | '/api/ai-refine-case-field'
+    | '/api/ai-validate-legal-claims'
+    | '/api/case-generation-jobs'
     | '/api/copilot-track'
     | '/api/crawl-legal-source'
     | '/api/enrich-legal-section'
@@ -1330,8 +1414,10 @@ export interface FileRouteTypes {
     | '/faelle/$id'
     | '/fall/$id'
     | '/rechtsgrundlagen/$id'
+    | '/vorgaenge/$id'
     | '/workflows/$templateId'
     | '/admin'
+    | '/vorgaenge'
     | '/workflows'
     | '/admin/editorial/legal-quality'
     | '/admin/editorial/publishing'
@@ -1352,6 +1438,7 @@ export interface FileRouteTypes {
     | '/admin/legal-knowledge/veraltet'
     | '/admin/legal-knowledge/versions'
     | '/admin/rechtsgrundlagen/$id'
+    | '/api/case-generation-jobs/$id'
     | '/api/workflow-sessions/$id'
     | '/api/workflows/$id'
     | '/faelle/$id/dokument'
@@ -1404,6 +1491,7 @@ export interface FileRouteTypes {
     | '/admin/knowledge-graph'
     | '/admin/legal-knowledge'
     | '/admin/legal-testmatrix'
+    | '/admin/pilot'
     | '/admin/praxisfall-matching'
     | '/admin/qualitaet'
     | '/admin/qualitaetsmanager'
@@ -1414,11 +1502,13 @@ export interface FileRouteTypes {
     | '/admin/suchtest'
     | '/admin/verknuepfungen'
     | '/admin/vorlagen'
+    | '/api/ai-condense-case'
     | '/api/ai-draft-batch-item'
     | '/api/ai-draft-case'
     | '/api/ai-draft-decision-tree'
     | '/api/ai-draft-topics'
     | '/api/ai-editorial-suggest'
+    | '/api/ai-enrich-legal-section'
     | '/api/ai-match-keywords'
     | '/api/ai-match-legal-sections'
     | '/api/ai-match-similar-cases'
@@ -1426,6 +1516,8 @@ export interface FileRouteTypes {
     | '/api/ai-reclassify-ampel'
     | '/api/ai-reevaluate-legal-links'
     | '/api/ai-refine-case-field'
+    | '/api/ai-validate-legal-claims'
+    | '/api/case-generation-jobs'
     | '/api/copilot-track'
     | '/api/crawl-legal-source'
     | '/api/enrich-legal-section'
@@ -1451,8 +1543,10 @@ export interface FileRouteTypes {
     | '/faelle/$id'
     | '/fall/$id'
     | '/rechtsgrundlagen/$id'
+    | '/vorgaenge/$id'
     | '/workflows/$templateId'
     | '/admin/'
+    | '/vorgaenge/'
     | '/workflows/'
     | '/admin/editorial/faelle'
     | '/admin/editorial/legal-quality'
@@ -1474,6 +1568,7 @@ export interface FileRouteTypes {
     | '/admin/legal-knowledge/veraltet'
     | '/admin/legal-knowledge/versions'
     | '/admin/rechtsgrundlagen/$id'
+    | '/api/case-generation-jobs/$id'
     | '/api/workflow-sessions/$id'
     | '/api/workflows/$id'
     | '/faelle_/$id/dokument'
@@ -1511,12 +1606,14 @@ export interface RootRouteChildren {
   NavigatorRoute: typeof NavigatorRoute
   PraesentationRoute: typeof PraesentationRoute
   RechtsgrundlagenRoute: typeof RechtsgrundlagenRouteWithChildren
-  VorgaengeRoute: typeof VorgaengeRoute
+  VorgaengeRoute: typeof VorgaengeRouteWithChildren
+  ApiAiCondenseCaseRoute: typeof ApiAiCondenseCaseRoute
   ApiAiDraftBatchItemRoute: typeof ApiAiDraftBatchItemRoute
   ApiAiDraftCaseRoute: typeof ApiAiDraftCaseRoute
   ApiAiDraftDecisionTreeRoute: typeof ApiAiDraftDecisionTreeRoute
   ApiAiDraftTopicsRoute: typeof ApiAiDraftTopicsRoute
   ApiAiEditorialSuggestRoute: typeof ApiAiEditorialSuggestRoute
+  ApiAiEnrichLegalSectionRoute: typeof ApiAiEnrichLegalSectionRoute
   ApiAiMatchKeywordsRoute: typeof ApiAiMatchKeywordsRoute
   ApiAiMatchLegalSectionsRoute: typeof ApiAiMatchLegalSectionsRoute
   ApiAiMatchSimilarCasesRoute: typeof ApiAiMatchSimilarCasesRoute
@@ -1524,6 +1621,8 @@ export interface RootRouteChildren {
   ApiAiReclassifyAmpelRoute: typeof ApiAiReclassifyAmpelRoute
   ApiAiReevaluateLegalLinksRoute: typeof ApiAiReevaluateLegalLinksRoute
   ApiAiRefineCaseFieldRoute: typeof ApiAiRefineCaseFieldRoute
+  ApiAiValidateLegalClaimsRoute: typeof ApiAiValidateLegalClaimsRoute
+  ApiCaseGenerationJobsRoute: typeof ApiCaseGenerationJobsRouteWithChildren
   ApiCopilotTrackRoute: typeof ApiCopilotTrackRoute
   ApiCrawlLegalSourceRoute: typeof ApiCrawlLegalSourceRoute
   ApiEnrichLegalSectionRoute: typeof ApiEnrichLegalSectionRoute
@@ -1758,6 +1857,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminLegalTestmatrixRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/pilot': {
+      id: '/admin/pilot'
+      path: '/pilot'
+      fullPath: '/admin/pilot'
+      preLoaderRoute: typeof AdminPilotRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/praxisfall-matching': {
       id: '/admin/praxisfall-matching'
       path: '/praxisfall-matching'
@@ -1828,6 +1934,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminVorlagenRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/api/ai-condense-case': {
+      id: '/api/ai-condense-case'
+      path: '/api/ai-condense-case'
+      fullPath: '/api/ai-condense-case'
+      preLoaderRoute: typeof ApiAiCondenseCaseRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/ai-draft-batch-item': {
       id: '/api/ai-draft-batch-item'
       path: '/api/ai-draft-batch-item'
@@ -1861,6 +1974,13 @@ declare module '@tanstack/react-router' {
       path: '/api/ai-editorial-suggest'
       fullPath: '/api/ai-editorial-suggest'
       preLoaderRoute: typeof ApiAiEditorialSuggestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/ai-enrich-legal-section': {
+      id: '/api/ai-enrich-legal-section'
+      path: '/api/ai-enrich-legal-section'
+      fullPath: '/api/ai-enrich-legal-section'
+      preLoaderRoute: typeof ApiAiEnrichLegalSectionRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/ai-match-keywords': {
@@ -1910,6 +2030,20 @@ declare module '@tanstack/react-router' {
       path: '/api/ai-refine-case-field'
       fullPath: '/api/ai-refine-case-field'
       preLoaderRoute: typeof ApiAiRefineCaseFieldRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/ai-validate-legal-claims': {
+      id: '/api/ai-validate-legal-claims'
+      path: '/api/ai-validate-legal-claims'
+      fullPath: '/api/ai-validate-legal-claims'
+      preLoaderRoute: typeof ApiAiValidateLegalClaimsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/case-generation-jobs': {
+      id: '/api/case-generation-jobs'
+      path: '/api/case-generation-jobs'
+      fullPath: '/api/case-generation-jobs'
+      preLoaderRoute: typeof ApiCaseGenerationJobsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/copilot-track': {
@@ -2086,6 +2220,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/rechtsgrundlagen/$id'
       preLoaderRoute: typeof RechtsgrundlagenIdRouteImport
       parentRoute: typeof RechtsgrundlagenRoute
+    }
+    '/vorgaenge/': {
+      id: '/vorgaenge/'
+      path: '/'
+      fullPath: '/vorgaenge/'
+      preLoaderRoute: typeof VorgaengeIndexRouteImport
+      parentRoute: typeof VorgaengeRoute
+    }
+    '/vorgaenge/$id': {
+      id: '/vorgaenge/$id'
+      path: '/$id'
+      fullPath: '/vorgaenge/$id'
+      preLoaderRoute: typeof VorgaengeIdRouteImport
+      parentRoute: typeof VorgaengeRoute
     }
     '/workflows/': {
       id: '/workflows/'
@@ -2268,6 +2416,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/rechtsgrundlagen/$id'
       preLoaderRoute: typeof AdminRechtsgrundlagenIdRouteImport
       parentRoute: typeof AdminRechtsgrundlagenRoute
+    }
+    '/api/case-generation-jobs/$id': {
+      id: '/api/case-generation-jobs/$id'
+      path: '/$id'
+      fullPath: '/api/case-generation-jobs/$id'
+      preLoaderRoute: typeof ApiCaseGenerationJobsIdRouteImport
+      parentRoute: typeof ApiCaseGenerationJobsRoute
     }
     '/api/workflow-sessions/$id': {
       id: '/api/workflow-sessions/$id'
@@ -2530,6 +2685,7 @@ interface AdminRouteChildren {
   AdminKnowledgeGraphRoute: typeof AdminKnowledgeGraphRoute
   AdminLegalKnowledgeRoute: typeof AdminLegalKnowledgeRouteWithChildren
   AdminLegalTestmatrixRoute: typeof AdminLegalTestmatrixRoute
+  AdminPilotRoute: typeof AdminPilotRoute
   AdminPraxisfallMatchingRoute: typeof AdminPraxisfallMatchingRoute
   AdminQualitaetRoute: typeof AdminQualitaetRoute
   AdminQualitaetsmanagerRoute: typeof AdminQualitaetsmanagerRoute
@@ -2568,6 +2724,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminKnowledgeGraphRoute: AdminKnowledgeGraphRoute,
   AdminLegalKnowledgeRoute: AdminLegalKnowledgeRouteWithChildren,
   AdminLegalTestmatrixRoute: AdminLegalTestmatrixRoute,
+  AdminPilotRoute: AdminPilotRoute,
   AdminPraxisfallMatchingRoute: AdminPraxisfallMatchingRoute,
   AdminQualitaetRoute: AdminQualitaetRoute,
   AdminQualitaetsmanagerRoute: AdminQualitaetsmanagerRoute,
@@ -2612,6 +2769,33 @@ const RechtsgrundlagenRouteChildren: RechtsgrundlagenRouteChildren = {
 
 const RechtsgrundlagenRouteWithChildren =
   RechtsgrundlagenRoute._addFileChildren(RechtsgrundlagenRouteChildren)
+
+interface VorgaengeRouteChildren {
+  VorgaengeIdRoute: typeof VorgaengeIdRoute
+  VorgaengeIndexRoute: typeof VorgaengeIndexRoute
+}
+
+const VorgaengeRouteChildren: VorgaengeRouteChildren = {
+  VorgaengeIdRoute: VorgaengeIdRoute,
+  VorgaengeIndexRoute: VorgaengeIndexRoute,
+}
+
+const VorgaengeRouteWithChildren = VorgaengeRoute._addFileChildren(
+  VorgaengeRouteChildren,
+)
+
+interface ApiCaseGenerationJobsRouteChildren {
+  ApiCaseGenerationJobsIdRoute: typeof ApiCaseGenerationJobsIdRoute
+}
+
+const ApiCaseGenerationJobsRouteChildren: ApiCaseGenerationJobsRouteChildren = {
+  ApiCaseGenerationJobsIdRoute: ApiCaseGenerationJobsIdRoute,
+}
+
+const ApiCaseGenerationJobsRouteWithChildren =
+  ApiCaseGenerationJobsRoute._addFileChildren(
+    ApiCaseGenerationJobsRouteChildren,
+  )
 
 interface ApiWorkflowSessionsIdDocumentsDocIdRouteChildren {
   ApiWorkflowSessionsIdDocumentsDocIdExportRoute: typeof ApiWorkflowSessionsIdDocumentsDocIdExportRoute
@@ -2705,12 +2889,14 @@ const rootRouteChildren: RootRouteChildren = {
   NavigatorRoute: NavigatorRoute,
   PraesentationRoute: PraesentationRoute,
   RechtsgrundlagenRoute: RechtsgrundlagenRouteWithChildren,
-  VorgaengeRoute: VorgaengeRoute,
+  VorgaengeRoute: VorgaengeRouteWithChildren,
+  ApiAiCondenseCaseRoute: ApiAiCondenseCaseRoute,
   ApiAiDraftBatchItemRoute: ApiAiDraftBatchItemRoute,
   ApiAiDraftCaseRoute: ApiAiDraftCaseRoute,
   ApiAiDraftDecisionTreeRoute: ApiAiDraftDecisionTreeRoute,
   ApiAiDraftTopicsRoute: ApiAiDraftTopicsRoute,
   ApiAiEditorialSuggestRoute: ApiAiEditorialSuggestRoute,
+  ApiAiEnrichLegalSectionRoute: ApiAiEnrichLegalSectionRoute,
   ApiAiMatchKeywordsRoute: ApiAiMatchKeywordsRoute,
   ApiAiMatchLegalSectionsRoute: ApiAiMatchLegalSectionsRoute,
   ApiAiMatchSimilarCasesRoute: ApiAiMatchSimilarCasesRoute,
@@ -2718,6 +2904,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiAiReclassifyAmpelRoute: ApiAiReclassifyAmpelRoute,
   ApiAiReevaluateLegalLinksRoute: ApiAiReevaluateLegalLinksRoute,
   ApiAiRefineCaseFieldRoute: ApiAiRefineCaseFieldRoute,
+  ApiAiValidateLegalClaimsRoute: ApiAiValidateLegalClaimsRoute,
+  ApiCaseGenerationJobsRoute: ApiCaseGenerationJobsRouteWithChildren,
   ApiCopilotTrackRoute: ApiCopilotTrackRoute,
   ApiCrawlLegalSourceRoute: ApiCrawlLegalSourceRoute,
   ApiEnrichLegalSectionRoute: ApiEnrichLegalSectionRoute,

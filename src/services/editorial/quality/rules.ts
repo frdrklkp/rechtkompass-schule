@@ -12,6 +12,10 @@ function isNonEmptyArray(v: unknown): boolean {
   return Array.isArray(v) && v.length > 0;
 }
 
+function hasMinItems(v: unknown, min: number): boolean {
+  return Array.isArray(v) && v.length >= min;
+}
+
 function isNonEmptyObjectOrArray(v: unknown): boolean {
   if (v == null) return false;
   if (Array.isArray(v)) return v.length > 0;
@@ -169,14 +173,14 @@ export const CONTENT_RULES: QualityRule[] = [
   {
     id: "content.common_mistakes",
     category: "content",
-    severity: "warning",
+    severity: "blocker",
     maxScore: 2,
-    title: "Häufige Fehler vorhanden",
-    description: "Typische Fehler machen Fälle redaktionell wertvoller.",
-    remediation: "Ergänzen Sie mindestens einen häufigen Fehler.",
+    title: "Don'ts als Liste vorhanden",
+    description: "Mindestens 2 separate Don'ts-Einträge erforderlich - sonst vermutlich zu einem String zusammengequetscht statt als Liste gepflegt.",
+    remediation: "Don'ts als mehrere eigenständige Einträge pflegen (nicht als ein zusammenhängender Text).",
     relatedField: "common_mistakes",
     relatedRoute: caseEditPath,
-    evaluate: (i) => ({ passed: isNonEmptyArray(i.case.common_mistakes) }),
+    evaluate: (i) => ({ passed: hasMinItems(i.case.common_mistakes, 2) }),
   },
   {
     id: "content.faq",

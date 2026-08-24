@@ -9,6 +9,7 @@ import {
   CheckCircle2,
   Pencil,
   Send,
+  Undo2,
   Upload,
   XCircle,
   MessageSquareWarning,
@@ -24,6 +25,7 @@ import type {
 import {
   ArchiveDialog,
   ReactivateDialog,
+  RevertToDraftDialog,
   ReviewDecisionDialog,
   SubmitForReviewDialog,
 } from "./dialogs";
@@ -43,6 +45,7 @@ export function WorkflowActionButtons({
   const [publishOpen, setPublishOpen] = useState(false);
   const [archiveOpen, setArchiveOpen] = useState(false);
   const [reactivateOpen, setReactivateOpen] = useState(false);
+  const [revertOpen, setRevertOpen] = useState(false);
   const [decision, setDecision] = useState<ReviewDecision | null>(null);
 
   const status = caseRow.workflow_status;
@@ -128,6 +131,13 @@ export function WorkflowActionButtons({
         </Button>
       )}
 
+      {status === "approved" && role.canRevertToDraft && (
+        <Button variant="outline" size="sm" onClick={() => setRevertOpen(true)}>
+          <Undo2 className="h-4 w-4" />
+          Genehmigung zurückziehen
+        </Button>
+      )}
+
       {status === "published" && role.canArchivePublished && (
         <Button variant="destructive" size="sm" onClick={() => setArchiveOpen(true)}>
           <ArchiveX className="h-4 w-4" />
@@ -164,6 +174,11 @@ export function WorkflowActionButtons({
         caseId={caseRow.id}
         open={reactivateOpen}
         onOpenChange={setReactivateOpen}
+      />
+      <RevertToDraftDialog
+        caseId={caseRow.id}
+        open={revertOpen}
+        onOpenChange={setRevertOpen}
       />
       {pendingReview && decision && (
         <ReviewDecisionDialog

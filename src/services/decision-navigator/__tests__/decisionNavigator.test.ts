@@ -27,7 +27,6 @@ test("Standardablauf enthält alle Phasen in fester Reihenfolge", () => {
     "analyse",
     "bewertung",
     "sofortmassnahmen",
-    "dokumentation",
     "rechtsgrundlagen",
     "vorlagen",
     "abschluss",
@@ -55,9 +54,9 @@ test("Zurück am ersten Schritt ist nicht möglich", () => {
 test("Fortschritt wird korrekt berechnet", () => {
   const { engine } = makeEngine();
   const p0 = engine.getProgress();
-  assert.equal(p0.totalSteps, 9);
+  assert.equal(p0.totalSteps, 8);
   assert.equal(p0.processedSteps, 0);
-  assert.equal(p0.openSteps, 9);
+  assert.equal(p0.openSteps, 8);
   assert.equal(p0.percent, 0);
   assert.equal(p0.currentStep, "start");
   assert.equal(p0.lastStep, "abschluss");
@@ -66,8 +65,8 @@ test("Fortschritt wird korrekt berechnet", () => {
   engine.next();
   const p2 = engine.getProgress();
   assert.equal(p2.processedSteps, 2);
-  assert.equal(p2.openSteps, 7);
-  assert.equal(p2.percent, 22);
+  assert.equal(p2.openSteps, 6);
+  assert.equal(p2.percent, 25);
 });
 
 test("ProgressCalculator ignoriert unsichtbare Schritte", () => {
@@ -86,12 +85,12 @@ test("ProgressCalculator ignoriert unsichtbare Schritte", () => {
 test("Optionale Schritte können übersprungen werden, Pflichtschritte nicht", () => {
   const { engine } = makeEngine();
   assert.throws(() => engine.skip(), NavigatorError);
-  engine.goTo("dokumentation");
+  engine.goTo("vorlagen");
   assert.equal(engine.canSkip(), true);
   engine.skip();
-  assert.equal(engine.getState().currentStep, "rechtsgrundlagen");
-  assert.deepEqual(engine.getState().skippedSteps, ["dokumentation"]);
-  assert.equal(engine.getSteps().find((s) => s.id === "dokumentation")?.status, "skipped");
+  assert.equal(engine.getState().currentStep, "abschluss");
+  assert.deepEqual(engine.getState().skippedSteps, ["vorlagen"]);
+  assert.equal(engine.getSteps().find((s) => s.id === "vorlagen")?.status, "skipped");
 });
 
 test("Status wird im Store gespeichert und ist serialisierbar", () => {
@@ -146,7 +145,7 @@ test("Events werden bei allen Kernübergängen ausgelöst", () => {
 
 test("Abschluss beendet den Vorgang und blockiert weitere Navigation", () => {
   const { engine } = makeEngine();
-  for (let i = 0; i < 9; i++) engine.next();
+  for (let i = 0; i < 8; i++) engine.next();
   const state = engine.getState();
   assert.equal(state.status, "finished");
   assert.equal(state.progress.percent, 100);

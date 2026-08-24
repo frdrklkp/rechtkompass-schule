@@ -17,6 +17,7 @@ export interface EditorialRoleContext {
   canArchivePublished: boolean; // published → archived
   canArchiveDraft: boolean; // draft → archived (editor+)
   canReactivate: boolean; // archived → draft
+  canRevertToDraft: boolean; // approved → draft
   isAdmin: boolean;
 }
 
@@ -43,6 +44,7 @@ export function useEditorialRole(): EditorialRoleContext {
       canArchivePublished: isAdmin,
       canArchiveDraft: r === "editor" || r === "reviewer" || isAdmin,
       canReactivate: isAdmin,
+      canRevertToDraft: isAdmin,
       isAdmin,
     };
   }, [role, user, ready]);

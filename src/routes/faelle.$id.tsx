@@ -5,8 +5,10 @@ import {
   ArrowRight,
   CheckCircle2,
   ChevronDown,
+  FileDown,
   FileText,
   Flag,
+  HelpCircle,
   Link2,
   Save,
   Scale,
@@ -18,16 +20,20 @@ import {
 import { toast } from "sonner";
 import { CASES, type CaseData, type LegalSectionCard } from "@/data/cases";
 import { TEMPLATES } from "@/data/templates";
+import { buildPracticeCaseSummaryMarkdown } from "@/lib/practiceCaseSummaryMarkdown";
+import type { GeneratedDocument } from "@/services/document-generation/types";
 import { Disclaimer } from "@/components/Disclaimer";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { AmpelBanner } from "@/components/AmpelBanner";
 import { DecisionAssistant } from "@/components/DecisionAssistant";
 import { LoadingState, ErrorState } from "@/components/DataStates";
 import { LegalSectionModal } from "@/components/LegalSectionModal";
-import { usePublishedCase } from "@/lib/casesFromDb";
+import { usePublishedCase, useRelatedCases } from "@/lib/casesFromDb";
 import { isCuratedTreeApproved } from "@/lib/decisionTree";
 import { useQuery } from "@tanstack/react-query";
 import { listTemplatesForCase } from "@/lib/templatesRepo";
+import { extractLegalCitations } from "@/lib/legalCitationExtractor";
+import { normalizeParagraph, resolveLegalCitations } from "@/lib/legalCitationResolver";
 import {
   Accordion,
   AccordionContent,
@@ -35,11 +41,17 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import {
+  getChecklistTiered,
   getCommonMistakes,
+  getCommonMistakesTiered,
+  getDocumentationTiered,
   getLawCards,
   getPracticeTips,
+  getPracticeTipsTiered,
   getRelatedCases,
+  type TieredItem,
 } from "@/lib/caseEnrichment";
+import { supabase } from "@/integrations/supabase/client";
 import { FeedbackReportDialog } from "@/components/FeedbackReportDialog";
 
 export const Route = createFileRoute("/faelle/$id")({
@@ -124,12 +136,33 @@ function formatWarning(raw: string): string {
 
 /* ---------- Do's / Don'ts mit Aufklappen ---------- */
 
+/**
+ * Fund 2026-08-20: ein Punkt-Label ("Rechtlich erforderlich" vs.
+ * "Organisatorisch empfohlen" o.ä.) darf nach dem Nutzer-Regelwerk nicht
+ * ausschließlich über Farbe vermittelt werden - deshalb zusätzlich ein
+ * Text-Präfix-Zeichen ("§" für rechtlich, "•" sonst), nicht nur ein
+ * andersfarbiges Badge.
+ */
+function TierBadge({ label }: { label: string | null }) {
+  if (!label) return null;
+  const isLegal = /rechtlich/i.test(label);
+  return (
+    <span
+      className={`mb-1 inline-flex w-fit items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${
+        isLegal ? "bg-accent/15 text-accent" : "bg-muted text-muted-foreground"
+      }`}
+    >
+      {isLegal ? "§" : "•"} {label}
+    </span>
+  );
+}
+
 function CollapsibleList({
   items,
   max,
   variant,
 }: {
-  items: string[];
+  items: TieredItem[];
   max: number;
   variant: "do" | "dont";
 }) {
@@ -144,7 +177,10 @@ function CollapsibleList({
         {shown.map((t, i) => (
           <li key={i} className="flex gap-2 text-sm text-foreground/90">
             <Icon className={`mt-0.5 h-4 w-4 shrink-0 ${iconTone}`} />
-            <span>{t}</span>
+            <span className="flex flex-col">
+              <TierBadge label={t.label} />
+              <span>{t.text}</span>
+            </span>
           </li>
         ))}
       </ul>
@@ -152,7 +188,7 @@ function CollapsibleList({
         <button
           type="button"
           onClick={() => setExpanded((v) => !v)}
-          className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-accent hover:underline"
+          className="-my-2.5 mt-3 inline-flex min-h-11 items-center gap-1 py-2.5 text-xs font-medium text-accent hover:underline"
         >
           {expanded ? "Weniger anzeigen" : `Weitere ${rest} anzeigen`}
           <ChevronDown className={`h-3.5 w-3.5 transition-transform ${expanded ? "rotate-180" : ""}`} />
@@ -226,7 +262,7 @@ function SaveVorgangButton({ c }: { c: CaseData }) {
     <button
       type="button"
       onClick={saveVorgang}
-      className={`inline-flex items-center gap-2 rounded-full border border-border bg-background px-4 py-2 text-sm font-medium text-foreground/85 hover:border-accent hover:text-accent ${
+      className={`inline-flex min-h-11 items-center gap-2 rounded-full border border-border bg-background px-4 py-2 text-sm font-medium text-foreground/85 hover:border-accent hover:text-accent ${
         saved ? "border-accent bg-accent/10 text-accent" : ""
       }`}
     >
@@ -236,13 +272,116 @@ function SaveVorgangButton({ c }: { c: CaseData }) {
   );
 }
 
+/* ---------- PDF-Export (Ebene 2) ---------- */
+
+function ExportPdfButton({
+  c,
+  tips,
+  donts,
+  checklist,
+  documentation,
+  openQuestions,
+}: {
+  c: CaseData;
+  tips: TieredItem[];
+  donts: TieredItem[];
+  checklist: TieredItem[];
+  documentation: TieredItem[];
+  openQuestions: string[];
+}) {
+  const [exporting, setExporting] = useState(false);
+
+  const handleExport = async () => {
+    setExporting(true);
+    try {
+      const { PdfExportAdapter } = await import(
+        "@/services/document-generation/export/PdfExportAdapter"
+      );
+      const markdown = buildPracticeCaseSummaryMarkdown(c, { tips, donts, checklist, documentation, openQuestions });
+      const now = new Date().toISOString();
+      const doc: GeneratedDocument = {
+        id: `praxisfall-${c.id}`,
+        sessionId: `praxisfall-${c.id}`,
+        templateId: null,
+        templateSlug: "praxisfall-zusammenfassung",
+        stepId: null,
+        title: c.title,
+        markdown,
+        status: "generated",
+        workflowVersionId: null,
+        usedContext: {},
+        missingPlaceholders: [],
+        generationMetadata: {},
+        createdBy: null,
+        createdAt: now,
+        updatedAt: now,
+      };
+      const result = await new PdfExportAdapter().export(doc);
+      const arrayBuf = result.bytes.buffer.slice(
+        result.bytes.byteOffset,
+        result.bytes.byteOffset + result.bytes.byteLength,
+      ) as ArrayBuffer;
+      const blob = new Blob([arrayBuf], { type: result.contentType });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = result.filename;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      toast.error("Der PDF-Export konnte nicht erstellt werden. Bitte erneut versuchen.");
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={handleExport}
+      disabled={exporting}
+      className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-full border border-border bg-background px-4 py-2.5 text-sm font-semibold text-foreground hover:border-accent disabled:opacity-60 sm:w-auto"
+    >
+      <FileDown className="h-4 w-4" />
+      {exporting ? "PDF wird erstellt …" : "Fall als PDF zusammenfassen"}
+    </button>
+  );
+}
+
 /* ---------- Hauptkomponente ---------- */
 
 function CaseDetail({ c }: { c: CaseData }) {
   const tips = getPracticeTips(c);
+  const tipsTiered = getPracticeTipsTiered(c);
   const mistakes = getCommonMistakes(c);
+  const mistakesTiered = getCommonMistakesTiered(c);
+  const checklistTiered = getChecklistTiered(c);
+  const documentationTiered = getDocumentationTiered(c);
   const laws = getLawCards(c);
-  const related = getRelatedCases(c, 5).filter((r) => r.id !== c.id).slice(0, 5);
+
+  // Fund 2026-08-20: offene, nicht abschließend geklärte Rechtsfragen aus
+  // dem KI-Entwurf (case_legal_review_flags) - Transparenz für die
+  // Lehrkraft statt stillschweigend als geklärt darzustellen. Läuft über
+  // den anon-Client der öffentlichen Falldetailseite; siehe
+  // db/2026-08-20_case_legal_review_flags_public_select.sql für die dafür
+  // nötige RLS-Policy.
+  const openQuestionsQuery = useQuery({
+    queryKey: ["case-legal-review-flags", c.id],
+    queryFn: async () => {
+      const { data } = await (supabase as any).from("case_legal_review_flags")
+        .select("id, reason")
+        .eq("case_id", c.id)
+        .is("resolved_at", null)
+        .order("raised_at", { ascending: true });
+      return ((data ?? []) as Array<{ id: string; reason: string | null }>)
+        .map((f) => f.reason)
+        .filter((r): r is string => !!r && r.trim().length > 0);
+    },
+    staleTime: 60_000,
+  });
+  const openQuestions = openQuestionsQuery.data ?? [];
+  const { data: relatedFromDb } = useRelatedCases(c.id, c.category, 5);
+  const related = (relatedFromDb ?? getRelatedCases(c, 5)).filter((r) => r.id !== c.id).slice(0, 5);
   const staticTpls = c.applicableTemplates
     .map((id) => TEMPLATES.find((t) => t.id === id))
     .filter(Boolean) as { id: string; title: string; description?: string }[];
@@ -255,10 +394,53 @@ function CaseDetail({ c }: { c: CaseData }) {
 
   const legalSections: LegalSectionCard[] = c.legalSections ?? [];
 
+  // Fund 2026-08-18: die kuratierten legalSections-Karten und der frei
+  // formulierte legalExplanation-Fließtext werden unabhängig voneinander
+  // erzeugt und können auseinanderlaufen (Text zitiert z.B. § 37 SchulG NRW,
+  // Karten zeigen § 1). Zitate direkt aus dem Text extrahieren und gegen den
+  // Bestand auflösen, damit die angezeigten Karten zu dem passen, was
+  // tatsächlich im Text steht - inkl. ehrlicher "nicht im Bestand"-Anzeige.
+  const citedSectionsQuery = useQuery({
+    queryKey: ["case-legal-citations", c.id, c.legalExplanation],
+    queryFn: async () => {
+      const citations = extractLegalCitations(c.legalExplanation);
+      if (citations.length === 0) return [];
+      return resolveLegalCitations(citations);
+    },
+    staleTime: 5 * 60_000,
+  });
+  const citedSections = citedSectionsQuery.data ?? [];
+
+  // Fund 2026-08-18 (Nutzerrückmeldung): "Wissenskarten & Quellen" zeigte
+  // bislang IMMER den kompletten kuratierten legalSections-Satz, unabhängig
+  // davon, ob eine Karte überhaupt im Fließtext vorkommt (z.B. eine
+  // themenfremde "§ 13 ADO"-Karte bei einem Fall, der sie nirgends
+  // erwähnt). Corpus-Audit (364 Fälle mit kuratierten Karten): bei 87%
+  // passt KEINE einzige Karte zum Text - reines Ausblenden würde dort die
+  // ganze Sektion verschwinden lassen. Deshalb: passende Karten bleiben
+  // unter "Wissenskarten & Quellen", nicht belegte wandern in eine eigene,
+  // ehrlich beschriftete Sektion statt Inhalt zu verlieren oder
+  // Falschzuordnung stillschweigend zu zeigen.
+  const citedSourceParagraphKeys = new Set(
+    citedSections
+      .filter((r) => r.section)
+      .map((r) => `${r.section!.source?.name ?? ""}::${normalizeParagraph(r.section!.section_number)}`),
+  );
+  const isCitedInText = (s: LegalSectionCard) =>
+    citedSourceParagraphKeys.has(`${s.source?.name ?? ""}::${normalizeParagraph(s.section_number)}`);
+  // Nur splitten, wenn oben bereits die neuen Zitat-Karten gerendert werden
+  // (citedSections.length > 0, siehe Ternary weiter unten) - sonst zeigt der
+  // obere Block legalSections bereits ungefiltert als Fallback und eine
+  // Wiederholung hier wäre reine Duplikation.
+  const relevantLegalSections = citedSections.length > 0 ? legalSections.filter(isCitedInText) : [];
+  const unrelatedLegalSections =
+    citedSections.length > 0 ? legalSections.filter((s) => !isCitedInText(s)) : [];
+
   // Wichtigster Warnhinweis – erste common_mistake als Imperativ.
   const topWarning = mistakes.length > 0 ? formatWarning(mistakes[0]) : "";
   // Don'ts ohne den bereits als Warnhinweis dargestellten Eintrag.
   const dontsForList = topWarning ? mistakes.slice(1) : mistakes;
+  const dontsForListTiered = topWarning ? mistakesTiered.slice(1) : mistakesTiered;
 
   const [legalModal, setLegalModal] = useState<{
     section: LegalSectionCard | null;
@@ -332,6 +514,17 @@ function CaseDetail({ c }: { c: CaseData }) {
         </div>
       </header>
 
+      {c.workflowStatus && c.workflowStatus !== "published" && (
+        <div className="mt-3 rounded-2xl border border-warning/50 bg-warning/10 p-3 text-xs text-foreground">
+          <p className="font-semibold">Dieser Fall befindet sich in der redaktionellen Prüfung</p>
+          <p className="mt-1 text-muted-foreground">
+            Sie sehen diesen automatisch erstellten Fall, weil Sie ihn angefragt haben. Er ist noch
+            nicht veröffentlicht und für andere Lehrkräfte noch nicht sichtbar. Inhalte können sich
+            bis zur Freigabe durch die Redaktion noch ändern.
+          </p>
+        </div>
+      )}
+
       {/* 3-EBENEN-ACCORDION */}
       <Accordion
         type="multiple"
@@ -382,7 +575,7 @@ function CaseDetail({ c }: { c: CaseData }) {
                     <p className="flex items-center gap-2 text-sm font-semibold text-foreground">
                       ✅ Das sollten Sie tun
                     </p>
-                    <CollapsibleList items={tips} max={MAX_DOS} variant="do" />
+                    <CollapsibleList items={tipsTiered} max={MAX_DOS} variant="do" />
                   </div>
                 )}
                 {dontsForList.length > 0 && (
@@ -390,7 +583,7 @@ function CaseDetail({ c }: { c: CaseData }) {
                     <p className="flex items-center gap-2 text-sm font-semibold text-foreground">
                       ❌ Das sollten Sie vermeiden
                     </p>
-                    <CollapsibleList items={dontsForList} max={MAX_DONTS} variant="dont" />
+                    <CollapsibleList items={dontsForListTiered} max={MAX_DONTS} variant="dont" />
                   </div>
                 )}
               </div>
@@ -405,6 +598,26 @@ function CaseDetail({ c }: { c: CaseData }) {
                 <p className="mt-2 text-sm font-medium leading-relaxed text-foreground sm:text-base">
                   {topWarning}
                 </p>
+              </div>
+            )}
+
+            {/* Offene Rechtsfragen */}
+            {openQuestions.length > 0 && (
+              <div className="mt-4 rounded-2xl border-l-4 border-warning bg-warning/5 p-4 sm:p-5">
+                <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-warning">
+                  <HelpCircle className="h-3.5 w-3.5" /> Offene Rechtsfragen
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Zu diesen Punkten liegt keine ausreichend belastbare Rechtsgrundlage vor - weitere Prüfung
+                  empfohlen.
+                </p>
+                <ul className="mt-2 space-y-1.5">
+                  {openQuestions.map((q, i) => (
+                    <li key={i} className="text-sm text-foreground/90">
+                      {q}
+                    </li>
+                  ))}
+                </ul>
               </div>
             )}
 
@@ -428,6 +641,27 @@ function CaseDetail({ c }: { c: CaseData }) {
                 </button>
               </div>
             )}
+
+            {/* PDF-Export auch hier verfügbar (UX-Fund: der Export ist eine
+                der häufigsten Aktionen, sollte nicht erst hinter dem
+                standardmäßig eingeklappten Ebene-2-Akkordeon liegen). */}
+            <div className="mt-4 rounded-2xl border border-border bg-card p-5">
+              <p className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                <FileDown className="h-4 w-4 text-accent" /> Fall zusammenfassen
+              </p>
+              <p className="mt-2 text-sm text-foreground/85">
+                Alles Wichtige zu diesem Praxisfall – Empfehlung, Checkliste, Dokumentation und
+                Rechtsgrundlagen – als PDF für den weiteren Handlungsablauf.
+              </p>
+              <ExportPdfButton
+                c={c}
+                tips={tipsTiered}
+                donts={mistakesTiered}
+                checklist={checklistTiered}
+                documentation={documentationTiered}
+                openQuestions={openQuestions}
+              />
+            </div>
           </AccordionContent>
         </AccordionItem>
 
@@ -482,6 +716,24 @@ function CaseDetail({ c }: { c: CaseData }) {
                 </div>
               </div>
             )}
+
+            <div className="mt-4 rounded-2xl border border-border bg-card p-5">
+              <p className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                <FileDown className="h-4 w-4 text-accent" /> Fall zusammenfassen
+              </p>
+              <p className="mt-2 text-sm text-foreground/85">
+                Alles Wichtige zu diesem Praxisfall – Empfehlung, Checkliste, Dokumentation und
+                Rechtsgrundlagen – als PDF für den weiteren Handlungsablauf.
+              </p>
+              <ExportPdfButton
+                c={c}
+                tips={tipsTiered}
+                donts={mistakesTiered}
+                checklist={checklistTiered}
+                documentation={documentationTiered}
+                openQuestions={openQuestions}
+              />
+            </div>
           </AccordionContent>
         </AccordionItem>
 
@@ -511,7 +763,61 @@ function CaseDetail({ c }: { c: CaseData }) {
                     {c.legalExplanation}
                   </p>
                 )}
-                {legalSections.length > 0 ? (
+                {citedSections.length > 0 ? (
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    {citedSections.map(({ citation, section: s, ambiguous }, idx) =>
+                      ambiguous ? (
+                        <div
+                          key={`${citation.lawAbbrev}-${citation.paragraph}-${idx}`}
+                          className="rounded-xl border border-dashed border-amber-500/50 bg-amber-500/5 p-3"
+                        >
+                          <p className="text-xs font-semibold text-foreground">{citation.raw}</p>
+                          <p className="mt-2 text-[11px] text-muted-foreground">
+                            Mehrere fachlich unterschiedliche Fundstellen zu dieser Nummer im
+                            Bestand (z. B. verschiedene Anlagen) – nicht eindeutig
+                            zuordenbar, daher hier bewusst nicht automatisch angezeigt.
+                          </p>
+                        </div>
+                      ) : s ? (
+                        <button
+                          key={s.id}
+                          type="button"
+                          onClick={() => openLegal({ section: s })}
+                          className="group rounded-xl border border-border bg-background p-3 text-left hover:border-accent/60 hover:bg-accent/5"
+                        >
+                          {s.source?.name && (
+                            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                              {s.source.name}
+                            </p>
+                          )}
+                          <p className="text-xs font-semibold text-foreground group-hover:text-accent">
+                            {s.section_number}
+                            {s.title ? ` ${s.title}` : ""}
+                          </p>
+                          {(s.explanation || s.practice_relevance || s.summary) && (
+                            <p className="mt-2 line-clamp-3 text-xs text-foreground/80">
+                              {s.explanation ?? s.practice_relevance ?? s.summary}
+                            </p>
+                          )}
+                          <p className="mt-2 flex flex-wrap gap-2 text-[10px] text-muted-foreground">
+                            <span className="rounded-full bg-muted px-2 py-0.5">Im Text zitiert</span>
+                            <span className="rounded-full bg-muted px-2 py-0.5">Quelle vorhanden</span>
+                          </p>
+                        </button>
+                      ) : (
+                        <div
+                          key={`${citation.lawAbbrev}-${citation.paragraph}-${idx}`}
+                          className="rounded-xl border border-dashed border-border bg-muted/20 p-3"
+                        >
+                          <p className="text-xs font-semibold text-muted-foreground">{citation.raw}</p>
+                          <p className="mt-2 text-[11px] text-muted-foreground">
+                            Im Text zitiert, aber nicht im Rechtsquellen-Bestand hinterlegt.
+                          </p>
+                        </div>
+                      ),
+                    )}
+                  </div>
+                ) : legalSections.length > 0 ? (
                   <div className="grid gap-2 sm:grid-cols-2">
                     {legalSections.map((s) => (
                       <button
@@ -566,13 +872,13 @@ function CaseDetail({ c }: { c: CaseData }) {
               </div>
 
               {/* Wissenskarten & Quellen */}
-              {legalSections.length > 0 && (
+              {relevantLegalSections.length > 0 && (
                 <div>
                   <p className="mb-2 flex items-center gap-2 text-sm font-semibold text-foreground">
                     <ShieldCheck className="h-4 w-4 text-accent" /> Wissenskarten &amp; Quellen
                   </p>
                   <div className="space-y-2">
-                    {legalSections.map((s) => (
+                    {relevantLegalSections.map((s) => (
                       <div key={s.id} className="rounded-xl border border-border bg-background p-3">
                         <div className="flex items-start justify-between gap-2">
                           <div className="min-w-0">
@@ -585,6 +891,61 @@ function CaseDetail({ c }: { c: CaseData }) {
                             )}
                             {(s.summary || s.practice_relevance) && (
                               <p className="mt-2 line-clamp-2 text-xs text-foreground/80">
+                                {s.summary ?? s.practice_relevance}
+                              </p>
+                            )}
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => openLegal({ section: s })}
+                            className="shrink-0 rounded-full border border-border px-2.5 py-1 text-[11px] font-semibold text-foreground/80 hover:border-accent hover:text-accent"
+                          >
+                            Mehr erfahren
+                          </button>
+                        </div>
+                        {s.official_url && (
+                          <a
+                            href={s.official_url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="mt-2 inline-block text-[11px] text-accent hover:underline"
+                          >
+                            Offizielle Quelle öffnen
+                          </a>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Weiterführend, nicht im Fließtext erwähnt */}
+              {unrelatedLegalSections.length > 0 && (
+                <div>
+                  <p className="mb-2 flex items-center gap-2 text-sm font-semibold text-foreground">
+                    <ShieldCheck className="h-4 w-4 text-muted-foreground" /> Weiterführend
+                  </p>
+                  <p className="mb-2 text-[11px] text-muted-foreground">
+                    Thematisch verknüpfte Rechtsgrundlagen, die im obigen Fließtext nicht ausdrücklich
+                    genannt werden.
+                  </p>
+                  <div className="space-y-2">
+                    {unrelatedLegalSections.map((s) => (
+                      <div
+                        key={s.id}
+                        className="rounded-xl border border-dashed border-border bg-muted/20 p-3"
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <p className="text-xs font-semibold text-foreground/80">
+                              {s.section_number}
+                              {s.title ? ` ${s.title}` : ""}
+                            </p>
+                            {s.source?.name && (
+                              <p className="text-[11px] text-muted-foreground">{s.source.name}</p>
+                            )}
+                            {(s.summary || s.practice_relevance) && (
+                              <p className="mt-2 line-clamp-2 text-xs text-foreground/70">
                                 {s.summary ?? s.practice_relevance}
                               </p>
                             )}

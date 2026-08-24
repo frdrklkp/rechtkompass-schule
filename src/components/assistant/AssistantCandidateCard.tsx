@@ -37,6 +37,15 @@ export function AssistantCandidateCard({
 }: AssistantCandidateCardProps) {
   const positive = match.reasons.filter((r) => r.positive);
   const negative = match.reasons.filter((r) => !r.positive);
+  /*
+   * Fund 2026-08-20: "Bester Treffer" und ein durchgängig grüner Button
+   * signalisierten Zuversicht, die bei schwachen Treffern nicht gerechtfertigt
+   * ist - ein inhaltlich unpassender Fall wirkte trotz korrekt niedrigem
+   * Score wie eine verlässliche Empfehlung. Bei weak/none daher gedämpfte
+   * Kennzeichnung statt "bester Treffer" und ein zurückhaltender statt
+   * durchgängig grüner Auswahl-Button.
+   */
+  const lowConfidence = match.level === "weak" || match.level === "none";
 
   return (
     <article
@@ -48,9 +57,14 @@ export function AssistantCandidateCard({
         <span className="rounded-full border border-border bg-background px-2 py-0.5 text-[11px] font-medium">
           {MATCH_LEVEL_LABELS[match.level] ?? match.level}
         </span>
-        {primary && (
+        {primary && !lowConfidence && (
           <span className="rounded-full bg-accent/15 px-2 py-0.5 text-[11px] font-semibold text-accent">
             Bester Treffer
+          </span>
+        )}
+        {primary && lowConfidence && (
+          <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+            Einziger Anhaltspunkt – unsicher
           </span>
         )}
         <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">
@@ -124,11 +138,13 @@ export function AssistantCandidateCard({
           className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold ${
             selected
               ? "border border-accent bg-accent/10 text-foreground"
-              : "bg-accent text-accent-foreground"
+              : lowConfidence
+                ? "border border-border bg-background text-foreground hover:border-accent"
+                : "bg-accent text-accent-foreground"
           }`}
         >
           <Check className="h-3.5 w-3.5" />
-          {selected ? "Ausgewählt" : "Diesen Praxisfall verwenden"}
+          {selected ? "Ausgewählt" : lowConfidence ? "Trotzdem verwenden" : "Diesen Praxisfall verwenden"}
         </button>
         <Link
           to="/fall/$id"

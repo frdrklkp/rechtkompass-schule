@@ -29,14 +29,21 @@ export type HybridWeights = {
 /**
  * Referenz-Gewichtung (Variante A). Weitere Varianten werden im
  * Sweep über /admin/suchtest getestet.
+ *
+ * Anpassung 2026-08-18 (Nutzerrückmeldung: exakte Suchbegriffe fanden den
+ * passenden Fall teils nicht): legal/quality sind reine Vollständigkeits-
+ * Boni des Falls selbst - unabhängig davon, ob er zur Anfrage passt. Bei
+ * 0.1+0.1 konnten sie das Ranking bei knappen Score-Unterschieden stärker
+ * verzerren als der tatsächliche Stichwort-Treffer. Gewicht auf structured
+ * (den direkten, für Nutzer:innen nachvollziehbaren Wortabgleich) verlagert.
  */
 export const HYBRID_WEIGHTS: HybridWeights = {
   semantic: 0.5,
-  structured: 0.2,
+  structured: 0.32,
   topics: 0.1,
   signals: 0.0,
-  legal: 0.1,
-  quality: 0.1,
+  legal: 0.05,
+  quality: 0.03,
 };
 
 /** Vordefinierte Gewichtungsvarianten für den Sweep. */
@@ -76,8 +83,22 @@ function clamp01(x: number): number {
   return Math.max(0, Math.min(1, x));
 }
 
+/**
+ * Fund 2026-08-20: reale Rohwerte aus searchPublishedPracticeCases liegen
+ * für nur mäßig passende Treffer bereits bei 200-260 (IDF-Gewichtung +
+ * mehrere Feldtreffer je Term), während die alte Deckelung bei 40 lag -
+ * dadurch sättigte der structured-Score praktisch immer bei 1.0 und verlor
+ * jede Differenzierung. Ein zu generischer Treffer (z. B. nur "schüler",
+ * "unterricht", "regelmäßig") und ein inhaltlich präziser Treffer waren im
+ * structured-Score ununterscheidbar. 300 ist so gewählt, dass eindeutig gute
+ * Treffer (Rohwert 450-950 in Stichproben) weiterhin nahe 1.0 sättigen,
+ * während schwächere, nur zufällig überlappende Treffer (Rohwert ~200-260)
+ * spürbar darunter bleiben und damit Raum für die Handlungs-/Situations-
+ * Mismatch-Penalty aus computeSignalScores() lassen, statt von ihr
+ * überstimmt zu werden.
+ */
 function normalizeStructuredScore(score: number): number {
-  return clamp01(score / 40);
+  return clamp01(score / 300);
 }
 
 function normalizeTopic(s: string): string {
@@ -164,6 +185,26 @@ function qualityScore(c: CaseData): number {
   return clamp01(s);
 }
 
+/**
+ * Fund 2026-08-18 (Nutzerrückmeldung): exakte Suchbegriffe eines Falls
+ * fanden diesen teils nicht, weil semantische/generische Scores das
+ * Ranking überstimmen konnten. Sicherheitsnetz: kommen alle bedeutungs-
+ * tragenden Suchwörter (>= 5 Zeichen) wortwörtlich im Falltitel vor, wird
+ * der Fall unabhängig vom berechneten Score ganz nach oben gesetzt. Ein
+ * einzelnes Wort reicht bewusst nicht (zu unspezifisch), erst ab zwei
+ * Wörtern gilt der Titel als eindeutig getroffen.
+ */
+function hasFullTitleCoverage(query: string, title: string): boolean {
+  if (!query || !title) return false;
+  const qTokens = normalizeTopic(query)
+    .replace(/[^a-z0-9\s]/gi, " ")
+    .split(/\s+/)
+    .filter((w) => w.length >= 5);
+  if (qTokens.length < 2) return false;
+  const normTitle = normalizeTopic(title).replace(/[^a-z0-9\s]/gi, " ");
+  return qTokens.every((w) => normTitle.includes(w));
+}
+
 function labelFromScore(final: number): SearchResult["confidenceLabel"] {
   if (final >= 0.72) return "sehr-hoch";
   if (final >= 0.5) return "hoch";
@@ -248,6 +289,10 @@ export function combineHybrid(
     if (r?.matchReasons?.length) reasons.push(...r.matchReasons.slice(0, 2));
     if (legal >= 0.8 && weights.legal > 0) reasons.push("Mehrere passende Rechtsgrundlagen hinterlegt");
 
+    if (hasFullTitleCoverage(query, c.title ?? "")) {
+      reasons.unshift("Alle Suchbegriffe kommen wortwörtlich im Falltitel vor");
+    }
+
     out.push({
       case: c,
       semantic,
@@ -271,6 +316,15 @@ export function combineHybrid(
     });
   }
 
-  out.sort((a, b) => b.finalScore - a.finalScore);
+  const titleHitIds = new Set(
+    out.filter((cand) => hasFullTitleCoverage(query, cand.case.title ?? "")).map((cand) => cand.case.id),
+  );
+
+  out.sort((a, b) => {
+    const aHit = titleHitIds.has(a.case.id);
+    const bHit = titleHitIds.has(b.case.id);
+    if (aHit !== bHit) return aHit ? -1 : 1;
+    return b.finalScore - a.finalScore;
+  });
   return out;
 }

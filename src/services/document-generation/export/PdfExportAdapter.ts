@@ -331,14 +331,23 @@ function newPage(ctx: PdfCtx): void {
   drawHeader(ctx);
 }
 
+const DISCLAIMER =
+  "Diese Informationen dienen der Orientierung und ersetzen keine individuelle Rechtsberatung.";
+
 function finalizeFooters(ctx: PdfCtx): void {
   const pages = ctx.pdf.getPages();
   const total = pages.length;
   pages.forEach((p, idx) => {
+    const disclaimerW = ctx.fonts.italic.widthOfTextAtSize(sanitize(DISCLAIMER), 8);
+    p.drawText(sanitize(DISCLAIMER), {
+      x: (PAGE_W - disclaimerW) / 2, y: MARGIN_BOTTOM - 14,
+      size: 8, font: ctx.fonts.italic, color: rgb(0.55, 0.55, 0.55),
+    });
+
     const label = `RechtKompass Schule · Version ${ctx.version} · Seite ${idx + 1} / ${total}`;
     const w = ctx.fonts.regular.widthOfTextAtSize(sanitize(label), 8);
     p.drawText(sanitize(label), {
-      x: PAGE_W - MARGIN_X - w, y: MARGIN_BOTTOM - 24,
+      x: PAGE_W - MARGIN_X - w, y: MARGIN_BOTTOM - 28,
       size: 8, font: ctx.fonts.regular, color: rgb(0.55, 0.55, 0.55),
     });
   });

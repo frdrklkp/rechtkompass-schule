@@ -4,7 +4,6 @@
  * Services des Dokumentationsassistenten; diese Komponente wählt nur die
  * Darstellung.
  */
-import { ArrowLeft } from "lucide-react";
 import { LoadingState } from "@/components/DataStates";
 import { useDocumentation } from "@/hooks/documentation/useDocumentation";
 import { DocumentationView } from "./DocumentationView";
@@ -23,8 +22,6 @@ export function DocumentationStepPanel({
   workflowId,
   context,
   onPatchContext,
-  canGoBack,
-  onBack,
 }: DocumentationStepPanelProps) {
   const docs = useDocumentation({ navigatorId, workflowId, context, onPatchContext });
 
@@ -46,15 +43,6 @@ export function DocumentationStepPanel({
         <p className="mt-3 text-xs text-muted-foreground">
           Es werden keine Tatsachen ergänzt oder angenommen.
         </p>
-        {canGoBack && (
-          <button
-            type="button"
-            onClick={onBack}
-            className="mt-4 inline-flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm font-medium text-foreground hover:bg-muted"
-          >
-            <ArrowLeft className="h-4 w-4" aria-hidden="true" /> Zurück zur vorherigen Phase
-          </button>
-        )}
       </section>
     );
   }

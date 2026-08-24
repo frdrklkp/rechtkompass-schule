@@ -10,6 +10,7 @@ import { AssessmentStepPanel } from "./assessment/AssessmentStepPanel";
 import { ActionStepPanel } from "./actions/ActionStepPanel";
 import { LegalContextStepPanel } from "./legal/LegalContextStepPanel";
 import { DocumentationStepPanel } from "./documentation/DocumentationStepPanel";
+import { AbschlussStepPanel } from "./abschluss/AbschlussStepPanel";
 import { NAVIGATOR_DEMO_CONTEXT_KEY } from "@/services/decision-navigator";
 
 export interface NavigatorStepViewProps {
@@ -20,6 +21,7 @@ export interface NavigatorStepViewProps {
   canGoBack: boolean;
   onBack: () => void;
   onNext?: () => void;
+  onGoTo?: (stepId: string) => void;
 }
 
 export interface NavigatorStepViewEntry {
@@ -58,8 +60,8 @@ export const NAVIGATOR_STEP_VIEWS: Record<string, NavigatorStepViewEntry> = {
       <section className="rounded-2xl border border-border bg-card p-5">
         <h3 className="text-base font-semibold text-foreground">Bearbeitung beginnen</h3>
         <p className="mt-2 text-sm text-foreground/85">
-          Der Navigator führt Sie in neun Phasen durch den Vorgang. Sie können jederzeit
-          unterbrechen und später fortsetzen.
+          Der Navigator führt Sie in {NAVIGATOR_STEP_COUNT} Phasen durch den Vorgang. Sie können
+          jederzeit unterbrechen und später fortsetzen.
         </p>
         {p.context[NAVIGATOR_DEMO_CONTEXT_KEY] === true && (
           <p className="mt-3 rounded-lg border border-accent/40 bg-accent/10 px-3 py-2 text-xs text-foreground">
@@ -129,7 +131,23 @@ export const NAVIGATOR_STEP_VIEWS: Record<string, NavigatorStepViewEntry> = {
       />
     ),
   },
-  dokumentation: {
+  rechtsgrundlagen: {
+    available: true,
+    purpose: "Kuratierte Rechtsgrundlagen des bestätigten Praxisfalls.",
+    status: "Verfügbar.",
+    render: (p) => (
+      <LegalContextStepPanel
+        navigatorId={p.navigatorId}
+        workflowId={p.workflowId}
+        context={p.context}
+        onPatchContext={p.patchContext}
+        canGoBack={p.canGoBack}
+        onBack={p.onBack}
+        onNext={p.onNext}
+      />
+    ),
+  },
+  vorlagen: {
     available: true,
     purpose: "Dokumente aus den erfassten Angaben erzeugen, prüfen und exportieren.",
     status: "Verfügbar.",
@@ -144,32 +162,31 @@ export const NAVIGATOR_STEP_VIEWS: Record<string, NavigatorStepViewEntry> = {
       />
     ),
   },
-  rechtsgrundlagen: {
+  abschluss: {
     available: true,
-    purpose: "Kuratierte Rechtsgrundlagen des bestätigten Praxisfalls.",
+    purpose: "Zusammenfassung des Falls und bewusster Abschluss der Bearbeitung.",
     status: "Verfügbar.",
     render: (p) => (
-      <LegalContextStepPanel
+      <AbschlussStepPanel
         navigatorId={p.navigatorId}
         workflowId={p.workflowId}
         context={p.context}
         onPatchContext={p.patchContext}
         canGoBack={p.canGoBack}
         onBack={p.onBack}
+        onFinish={p.onNext ?? (() => {})}
+        onGoTo={p.onGoTo ?? (() => {})}
       />
     ),
   },
-  vorlagen: placeholder(
-    "Vorlagen",
-    "Später werden hier passende Dokumentvorlagen vorgeschlagen.",
-    "Diese Phase wird in einem späteren Sprint ergänzt.",
-  ),
-  abschluss: placeholder(
-    "Abschluss",
-    "Später wird hier die Bearbeitung zusammengefasst und abgeschlossen.",
-    "Die Abschlussansicht wird in einem späteren Sprint ergänzt.",
-  ),
 };
+
+/**
+ * Aus NAVIGATOR_STEP_VIEWS abgeleitet statt hart codiert, damit die
+ * Einstiegs-Copy nie wieder von der tatsächlichen Phasenzahl abweicht
+ * (Fund 2026-08-19: Text sagte "neun Phasen", der Ablauf hatte acht).
+ */
+export const NAVIGATOR_STEP_COUNT = Object.keys(NAVIGATOR_STEP_VIEWS).length;
 
 export function getStepView(stepId: string): NavigatorStepViewEntry {
   return (

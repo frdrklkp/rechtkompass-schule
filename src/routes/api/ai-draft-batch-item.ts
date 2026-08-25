@@ -52,18 +52,76 @@ function tokenize(s: string): Set<string> {
  * aus dieser Teilmenge. Betrifft sowohl dieses Skript-getriebene Batch als
  * auch die Admin-UI (admin.ki-entwurfsmaschine.index.tsx), die dieselbe
  * Route mit derselben vollen Sektionsliste aufruft.
+ *
+ * Fund 2026-08-26 (96 falsch verknüpfte Berufskolleg-Fälle): die reine
+ * Ganzwort-Überlappung hat zwei nachgemessene Blindstellen, durch die z. B.
+ * kein einziger der 372 APO-BK-Paragraphen die Top-300 für den Fall
+ * "Verweigerung der Prüfungsteilnahme..." erreichte:
+ * 1. Deutsche Komposita zerschlagen den Treffer ("Prüfungsteilnahme" im
+ *    Fall-Titel matcht nicht das Label-Wort "Prüfung") - daher zusätzlich
+ *    Teilwort-Treffer (Substring-Enthaltensein ab 5 Zeichen, halbes Gewicht).
+ * 2. Bei flachen Scores füllen hunderte gleichauf liegende BASS-Abschnitte
+ *    die Top-300 komplett auf und verdrängen ganze Quellen - daher eine
+ *    Diversitätsschranke von max. 40 Abschnitten je Quelle, damit jede
+ *    thematisch anschlussfähige Quelle vertreten bleibt und die KI die
+ *    Feinauswahl treffen kann.
  */
-function filterRelevantSections(sections: Ref[], queryText: string, maxCount = 300): Ref[] {
+const PER_SOURCE_CAP = 40;
+
+// Quellen-Schlüssel als Label-Präfix: das Label ist per Konvention aller
+// drei Aufrufer "<Quellenname> <Nummer> <Titel>", und reale Quellennamen
+// unterscheiden sich innerhalb der ersten 48 Zeichen. So braucht die
+// Ref-Struktur kein zusätzliches Quellenfeld über alle Aufrufer hinweg.
+function sourceKeyOf(label: string): string {
+  return label.slice(0, 48);
+}
+
+function overlapScore(queryTokens: Set<string>, label: string): number {
+  let score = 0;
+  for (const lt of tokenize(label)) {
+    if (queryTokens.has(lt)) {
+      score += 1;
+      continue;
+    }
+    if (lt.length >= 5) {
+      for (const qt of queryTokens) {
+        if (qt.length >= 5 && (qt.includes(lt) || lt.includes(qt))) {
+          score += 0.5;
+          break;
+        }
+      }
+    }
+  }
+  return score;
+}
+
+export function filterRelevantSections(sections: Ref[], queryText: string, maxCount = 300): Ref[] {
   if (sections.length <= maxCount) return sections;
   const queryTokens = tokenize(queryText);
-  const scored = sections.map((s) => {
-    const labelTokens = tokenize(s.label ?? "");
-    let overlap = 0;
-    for (const t of labelTokens) if (queryTokens.has(t)) overlap++;
-    return { ref: s, score: overlap };
-  });
+  const scored = sections.map((s) => ({ ref: s, score: overlapScore(queryTokens, s.label ?? "") }));
   scored.sort((a, b) => b.score - a.score);
-  return scored.slice(0, maxCount).map((x) => x.ref);
+
+  const perSource = new Map<string, number>();
+  const kept: Ref[] = [];
+  const overflow: Ref[] = [];
+  for (const { ref } of scored) {
+    if (kept.length >= maxCount) break;
+    const key = sourceKeyOf(ref.label ?? "");
+    const n = perSource.get(key) ?? 0;
+    if (n < PER_SOURCE_CAP) {
+      perSource.set(key, n + 1);
+      kept.push(ref);
+    } else {
+      overflow.push(ref);
+    }
+  }
+  // Falls die Schranke Plätze freigelassen hat (wenige Quellen insgesamt),
+  // mit den besten überzähligen Abschnitten auffüllen.
+  for (const ref of overflow) {
+    if (kept.length >= maxCount) break;
+    kept.push(ref);
+  }
+  return kept;
 }
 
 export const Route = createFileRoute("/api/ai-draft-batch-item")({
@@ -117,9 +175,15 @@ export const Route = createFileRoute("/api/ai-draft-batch-item")({
           "ZUSTÄNDIGKEITEN (responsibilities): nenne die tatsächlich passende Ebene, nicht automatisch Schulleitung. Bei echten Alltagsroutinen (ampel='gruen') ist meist die Lehrkraft, Klassenleitung, Abteilungsleitung oder Ausbildungskoordination zuständig - Schulleitung NUR nennen, wenn der Sachverhalt das nach den obigen Ampel-Kriterien tatsächlich erfordert (ampel='gelb'/'rot').",
         ].join(" ");
 
+        // "Berufskolleg" als konstanter Domänen-Anker im Filtertext: der
+        // System-Prompt dieser Route legt die Zielgruppe ohnehin auf
+        // "Berufskolleg NRW" fest, aber die Fall-Titel selbst nennen die
+        // Schulform fast nie ("Verweigerung der Prüfungsteilnahme...").
+        // Ohne den Anker erreichten Berufskolleg-Verordnungen (APO-BK)
+        // nachweislich die Top-300 nicht (Fund 2026-08-26, 96 Fälle).
         const relevantSections = filterRelevantSections(
           body.sections ?? [],
-          [title, sketch, body.topic ?? ""].join(" "),
+          [title, sketch, body.topic ?? "", "Berufskolleg"].join(" "),
         );
 
         const user = {

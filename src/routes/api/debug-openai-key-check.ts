@@ -1,5 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 
+// Re-check nach OPENAI_API_KEY-Rotate in Cloudflare.
+
 export const Route = createFileRoute("/api/debug-openai-key-check")({
   server: {
     handlers: {

@@ -1,6 +1,87 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useMutation } from "@tanstack/react-query";
+import { useState } from "react";
 import { signOut } from "@/lib/adminAuth";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+
+const MIN_PASSWORD_LENGTH = 8;
+
+function ChangePasswordForm() {
+  const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
+
+  const changeMut = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.auth.updateUser({ password });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      setPassword("");
+      setConfirm("");
+    },
+  });
+
+  const tooShort = password.length > 0 && password.length < MIN_PASSWORD_LENGTH;
+  const mismatch = confirm.length > 0 && password !== confirm;
+  const canSubmit = password.length >= MIN_PASSWORD_LENGTH && password === confirm;
+
+  return (
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        if (canSubmit) changeMut.mutate();
+      }}
+      className="mt-3 space-y-3"
+    >
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div className="space-y-1.5">
+          <Label htmlFor="new-password">Neues Passwort</Label>
+          <Input
+            id="new-password"
+            type="password"
+            autoComplete="new-password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+          {tooShort && (
+            <p className="text-xs text-muted-foreground">Mindestens {MIN_PASSWORD_LENGTH} Zeichen.</p>
+          )}
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="confirm-password">Passwort bestätigen</Label>
+          <Input
+            id="confirm-password"
+            type="password"
+            autoComplete="new-password"
+            value={confirm}
+            onChange={(e) => setConfirm(e.target.value)}
+            required
+          />
+          {mismatch && <p className="text-xs text-destructive">Stimmt nicht überein.</p>}
+        </div>
+      </div>
+
+      <Button type="submit" disabled={!canSubmit || changeMut.isPending}>
+        {changeMut.isPending ? "Wird geändert…" : "Passwort ändern"}
+      </Button>
+
+      {changeMut.isSuccess && (
+        <p className="rounded-md border border-emerald-500/30 bg-emerald-500/5 p-3 text-sm text-emerald-700 dark:text-emerald-300">
+          Passwort wurde geändert.
+        </p>
+      )}
+      {changeMut.isError && (
+        <p className="rounded-md border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">
+          {changeMut.error instanceof Error ? changeMut.error.message : "Passwort konnte nicht geändert werden."}
+        </p>
+      )}
+    </form>
+  );
+}
 
 export const Route = createFileRoute("/admin/einstellungen")({
   component: () => (
@@ -54,10 +135,10 @@ export const Route = createFileRoute("/admin/einstellungen")({
       <section className="rounded-xl border border-border bg-card p-5">
         <h2 className="text-sm font-semibold">Sicherheit</h2>
         <p className="mt-1 text-xs text-muted-foreground">
-          Die Anmeldung erfolgt derzeit über ein gemeinsames Redaktionspasswort. Mit Anbindung an Lovable Cloud werden
-          individuelle Benutzerkonten und Rollen (Admin, Redakteur, Leser) eingeführt.
+          Die Anmeldung erfolgt über dein persönliches Redaktionskonto (E-Mail + Passwort).
         </p>
-        <div className="mt-3">
+        <ChangePasswordForm />
+        <div className="mt-4 border-t border-border pt-4">
           <Button variant="outline" onClick={signOut}>
             Abmelden
           </Button>

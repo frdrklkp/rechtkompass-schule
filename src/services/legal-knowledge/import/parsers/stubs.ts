@@ -78,6 +78,12 @@ export { grundgesetzParser } from "./grundgesetzParser";
 import { grundgesetzParser } from "./grundgesetzParser";
 export { dsgvoParser } from "./dsgvoParser";
 import { dsgvoParser } from "./dsgvoParser";
+export { lbgNrwParser } from "./lbgNrwParser";
+import { lbgNrwParser } from "./lbgNrwParser";
+export { ldgNrwParser } from "./ldgNrwParser";
+import { ldgNrwParser } from "./ldgNrwParser";
+export { beamtstgParser } from "./beamtstgParser";
+import { beamtstgParser } from "./beamtstgParser";
 
 export const erlassParser = makeStub({
   id: "erlass-generic",
@@ -118,7 +124,10 @@ export const preparedParsers = [
   apoBkNrwParser,
   verwaltungsvorschriftNrwParser,
   vwvfgNrwParser,
+  lbgNrwParser,
+  ldgNrwParser,
   grundgesetzParser,
+  beamtstgParser,
   dsgvoParser,
   bassNrwParser,
   erlassParser,

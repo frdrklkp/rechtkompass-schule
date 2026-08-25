@@ -110,6 +110,43 @@ export const OFFICIAL_SOURCES: OfficialSourceDefinition[] = [
     maxDepth: 0,
   },
   {
+    // Nutzeranforderung 2026-08-25: Dienstrecht als Themenbereich ausbauen.
+    // recht.nrw.de liefert das LBG NRW über dieselbe "LRGV"-Vorlage wie
+    // VwVfG NRW (siehe vwvfgNrwParser.ts) - eigener Parser, da source.key/
+    // shortName/title sonst fälschlich auf "VwVfG NRW" hardcodiert blieben.
+    id: "lbg-nrw",
+    label: "LBG NRW",
+    description: "Landesbeamtengesetz NRW auf recht.nrw.de",
+    defaultUrl: "https://recht.nrw.de/lrgv/gesetz/04082026-landesbeamtengesetz-lbg-nrw/",
+    parserId: "lbg-nrw",
+    hosts: ["recht.nrw.de"],
+    maxPages: 5,
+    maxDepth: 0,
+  },
+  {
+    id: "ldg-nrw",
+    label: "LDG NRW",
+    description: "Landesdisziplinargesetz NRW auf recht.nrw.de",
+    defaultUrl: "https://recht.nrw.de/lrgv/gesetz/01072016-disziplinargesetz-fuer-das-land-nordrhein-westfalen-landesdisziplinargesetz/",
+    parserId: "ldg-nrw",
+    hosts: ["recht.nrw.de"],
+    maxPages: 5,
+    maxDepth: 0,
+  },
+  {
+    // Bundesrecht (gilt unmittelbar für Landesbeamtinnen/-beamte) - gleiche
+    // Seitenvorlage wie Grundgesetz (gesetze-im-internet.de), aber §- statt
+    // Art-Nummerierung, daher eigener Parser (beamtstgParser.ts).
+    id: "beamtstg",
+    label: "BeamtStG",
+    description: "Beamtenstatusgesetz (Bund)",
+    defaultUrl: "https://www.gesetze-im-internet.de/beamtstg/BJNR101000008.html",
+    parserId: "beamtstg",
+    hosts: ["gesetze-im-internet.de", "www.gesetze-im-internet.de"],
+    maxPages: 5,
+    maxDepth: 0,
+  },
+  {
     id: "schulministerium-nrw",
     label: "Schulministerium NRW (Erlasse)",
     description: "Erlasse und Bekanntmachungen des MSB NRW",

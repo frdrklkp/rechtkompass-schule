@@ -17,6 +17,9 @@ export { verwaltungsvorschriftNrwParser } from "./parsers/verwaltungsvorschriftN
 export { vwvfgNrwParser } from "./parsers/vwvfgNrwParser";
 export { grundgesetzParser } from "./parsers/grundgesetzParser";
 export { dsgvoParser } from "./parsers/dsgvoParser";
+export { lbgNrwParser } from "./parsers/lbgNrwParser";
+export { ldgNrwParser } from "./parsers/ldgNrwParser";
+export { beamtstgParser } from "./parsers/beamtstgParser";
 export {
   bassParser,
   apoBkParser,

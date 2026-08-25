@@ -60,7 +60,7 @@ export type SemanticHit = { caseId: string; similarity: number };
 export type HybridCandidate = {
   case: CaseData;
   semantic: number;      // 0..1
-  structured: number;    // 0..1
+  structured: number;    // 0..~1.35 (oberhalb der Sättigungsschwelle asymptotisch, siehe normalizeStructuredScore)
   topics: number;        // 0..1
   legal: number;         // 0..1
   quality: number;       // 0..1
@@ -98,7 +98,20 @@ function clamp01(x: number): number {
  * überstimmt zu werden.
  */
 function normalizeStructuredScore(score: number): number {
-  return clamp01(score / 300);
+  const CEILING = 300;
+  if (score <= CEILING) return clamp01(score / CEILING);
+  // Fund 2026-08-25 (Nutzerrückmeldung: exakter Titeltreffer landete nicht auf
+  // Platz 1): die harte Kappung bei 1.0 machte JEDEN Rohwert ab 300 score-
+  // identisch - ein Treffer mit Rohwert 493 (Zielfall, exakter Titeltreffer)
+  // und einer mit 567 (bloß thematisch ähnlicher Fall) waren im dominanten
+  // structured-Signal (Gewicht 0.32) dadurch ununterscheidbar, sobald die
+  // semantische Suche ausfiel (siehe fetchSemanticHits-Fehlerpfad) - das
+  // Ranking hing dann am Rauschen der viel kleineren übrigen Gewichte statt
+  // am eigentlich stärksten Signal. Oberhalb der Sättigungsschwelle bleibt
+  // die Kurve streng monoton (mit abnehmendem Grenznutzen) statt hart zu
+  // kappen; Rohwerte 0-300 verhalten sich exakt wie zuvor.
+  const extra = 0.35 * (1 - Math.exp(-(score - CEILING) / 350));
+  return 1 + extra;
 }
 
 function normalizeTopic(s: string): string {

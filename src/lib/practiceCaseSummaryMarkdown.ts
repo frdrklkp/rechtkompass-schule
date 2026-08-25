@@ -154,7 +154,16 @@ function sourceStatusSection(sections: LegalSectionCard[]): string {
 }
 
 function reviewStatusSection(c: CaseData): string {
-  if (!c.legalReviewStatus) return "";
+  if (!c.legalReviewStatus) {
+    // Fund 2026-08-25 (Nutzerrückmeldung: Prüfstatus "verschwand" aus dem
+    // PDF): der automatische Validierungsschritt läuft bisher nur bei über
+    // die volle Pipeline neu erstellten Fällen (siehe Migration
+    // 2026-08-21_legal_review_status.sql) - für ältere, bereits vorher
+    // veröffentlichte Fälle ist legal_review_status schlicht nie gesetzt
+    // worden. Statt den Abschnitt dafür stillschweigend wegzulassen (wirkt
+    // wie ein Datenverlust), zeigt das PDF ehrlich den tatsächlichen Stand.
+    return "## Prüfstatus\n\nNoch nicht durch den automatischen Prüfschritt bewertet.\n\n";
+  }
   const label = { gruen: "Grün – zentrale Rechtsaussagen ausreichend belegt", gelb: "Gelb – Kernaussage belegt, einzelne Nebenpunkte offen", rot: "Rot – fachliche Prüfung erforderlich" }[c.legalReviewStatus];
   let md = `## Prüfstatus\n\n${label}\n\n`;
   if (c.legalReviewReasoning?.trim()) md += `${c.legalReviewReasoning.trim()}\n\n`;

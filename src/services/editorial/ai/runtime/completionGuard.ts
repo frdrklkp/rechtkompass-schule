@@ -114,6 +114,54 @@ function coerceStringArrays(value: unknown, schema: Record<string, unknown>): vo
   }
 }
 
+/**
+ * Fund 2026-08-25 (ai-validate-legal-claims.ts, Retro-Validierungslauf):
+ * bei `consistency_conflicts` (type: array of string) lieferte das Modell
+ * reproduzierbar - auch nach dem eingebauten Retry - ein Array von OBJEKTEN
+ * statt Strings (z. B. mit Feldern wie "aussage_1"/"aussage_2"/"widerspruch"),
+ * offenbar weil das Feld inhaltlich einen strukturierten Vergleich zweier
+ * Aussagen beschreibt und das Modell diese Struktur ins JSON durchreicht.
+ * Statt die sonst valide, inhaltlich brauchbare Antwort zu verwerfen, wird
+ * jedes Objekt-Element verlustfrei in einen lesbaren "Feld: Wert"-String
+ * aufgelöst - derselbe Reparatur-statt-Verwerfen-Ansatz wie bei
+ * coerceStringArrays oben, nur für die Elementebene statt die Feldebene.
+ */
+function objectToReadableString(node: unknown, depth = 0): string {
+  if (typeof node === "string") return node.trim();
+  if (typeof node === "number" || typeof node === "boolean") return String(node);
+  if (node == null || depth > 3) return "";
+  if (Array.isArray(node)) {
+    return node
+      .map((v) => objectToReadableString(v, depth + 1))
+      .filter(Boolean)
+      .join("; ");
+  }
+  if (typeof node === "object") {
+    return Object.entries(node as Record<string, unknown>)
+      .map(([k, v]) => {
+        const text = objectToReadableString(v, depth + 1);
+        return text ? `${k}: ${text}` : "";
+      })
+      .filter(Boolean)
+      .join(" – ");
+  }
+  return "";
+}
+
+function coerceObjectArrayItems(value: unknown, schema: Record<string, unknown>): void {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return;
+  const obj = value as Record<string, unknown>;
+  const props = (schema.properties as Record<string, Record<string, unknown>>) ?? {};
+  for (const [key, propSchema] of Object.entries(props)) {
+    const items = propSchema?.items as Record<string, unknown> | undefined;
+    if (propSchema?.type === "array" && items?.type === "string" && Array.isArray(obj[key])) {
+      obj[key] = (obj[key] as unknown[]).map((item) =>
+        typeof item === "string" ? item : objectToReadableString(item),
+      );
+    }
+  }
+}
+
 export class CompletionValidationError extends Error {
   errors: string[];
   constructor(errors: string[]) {
@@ -139,6 +187,7 @@ export async function completeWithValidation<T>(
     async () => {
       const result = await call();
       coerceStringArrays(result, schema);
+      coerceObjectArrayItems(result, schema);
       const check = validateCompletionOutput(result, schema);
       if (!check.ok) throw new CompletionValidationError(check.errors);
       return result;

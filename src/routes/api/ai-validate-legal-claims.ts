@@ -268,7 +268,12 @@ export const Route = createFileRoute("/api/ai-validate-legal-claims")({
                 // Fund 2026-08-21 (siehe ai-draft-batch-item.ts): Provider-
                 // Default (4096) reicht nach Erweiterung um source_summaries/
                 // consistency_conflicts/short_answer-Prüfung nicht mehr sicher.
-                maxTokens: 8000,
+                // Fund 2026-08-25 (Retro-Validierungslauf): bei einem
+                // inhaltsreichen Fall (viele Checklist-/Dokumentations-
+                // Elemente + mehrere Quellen) brach die Antwort nach dem
+                // ersten Feld ab (alle weiteren required-Felder fehlten) -
+                // Indiz für harte Kappung am alten Limit. Auf 12000 erhöht.
+                maxTokens: 12000,
               });
               return result.json;
             },

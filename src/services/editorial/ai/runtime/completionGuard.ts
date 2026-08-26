@@ -162,6 +162,37 @@ function coerceObjectArrayItems(value: unknown, schema: Record<string, unknown>)
   }
 }
 
+/**
+ * Fund 2026-08-26 (Nachtlauf über den Gesamtbestand): drei weitere, je
+ * einzeln beobachtete Verpackungsfehler desselben Musters - das Modell
+ * liefert ein als Array-von-Objekten oder Objekt deklariertes Feld als
+ * JSON-STRING ("matches: expected array, got string",
+ * "legal_explanation_revision: expected object, got string",
+ * "source_summaries: expected array, got string"). Der String enthält
+ * dabei meist das korrekt serialisierte JSON. Verlustfreie Reparatur:
+ * String parsen und nur übernehmen, wenn der geparste Typ zum Schema
+ * passt - alles andere bleibt ein echter Validierungsfehler.
+ */
+function coerceJsonStrings(value: unknown, schema: Record<string, unknown>): void {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return;
+  const obj = value as Record<string, unknown>;
+  const props = (schema.properties as Record<string, Record<string, unknown>>) ?? {};
+  for (const [key, propSchema] of Object.entries(props)) {
+    const expected = propSchema?.type;
+    if ((expected !== "array" && expected !== "object") || typeof obj[key] !== "string") continue;
+    const raw = (obj[key] as string).trim();
+    const looksLikeJson = expected === "array" ? raw.startsWith("[") : raw.startsWith("{");
+    if (!looksLikeJson) continue;
+    try {
+      const parsed = JSON.parse(raw);
+      const typeMatches = expected === "array" ? Array.isArray(parsed) : parsed !== null && typeof parsed === "object" && !Array.isArray(parsed);
+      if (typeMatches) obj[key] = parsed;
+    } catch {
+      // kein valides JSON - bewusst unverändert lassen, Validator meldet es
+    }
+  }
+}
+
 export class CompletionValidationError extends Error {
   errors: string[];
   constructor(errors: string[]) {
@@ -186,6 +217,7 @@ export async function completeWithValidation<T>(
   return withRetry(
     async () => {
       const result = await call();
+      coerceJsonStrings(result, schema);
       coerceStringArrays(result, schema);
       coerceObjectArrayItems(result, schema);
       const check = validateCompletionOutput(result, schema);

@@ -67,7 +67,8 @@ export const Route = createFileRoute("/api/ai-revise-legal-case")({
           "STRUKTUR legal_explanation: GENAU zwei Absätze. 'vorgegeben' enthält AUSSCHLIESSLICH Aussagen, die unmittelbar (DIRECT) aus dem Wortlaut der übergebenen Quellen folgen, je mit Fundstelle. 'einordnung' enthält die Schlussfolgerung für diesen Sachverhalt und kennzeichnet Unsicherheiten ausdrücklich ('Rechtslage nicht eindeutig', 'hierzu enthält [Quelle] keine ausdrückliche Regelung'). Keine Absatz-/Satznummern nennen, die im übergebenen Normtext nicht erkennbar sind.",
           "VERNEINUNGEN: 'ist nicht erlaubt'/'untersagt' NUR wenn die Quelle es konkret verbietet; schweigt die Quelle, formuliere 'hierzu enthält [Quelle] keine ausdrückliche Regelung'.",
           "LABEL-VOKABULAR (exakt, in eckigen Klammern am Elementanfang): checklist: '[Rechtlich erforderlich]', '[Organisatorisch empfohlen]', '[Rechtlich zu prüfen]', '[Optional]'. common_mistakes: '[Rechtlich problematisch]', '[Organisatorisch ungünstig]'. documentation: '[Rechtlich erforderlich]', '[Zur Nachvollziehbarkeit empfohlen]'. practice_tip ist EIN String, jede Zeile '- [Label] Text' mit Label aus '[Rechtlich erforderlich]', '[Praktisch empfohlen]', '[Bei Unsicherheit]'. '[Rechtlich erforderlich]' und '[Rechtlich problematisch]' NUR mit konkreter Fundstelle im Elementtext.",
-          "FELDER, die die Prüfbefunde nicht beanstanden, unverändert lassen (changed: false). Für jedes geänderte Feld den VOLLSTÄNDIGEN neuen Feldwert liefern, nicht nur die Änderung.",
+          "FELDER, die die Prüfbefunde nicht beanstanden, unverändert lassen (changed: false) - für solche Felder AUSSCHLIESSLICH {\"changed\": false} ausgeben, KEINEN Text und KEINE Items mitliefern. Für jedes geänderte Feld den VOLLSTÄNDIGEN neuen Feldwert liefern, nicht nur die Änderung.",
+          "AUSGABE KNAPP HALTEN: revision_notes maximal 12 Zeilen à höchstens 25 Wörter, unresolved maximal 8 Einträge à höchstens 30 Wörter - keine ausformulierten Absätze in diesen beiden Listen.",
           "revision_notes: je geänderte Stelle eine knappe Zeile 'Feld: was geändert und warum (verankert/abgestuft/gestrichen)'.",
           "unresolved: Fragen, die auch mit den übergebenen Quellen nicht klärbar sind (bleiben offene Redaktionsfragen) - NICHT im Fließtext verstecken.",
           "KEINE Markdown-Formatierung (keine **, __, #, Backticks) - reiner Fließtext bzw. '-'-Aufzählungen.",
@@ -156,10 +157,11 @@ export const Route = createFileRoute("/api/ai-revise-legal-case")({
                   { role: "user", content: JSON.stringify(user) },
                 ],
                 jsonSchema: { name: "legal_case_revision", schema },
-                // Sanierung liefert komplette Feld-Neufassungen; 12000 hat
-                // sich beim inhaltlich vergleichbaren Prüfschritt als
-                // knapp erwiesen (Abbruch-Fehler), daher großzügiger.
-                maxTokens: 16000,
+                // Sanierung liefert komplette Feld-Neufassungen. Pilot-Fund
+                // 2026-08-26: bei 16000 brachen 6 von 10 Antworten ab
+                // (alle required-Felder fehlten) - zusammen mit der
+                // Knapphalten-Anweisung im Prompt auf 24000 erhöht.
+                maxTokens: 24000,
               });
               return result.json;
             },

@@ -82,15 +82,24 @@ export interface ReleaseGateResult {
 
 /**
  * Berechnet den Freigabestatus ausschließlich aus der Claim-Klassifikation -
- * keine Interpretation von Freitext, keine erneute Quellenprüfung. Regel 18
- * des Nutzerdokuments 1:1 umgesetzt:
+ * keine Interpretation von Freitext, keine erneute Quellenprüfung.
  *
  * GRÜN nur wenn: keine UNSUPPORTED-, keine CONFLICT-Claims, alle
- * "Rechtlich vorgegeben"-Claims DIRECT, keine zentrale offene Kernfrage.
+ * "Rechtlich vorgegeben"-Claims DIRECT, keine offene Rechtsfrage.
  *
- * ROT wenn ein UNSUPPORTED/CONFLICT/OPEN-Claim die zentrale Rechtsfrage
- * betrifft, oder eine zentrale "Rechtlich vorgegeben"-Aussage nicht DIRECT
- * ist. Sonst (nicht-zentrale Verstöße) GELB.
+ * ROT nur, wenn eine ZENTRALE Aussage UNSUPPORTED oder CONFLICT ist -
+ * also aktiv unbelegt oder quellenwidersprüchlich. Alles andere GELB.
+ *
+ * Rekalibrierung 2026-08-26 (vom Nutzer freigegeben, nach dem ersten
+ * Bestands-Nachtlauf mit 375/394 ROT und nur 2 GELB): die ursprüngliche
+ * Regel-18-Umsetzung wertete auch (1) eine zentrale, lediglich OFFENE
+ * Rechtsfrage und (2) eine belegbare, nur falsch einsortierte Aussage
+ * (DERIVED/ORGANIZATIONAL unter "Rechtlich vorgegeben") als ROT. Beides
+ * sind keine unbelegten Behauptungen: offene Fragen werden dem Leser auf
+ * der Fallseite transparent angezeigt (case_legal_review_flags), und
+ * Einsortierungsfehler sind redaktionelle Struktur-, keine Quellenmängel.
+ * Der Kern des Regelwerks ("keine Freigabe bei unbelegten Rechtsclaims")
+ * bleibt unverändert: zentrale UNSUPPORTED-/CONFLICT-Claims sperren mit ROT.
  */
 export function computeReleaseGate(claims: ClassifiedClaim[]): ReleaseGateResult {
   const blockers: string[] = [];
@@ -114,7 +123,10 @@ export function computeReleaseGate(claims: ClassifiedClaim[]): ReleaseGateResult
           c.problem ??
           `"${c.text}" ist als ${c.classification} klassifiziert, steht aber unter "Rechtlich vorgegeben" - dort sind nur DIRECT-Aussagen (unmittelbar durch eine Quelle getragen) zulässig.`,
       });
-      escalate(c.isCentral ? "rot" : "gelb");
+      // Falsche Einsortierung allein ist GELB - ist die Aussage zusätzlich
+      // UNSUPPORTED/CONFLICT und zentral, eskaliert deren eigener Block
+      // unten ohnehin auf ROT.
+      escalate("gelb");
     }
 
     if (c.classification === "UNSUPPORTED") {
@@ -147,10 +159,11 @@ export function computeReleaseGate(claims: ClassifiedClaim[]): ReleaseGateResult
             c.problem ??
             `"${c.text}" betrifft die zentrale Rechtsfrage dieses Praxisfalls und wird durch die vorhandenen Quellen nicht abschließend beantwortet.`,
         });
-        escalate("rot");
-      } else {
-        escalate("gelb");
       }
+      // Rekalibrierung 2026-08-26: eine OFFENE Frage ist keine unbelegte
+      // Behauptung - sie wird dem Leser als Flag transparent angezeigt.
+      // GELB (auch bei zentraler Frage), Blocker/Flag bleiben erhalten.
+      escalate("gelb");
     }
   }
 

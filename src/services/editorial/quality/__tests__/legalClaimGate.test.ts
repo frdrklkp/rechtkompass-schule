@@ -76,12 +76,21 @@ test("TEST 7: Normclaim exakt durch Absatz gedeckt => DIRECT, GRÜN möglich", (
   assert.equal(res.color, "gruen");
 });
 
-test("TEST 8: DERIVED Claim im Abschnitt 'Rechtlich vorgegeben' => BLOCK", () => {
+test("TEST 8: DERIVED Claim im Abschnitt 'Rechtlich vorgegeben' => BLOCK (Rekalibrierung 2026-08-26: gelb, nicht rot)", () => {
   const res = computeReleaseGate([
     claim({ classification: "DERIVED", section: "legal_vorgegeben", isCentral: true, text: "Die Gesamtverantwortung verbleibt stets bei der Schulleitung." }),
   ]);
   assert.notEqual(res.color, "gruen");
+  // Belegbare, nur falsch einsortierte Aussage: Struktur-, kein Quellenmangel.
+  assert.equal(res.color, "gelb");
   assert.ok(res.flags.some((f) => f.flagType === "LEGAL_STRUCTURAL_MISPLACEMENT"));
+});
+
+test("TEST 8b: UNSUPPORTED Claim im Abschnitt 'Rechtlich vorgegeben', zentral => weiterhin ROT", () => {
+  const res = computeReleaseGate([
+    claim({ classification: "UNSUPPORTED", section: "legal_vorgegeben", isCentral: true, text: "Die Bestellung muss zwingend schriftlich erfolgen." }),
+  ]);
+  assert.equal(res.color, "rot");
 });
 
 test("TEST 9: UNSUPPORTED Claim nur in Checkliste => trotzdem BLOCK", () => {
@@ -105,12 +114,16 @@ test("TEST 11: Quelle widerspricht Claim => CONFLICT/BLOCK (rot, zentral)", () =
   assert.equal(res.color, "rot");
 });
 
-test("TEST 12: zentrale OPEN-Rechtsfrage => kein GRÜN (rot)", () => {
+test("TEST 12: zentrale OPEN-Rechtsfrage => kein GRÜN (Rekalibrierung 2026-08-26: gelb, nicht rot)", () => {
   const res = computeReleaseGate([
     claim({ classification: "OPEN", isCentral: true, text: "Wer den Vorsitz bei Verhinderung übernimmt, ist unklar." }),
   ]);
   assert.notEqual(res.color, "gruen");
-  assert.equal(res.color, "rot");
+  // Offene Frage ist keine unbelegte Behauptung: sie wird dem Leser als
+  // Flag transparent angezeigt. Blocker + Flag bleiben trotzdem erhalten.
+  assert.equal(res.color, "gelb");
+  assert.ok(res.blockers.some((b) => b.includes("Zentrale offene Rechtsfrage")));
+  assert.ok(res.flags.some((f) => f.flagType === "LEGAL_OPEN_CORE_QUESTION"));
 });
 
 test("TEST 13: nur Nebenfrage OPEN, Kern sicher => GELB möglich", () => {

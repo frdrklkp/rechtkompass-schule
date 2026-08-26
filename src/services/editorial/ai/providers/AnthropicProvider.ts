@@ -181,8 +181,27 @@ export class AnthropicProvider implements AIProvider {
     let json: unknown = undefined;
 
     if (req.jsonSchema) {
-      const toolBlock = blocks.find((b) => b.type === "tool_use");
-      json = toolBlock?.input;
+      // Fund 2026-08-26 (Direktdiagnose gegen api.anthropic.com, Sanierungs-
+      // Pilot): Haiku 4.5 verteilt die strukturierte Antwort bei manchen
+      // Eingaben auf MEHRERE parallele tool_use-Blöcke (beobachtet: Block 1
+      // nur {legal_explanation, short_answer}, Rest in Block 2; stop_reason
+      // "tool_use", kein Token-Abbruch). Das bisherige blocks.find() nahm
+      // nur den ersten Block - alle Felder der Folgeblöcke fehlten dann und
+      // die Antwort scheiterte reproduzierbar als "root: missing required".
+      // Daher: alle tool_use-Inputs der Reihe nach zusammenführen; bei
+      // Schlüsselkonflikten gewinnt der erste Block (deterministisch).
+      const toolBlocks = blocks.filter((b) => b.type === "tool_use" && b.input && typeof b.input === "object");
+      if (toolBlocks.length === 1) {
+        json = toolBlocks[0].input;
+      } else if (toolBlocks.length > 1) {
+        const merged: Record<string, unknown> = {};
+        for (const b of toolBlocks) {
+          for (const [k, v] of Object.entries(b.input as Record<string, unknown>)) {
+            if (!(k in merged)) merged[k] = v;
+          }
+        }
+        json = merged;
+      }
       content = json !== undefined ? JSON.stringify(json) : "";
       if (json === undefined) {
         throw new AIError({

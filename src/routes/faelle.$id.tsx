@@ -128,9 +128,12 @@ function formatWarning(raw: string): string {
     /^(Vermeiden|Beginnen|Achten|Dokumentieren|Warten|Handeln|Prüfen|Sprechen|Informieren|Melden|Nutzen|Kontaktieren|Klären|Wenden|Setzen|Stellen|Zeigen|Unterlassen|Bewahren|Trennen|Sichern|Reagieren|Erstellen)\s+Sie\b/i;
   const endWithPeriod = (t: string) => (/[.!?]$/.test(t) ? t : t + ".");
   if (imperativeStart.test(s)) return endWithPeriod(s);
+  // Nutzer-Fund 2026-08-29: nach dem Doppelpunkt wurde der Satzrest
+  // kleingeschrieben - das traf auch Substantive ("smartphone"). Nach
+  // einem Doppelpunkt mit Großbuchstaben fortsetzen.
   const cleaned = s
     .replace(/^(Keine|Kein|Nie|Niemals|Nicht)\s+/i, "")
-    .replace(/^./, (m) => m.toLowerCase());
+    .replace(/^./, (m) => m.toUpperCase());
   return endWithPeriod(`Vermeiden Sie unbedingt: ${cleaned}`);
 }
 
@@ -595,7 +598,15 @@ function CaseDetail({ c }: { c: CaseData }) {
                 <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-danger">
                   <TriangleAlert className="h-3.5 w-3.5" /> Wichtigster Warnhinweis
                 </p>
-                <p className="mt-2 text-sm font-medium leading-relaxed text-foreground sm:text-base">
+                {/* Nutzer-Wunsch 2026-08-29: auch am Warnhinweis sichtbar
+                    machen, ob der Punkt rechtlich vorgegeben oder "nur"
+                    organisatorisch ist - gleiches Badge wie in den Listen. */}
+                {mistakesTiered[0]?.label && (
+                  <div className="mt-2">
+                    <TierBadge label={mistakesTiered[0].label} />
+                  </div>
+                )}
+                <p className="mt-1 text-sm font-medium leading-relaxed text-foreground sm:text-base">
                   {topWarning}
                 </p>
               </div>

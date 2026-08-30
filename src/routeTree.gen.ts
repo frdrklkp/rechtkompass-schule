@@ -63,6 +63,7 @@ import { Route as ApiAiMatchTemplatesRouteImport } from './routes/api/ai-match-t
 import { Route as ApiAiReclassifyAmpelRouteImport } from './routes/api/ai-reclassify-ampel'
 import { Route as ApiAiReevaluateLegalLinksRouteImport } from './routes/api/ai-reevaluate-legal-links'
 import { Route as ApiAiRefineCaseFieldRouteImport } from './routes/api/ai-refine-case-field'
+import { Route as ApiAiReviseLegalCaseRouteImport } from './routes/api/ai-revise-legal-case'
 import { Route as ApiAiValidateLegalClaimsRouteImport } from './routes/api/ai-validate-legal-claims'
 import { Route as ApiCaseGenerationJobsRouteImport } from './routes/api/case-generation-jobs'
 import { Route as ApiCopilotTrackRouteImport } from './routes/api/copilot-track'
@@ -409,6 +410,11 @@ const ApiAiReevaluateLegalLinksRoute =
 const ApiAiRefineCaseFieldRoute = ApiAiRefineCaseFieldRouteImport.update({
   id: '/api/ai-refine-case-field',
   path: '/api/ai-refine-case-field',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAiReviseLegalCaseRoute = ApiAiReviseLegalCaseRouteImport.update({
+  id: '/api/ai-revise-legal-case',
+  path: '/api/ai-revise-legal-case',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiAiValidateLegalClaimsRoute =
@@ -875,6 +881,7 @@ export interface FileRoutesByFullPath {
   '/api/ai-reclassify-ampel': typeof ApiAiReclassifyAmpelRoute
   '/api/ai-reevaluate-legal-links': typeof ApiAiReevaluateLegalLinksRoute
   '/api/ai-refine-case-field': typeof ApiAiRefineCaseFieldRoute
+  '/api/ai-revise-legal-case': typeof ApiAiReviseLegalCaseRoute
   '/api/ai-validate-legal-claims': typeof ApiAiValidateLegalClaimsRoute
   '/api/case-generation-jobs': typeof ApiCaseGenerationJobsRouteWithChildren
   '/api/copilot-track': typeof ApiCopilotTrackRoute
@@ -1000,6 +1007,7 @@ export interface FileRoutesByTo {
   '/api/ai-reclassify-ampel': typeof ApiAiReclassifyAmpelRoute
   '/api/ai-reevaluate-legal-links': typeof ApiAiReevaluateLegalLinksRoute
   '/api/ai-refine-case-field': typeof ApiAiRefineCaseFieldRoute
+  '/api/ai-revise-legal-case': typeof ApiAiReviseLegalCaseRoute
   '/api/ai-validate-legal-claims': typeof ApiAiValidateLegalClaimsRoute
   '/api/case-generation-jobs': typeof ApiCaseGenerationJobsRouteWithChildren
   '/api/copilot-track': typeof ApiCopilotTrackRoute
@@ -1130,6 +1138,7 @@ export interface FileRoutesById {
   '/api/ai-reclassify-ampel': typeof ApiAiReclassifyAmpelRoute
   '/api/ai-reevaluate-legal-links': typeof ApiAiReevaluateLegalLinksRoute
   '/api/ai-refine-case-field': typeof ApiAiRefineCaseFieldRoute
+  '/api/ai-revise-legal-case': typeof ApiAiReviseLegalCaseRoute
   '/api/ai-validate-legal-claims': typeof ApiAiValidateLegalClaimsRoute
   '/api/case-generation-jobs': typeof ApiCaseGenerationJobsRouteWithChildren
   '/api/copilot-track': typeof ApiCopilotTrackRoute
@@ -1262,6 +1271,7 @@ export interface FileRouteTypes {
     | '/api/ai-reclassify-ampel'
     | '/api/ai-reevaluate-legal-links'
     | '/api/ai-refine-case-field'
+    | '/api/ai-revise-legal-case'
     | '/api/ai-validate-legal-claims'
     | '/api/case-generation-jobs'
     | '/api/copilot-track'
@@ -1387,6 +1397,7 @@ export interface FileRouteTypes {
     | '/api/ai-reclassify-ampel'
     | '/api/ai-reevaluate-legal-links'
     | '/api/ai-refine-case-field'
+    | '/api/ai-revise-legal-case'
     | '/api/ai-validate-legal-claims'
     | '/api/case-generation-jobs'
     | '/api/copilot-track'
@@ -1516,6 +1527,7 @@ export interface FileRouteTypes {
     | '/api/ai-reclassify-ampel'
     | '/api/ai-reevaluate-legal-links'
     | '/api/ai-refine-case-field'
+    | '/api/ai-revise-legal-case'
     | '/api/ai-validate-legal-claims'
     | '/api/case-generation-jobs'
     | '/api/copilot-track'
@@ -1621,6 +1633,7 @@ export interface RootRouteChildren {
   ApiAiReclassifyAmpelRoute: typeof ApiAiReclassifyAmpelRoute
   ApiAiReevaluateLegalLinksRoute: typeof ApiAiReevaluateLegalLinksRoute
   ApiAiRefineCaseFieldRoute: typeof ApiAiRefineCaseFieldRoute
+  ApiAiReviseLegalCaseRoute: typeof ApiAiReviseLegalCaseRoute
   ApiAiValidateLegalClaimsRoute: typeof ApiAiValidateLegalClaimsRoute
   ApiCaseGenerationJobsRoute: typeof ApiCaseGenerationJobsRouteWithChildren
   ApiCopilotTrackRoute: typeof ApiCopilotTrackRoute
@@ -2030,6 +2043,13 @@ declare module '@tanstack/react-router' {
       path: '/api/ai-refine-case-field'
       fullPath: '/api/ai-refine-case-field'
       preLoaderRoute: typeof ApiAiRefineCaseFieldRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/ai-revise-legal-case': {
+      id: '/api/ai-revise-legal-case'
+      path: '/api/ai-revise-legal-case'
+      fullPath: '/api/ai-revise-legal-case'
+      preLoaderRoute: typeof ApiAiReviseLegalCaseRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/ai-validate-legal-claims': {
@@ -2904,6 +2924,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiAiReclassifyAmpelRoute: ApiAiReclassifyAmpelRoute,
   ApiAiReevaluateLegalLinksRoute: ApiAiReevaluateLegalLinksRoute,
   ApiAiRefineCaseFieldRoute: ApiAiRefineCaseFieldRoute,
+  ApiAiReviseLegalCaseRoute: ApiAiReviseLegalCaseRoute,
   ApiAiValidateLegalClaimsRoute: ApiAiValidateLegalClaimsRoute,
   ApiCaseGenerationJobsRoute: ApiCaseGenerationJobsRouteWithChildren,
   ApiCopilotTrackRoute: ApiCopilotTrackRoute,

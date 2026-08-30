@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
 import {
   ArrowLeft,
@@ -55,16 +55,20 @@ import { supabase } from "@/integrations/supabase/client";
 import { FeedbackReportDialog } from "@/components/FeedbackReportDialog";
 
 export const Route = createFileRoute("/faelle/$id")({
-  component: CaseDetailRoute,
+  // Fund 2026-08-30 (Nutzer-Auftrag "aufräumen"): diese Route ist unter
+  // /faelle (Fallliste) verschachtelt, deren Komponente keinen <Outlet/>
+  // rendert - Deeplinks auf /faelle/<id> zeigten deshalb kommentarlos die
+  // Liste statt des Falls. Kanonische Detail-URL ist /fall/<id> (einzige
+  // Form, auf die die App intern verlinkt); alte Deeplinks werden jetzt
+  // dorthin umgeleitet. Die Komponente CaseDetailById bleibt hier
+  // exportiert, weil fall.$id.tsx sie importiert.
+  beforeLoad: ({ params }) => {
+    throw redirect({ to: "/fall/$id", params: { id: params.id } });
+  },
   head: () => ({
     meta: [{ title: "Praxisfall – RechtKompass Schule" }],
   }),
 });
-
-function CaseDetailRoute() {
-  const { id } = Route.useParams();
-  return <CaseDetailById id={id} />;
-}
 
 export function CaseDetailById({ id }: { id: string }) {
   const { data: dbCase, isLoading, error } = usePublishedCase(id);

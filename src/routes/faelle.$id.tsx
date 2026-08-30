@@ -380,6 +380,15 @@ function ExportPdfButton({
 /* ---------- Hauptkomponente ---------- */
 
 function CaseDetail({ c }: { c: CaseData }) {
+  // Demo-/Präsentationsmodus (Nutzer-Wunsch 2026-08-30): mit ?ebenen=alle
+  // öffnet die Fallseite alle drei Ebenen bereits aufgeklappt - für
+  // Vorführungen ohne Klick-Gefummel. Bewusst über window.location statt
+  // Router-Search gelesen: der Wert wirkt nur einmal beim ersten Render
+  // (defaultValue des Accordions) und braucht keine Typ-Registrierung
+  // über alle Routen (/fall/$id und /faelle/$id teilen diese Komponente).
+  const [alleEbenenOffen] = useState(
+    () => typeof window !== "undefined" && new URLSearchParams(window.location.search).get("ebenen") === "alle",
+  );
   const tips = getPracticeTips(c);
   const tipsTiered = getPracticeTipsTiered(c);
   const mistakes = getCommonMistakes(c);
@@ -566,7 +575,7 @@ function CaseDetail({ c }: { c: CaseData }) {
       {/* 3-EBENEN-ACCORDION */}
       <Accordion
         type="multiple"
-        defaultValue={["ebene-1"]}
+        defaultValue={alleEbenenOffen ? ["ebene-1", "ebene-2", "ebene-3"] : ["ebene-1"]}
         className="mt-6 space-y-3"
       >
         {/* ============================================================ */}

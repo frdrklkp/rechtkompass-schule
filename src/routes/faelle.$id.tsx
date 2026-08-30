@@ -49,6 +49,7 @@ import {
   getPracticeTips,
   getPracticeTipsTiered,
   getRelatedCases,
+  splitLegalExplanation,
   type TieredItem,
 } from "@/lib/caseEnrichment";
 import { supabase } from "@/integrations/supabase/client";
@@ -787,11 +788,37 @@ function CaseDetail({ c }: { c: CaseData }) {
                 <p className="mb-2 flex items-center gap-2 text-sm font-semibold text-foreground">
                   <Scale className="h-4 w-4 text-accent" /> Rechtsgrundlagen
                 </p>
-                {c.legalExplanation && c.legalExplanation.trim().length > 0 && (
-                  <p className="mb-3 text-sm leading-relaxed text-foreground/90">
-                    {c.legalExplanation}
-                  </p>
-                )}
+                {/* Nutzer-Wunsch 2026-08-30: "RECHTLICH VORGEGEBEN" und
+                    "RECHTLICHE EINORDNUNG" nicht mehr als ein Fließtext-
+                    Block, sondern sichtbar getrennt - Normwiedergabe mit
+                    §-Akzent, Einordnung neutral abgesetzt. Fallback auf den
+                    alten Absatz, falls ein Alt-Fall die Marker nicht trägt. */}
+                {c.legalExplanation && c.legalExplanation.trim().length > 0 && (() => {
+                  const parts = splitLegalExplanation(c.legalExplanation);
+                  if (!parts.einordnung) {
+                    return (
+                      <p className="mb-3 text-sm leading-relaxed text-foreground/90">
+                        {c.legalExplanation}
+                      </p>
+                    );
+                  }
+                  return (
+                    <div className="mb-3 space-y-3">
+                      <div className="rounded-xl border border-accent/30 bg-accent/5 p-4">
+                        <p className="mb-1.5 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-accent">
+                          § Rechtlich vorgegeben
+                        </p>
+                        <p className="text-sm leading-relaxed text-foreground/90">{parts.vorgegeben}</p>
+                      </div>
+                      <div className="rounded-xl border border-border bg-muted/30 p-4">
+                        <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                          Rechtliche Einordnung für diesen Fall
+                        </p>
+                        <p className="text-sm leading-relaxed text-foreground/90">{parts.einordnung}</p>
+                      </div>
+                    </div>
+                  );
+                })()}
                 {citedSections.length > 0 ? (
                   <div className="grid gap-2 sm:grid-cols-2">
                     {citedSections.map(({ citation, section: s, ambiguous }, idx) =>

@@ -657,26 +657,10 @@ function CaseDetail({ c }: { c: CaseData }) {
               </div>
             )}
 
-            {/* PDF-Export auch hier verfügbar (UX-Fund: der Export ist eine
-                der häufigsten Aktionen, sollte nicht erst hinter dem
-                standardmäßig eingeklappten Ebene-2-Akkordeon liegen). */}
-            <div className="mt-4 rounded-2xl border border-border bg-card p-5">
-              <p className="flex items-center gap-2 text-sm font-semibold text-foreground">
-                <FileDown className="h-4 w-4 text-accent" /> Fall zusammenfassen
-              </p>
-              <p className="mt-2 text-sm text-foreground/85">
-                Alles Wichtige zu diesem Praxisfall – Empfehlung, Checkliste, Dokumentation und
-                Rechtsgrundlagen – als PDF für den weiteren Handlungsablauf.
-              </p>
-              <ExportPdfButton
-                c={c}
-                tips={tipsTiered}
-                donts={mistakesTiered}
-                checklist={checklistTiered}
-                documentation={documentationTiered}
-                openQuestions={openQuestions}
-              />
-            </div>
+            {/* Nutzer-Entscheidung 2026-08-30: die "Fall zusammenfassen"-
+                Karte stand doppelt auf der Seite (Ebene 1 UND Ebene 2).
+                Sie gehört thematisch zu "Dokumentieren" und lebt jetzt nur
+                noch dort. */}
           </AccordionContent>
         </AccordionItem>
 

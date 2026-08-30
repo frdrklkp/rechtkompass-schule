@@ -288,6 +288,7 @@ function ExportPdfButton({
   checklist,
   documentation,
   openQuestions,
+  compact = false,
 }: {
   c: CaseData;
   tips: TieredItem[];
@@ -295,6 +296,12 @@ function ExportPdfButton({
   checklist: TieredItem[];
   documentation: TieredItem[];
   openQuestions: string[];
+  /**
+   * Nutzer-Entscheidung 2026-08-30: die große Export-Karte lebt nur noch in
+   * Ebene 2 - als schneller Zugriff gibt es zusätzlich diese kompakte
+   * Pill-Variante in der Kopfzeile (gleicher Stil wie "Fall speichern").
+   */
+  compact?: boolean;
 }) {
   const [exporting, setExporting] = useState(false);
 
@@ -341,6 +348,20 @@ function ExportPdfButton({
       setExporting(false);
     }
   };
+
+  if (compact) {
+    return (
+      <button
+        type="button"
+        onClick={handleExport}
+        disabled={exporting}
+        className="inline-flex min-h-11 items-center gap-2 rounded-full border border-border bg-background px-4 py-2 text-sm font-medium text-foreground/85 hover:border-accent hover:text-accent disabled:opacity-60"
+      >
+        <FileDown className="h-4 w-4" />
+        {exporting ? "PDF …" : "Als PDF"}
+      </button>
+    );
+  }
 
   return (
     <button
@@ -512,6 +533,15 @@ function CaseDetail({ c }: { c: CaseData }) {
         </h1>
         <div className="mt-4 flex flex-wrap items-center gap-3">
           <SaveVorgangButton c={c} />
+          <ExportPdfButton
+            c={c}
+            tips={tipsTiered}
+            donts={mistakesTiered}
+            checklist={checklistTiered}
+            documentation={documentationTiered}
+            openQuestions={openQuestions}
+            compact
+          />
           <FeedbackReportDialog
             caseId={c.id}
             caseTitle={c.title}

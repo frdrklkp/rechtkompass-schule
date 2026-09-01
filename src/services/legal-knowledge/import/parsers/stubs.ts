@@ -90,6 +90,10 @@ export { kunsturhgParser } from "./kunsturhgParser";
 import { kunsturhgParser } from "./kunsturhgParser";
 export { sgb8Parser } from "./sgb8Parser";
 import { sgb8Parser } from "./sgb8Parser";
+export { bbigParser } from "./bbigParser";
+import { bbigParser } from "./bbigParser";
+export { jarbschgParser } from "./jarbschgParser";
+import { jarbschgParser } from "./jarbschgParser";
 
 export const erlassParser = makeStub({
   id: "erlass-generic",
@@ -137,6 +141,8 @@ export const preparedParsers = [
   beamtstgParser,
   kunsturhgParser,
   sgb8Parser,
+  bbigParser,
+  jarbschgParser,
   dsgvoParser,
   bassNrwParser,
   erlassParser,

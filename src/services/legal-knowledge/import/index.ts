@@ -23,6 +23,8 @@ export { beamtstgParser } from "./parsers/beamtstgParser";
 export { dsgNrwParser } from "./parsers/dsgNrwParser";
 export { kunsturhgParser } from "./parsers/kunsturhgParser";
 export { sgb8Parser } from "./parsers/sgb8Parser";
+export { bbigParser } from "./parsers/bbigParser";
+export { jarbschgParser } from "./parsers/jarbschgParser";
 export {
   bassParser,
   apoBkParser,

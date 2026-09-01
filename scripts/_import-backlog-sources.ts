@@ -8,7 +8,7 @@
  * Aufruf: bun run scripts/_import-backlog-sources.ts
  */
 import { createClient } from "@supabase/supabase-js";
-import { dsgNrwParser, kunsturhgParser, sgb8Parser } from "../src/services/legal-knowledge/import";
+import { bbigParser, dsgNrwParser, jarbschgParser, kunsturhgParser, sgb8Parser } from "../src/services/legal-knowledge/import";
 import { mergeDocuments } from "../src/services/legal-knowledge/connectors/OfficialSourceConnectorService";
 import type { LegalImportInput, LegalImportParser, LegalNode } from "../src/services/legal-knowledge/import/types";
 import {
@@ -53,6 +53,22 @@ const TARGETS: Array<{ url: string; label: string; sourceId: string; parser: Leg
     sourceId: "sgb-8",
     parser: sgb8Parser,
     legalDomain: "Kinder- und Jugendhilfe",
+    bund: true,
+  },
+  {
+    url: "https://www.gesetze-im-internet.de/bbig_2005/BJNR093110005.html",
+    label: "BBiG",
+    sourceId: "bbig",
+    parser: bbigParser,
+    legalDomain: "Ausbildungsrecht",
+    bund: true,
+  },
+  {
+    url: "https://www.gesetze-im-internet.de/jarbschg/BJNR009650976.html",
+    label: "JArbSchG",
+    sourceId: "jarbschg",
+    parser: jarbschgParser,
+    legalDomain: "Ausbildungsrecht",
     bund: true,
   },
 ];

@@ -72,9 +72,19 @@ export const Route = createFileRoute("/api/case-generation-jobs")({
           );
         }
 
+        // Fund 2026-09-01 (Produktionstest): die Pipeline dauert 6-7 Minuten -
+        // auf Cloudflare Workers stirbt eine so lange Hintergrundausführung
+        // still (Job blieb dauerhaft in "entwurf", weder Fortschritt noch
+        // Fehler; waitUntil verlängert die Lebenszeit nicht ausreichend).
+        // Der Job wird deshalb nur noch EINGEREIHT (status "pending") und von
+        // einem externen Runner abgearbeitet (GitHub-Actions-Workflow
+        // case-generation-runner.yml, alle 5 Minuten; Skript
+        // scripts/_process-generation-queue.ts). Im lokalen Bun-Dev-Betrieb
+        // wird weiterhin sofort in-process verarbeitet - der Claim-Schritt
+        // im Runner-Skript verhindert Doppelverarbeitung.
         const { data: jobRow, error: insertError } = await (service as any)
           .from("case_generation_jobs")
-          .insert({ requested_by: auth.userId, sketch, status: "running", phase: "entwurf" })
+          .insert({ requested_by: auth.userId, sketch, status: "pending", phase: "entwurf" })
           .select("id")
           .single();
         if (insertError || !jobRow) {
@@ -83,22 +93,23 @@ export const Route = createFileRoute("/api/case-generation-jobs")({
         }
 
         const jobId = jobRow.id as string;
-        const apiOrigin = new URL(request.url).origin;
-        const jobPromise = processCaseGenerationJob(jobId, sketch, apiOrigin);
-        // Sprint 4.6K: auf Cloudflare Workers (nitro-Preset "cloudflare-module")
-        // wird die Ausführung nach dem Response i. d. R. beendet, sofern die
-        // Zusage nicht per waitUntil verlängert wird. Im aktuell tatsächlich
-        // betriebenen Bun-Prozess (nohup bun run dev) läuft die Promise ohnehin
-        // unabhängig vom Response weiter; dieser Hook ist eine Absicherung für
-        // eine mögliche künftige Cloudflare-Bereitstellung, kein Ersatz dafür.
-        const waitUntil = (request as unknown as { waitUntil?: (p: Promise<unknown>) => void }).waitUntil;
-        if (typeof waitUntil === "function") {
-          waitUntil(jobPromise);
-        } else {
-          jobPromise.catch((err) => console.error("[case-generation-jobs] Hintergrundverarbeitung fehlgeschlagen:", err));
+        const isLocalDev = process.env.NODE_ENV !== "production";
+        if (isLocalDev) {
+          const apiOrigin = new URL(request.url).origin;
+          const { data: claimed } = await (service as any)
+            .from("case_generation_jobs")
+            .update({ status: "running" })
+            .eq("id", jobId)
+            .eq("status", "pending")
+            .select("id");
+          if (claimed?.length) {
+            processCaseGenerationJob(jobId, sketch, apiOrigin).catch((err) =>
+              console.error("[case-generation-jobs] Hintergrundverarbeitung fehlgeschlagen:", err),
+            );
+          }
         }
 
-        return jsonResponse({ jobId, status: "running", phase: "entwurf" }, 201);
+        return jsonResponse({ jobId, status: isLocalDev ? "running" : "pending", phase: "entwurf" }, 201);
       },
     },
   },

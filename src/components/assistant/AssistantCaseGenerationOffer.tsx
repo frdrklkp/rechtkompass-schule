@@ -53,7 +53,7 @@ export function AssistantCaseGenerationOffer({ sketch }: AssistantCaseGeneration
     return (
       <div className="mt-3 flex items-center gap-2 rounded-xl border border-border bg-background/60 px-3 py-2 text-xs text-muted-foreground">
         <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin text-accent" aria-hidden="true" />
-        <span>{label} … Das kann bis zu drei Minuten dauern.</span>
+        <span>{label} … Das kann einige Minuten dauern – Sie können die Seite zwischendurch verlassen, der Fall wird im Hintergrund fertiggestellt.</span>
       </div>
     );
   }

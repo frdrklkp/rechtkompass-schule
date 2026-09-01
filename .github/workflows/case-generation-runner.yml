@@ -1,0 +1,35 @@
+# Externer Runner für die Fallgenerierungs-Queue (Fund 2026-09-01: die
+# 6-7-minütige KI-Pipeline stirbt auf Cloudflare Workers still; Jobs werden
+# dort nur eingereiht und hier abgearbeitet). Läuft alle 5 Minuten sowie auf
+# Knopfdruck (Actions-Tab -> "Fallgenerierungs-Queue" -> Run workflow).
+name: Fallgenerierungs-Queue
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: case-generation-queue
+  cancel-in-progress: false
+
+jobs:
+  process-queue:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - name: Abhängigkeiten installieren
+        run: bun install --frozen-lockfile
+      - name: Wartende Jobs verarbeiten
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          CASE_GENERATION_SERVICE_PASSWORD: ${{ secrets.CASE_GENERATION_SERVICE_PASSWORD }}
+        run: bun run scripts/_process-generation-queue.ts

@@ -7,6 +7,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { createFileRoute } from "@tanstack/react-router";
 import { requireApiAuth } from "@/integrations/supabase/apiAuthGuard";
+import { readSupabasePublishableKey, readSupabaseUrl } from "@/lib/server/supabaseEnv";
 import type { Database } from "@/integrations/supabase/types";
 
 function jsonResponse(body: unknown, status: number): Response {
@@ -23,8 +24,11 @@ export const Route = createFileRoute("/api/case-generation-jobs/$id")({
         const auth = await requireApiAuth(request);
         if (auth instanceof Response) return auth;
 
-        const url = process.env.VITE_SUPABASE_URL;
-        const key = process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+        // Fund 2026-08-30: rohes process.env.VITE_* war im Worker leer -
+        // dadurch lieferte diese Route in Produktion dauerhaft 500 und der
+        // Fallgenerierungs-Spinner pollte endlos, ohne den Fehler zu sehen.
+        const url = readSupabaseUrl();
+        const key = readSupabasePublishableKey();
         if (!url || !key) {
           return jsonResponse({ error: "Serverkonfiguration unvollständig" }, 500);
         }

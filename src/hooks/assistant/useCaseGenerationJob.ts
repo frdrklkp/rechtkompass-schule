@@ -20,6 +20,12 @@ export interface CaseGenerationJobController {
 }
 
 const POLL_INTERVAL_MS = 3000;
+// Fund 2026-08-30: als die Status-Route in Produktion dauerhaft 500 lieferte
+// (Env-Problem), pollte der Hook endlos weiter und die UI zeigte einen
+// ewigen Spinner statt eines Fehlers. Einzelne Fehlschläge bleiben tolerant
+// (Netzwerk-Hänger), aber nach dieser Anzahl AUFEINANDERFOLGENDER
+// Fehlversuche (~30 Sekunden) wird sichtbar aufgegeben.
+const MAX_CONSECUTIVE_POLL_FAILURES = 10;
 
 export function useCaseGenerationJob(): CaseGenerationJobController {
   const [state, setState] = useState<CaseGenerationJobState>({ status: "idle" });
@@ -37,10 +43,25 @@ export function useCaseGenerationJob(): CaseGenerationJobController {
   const poll = useCallback(
     (jobId: string) => {
       stopPolling();
+      let consecutiveFailures = 0;
+      const giveUp = () => {
+        stopPolling();
+        setState({
+          status: "failed",
+          jobId,
+          error:
+            "Der Status der Fallgenerierung ist derzeit nicht abrufbar. Der Auftrag läuft möglicherweise im Hintergrund weiter - bitte später erneut prüfen oder das Problem melden.",
+        });
+      };
       pollRef.current = setInterval(async () => {
         try {
           const res = await apiFetch(`/api/case-generation-jobs/${jobId}`);
-          if (!res.ok) return;
+          if (!res.ok) {
+            consecutiveFailures += 1;
+            if (consecutiveFailures >= MAX_CONSECUTIVE_POLL_FAILURES) giveUp();
+            return;
+          }
+          consecutiveFailures = 0;
           const data = (await res.json()) as {
             status: string;
             phase: string;
@@ -57,7 +78,10 @@ export function useCaseGenerationJob(): CaseGenerationJobController {
             setState({ status: "running", jobId, phase: data.phase });
           }
         } catch {
-          // Vorübergehender Netzwerkfehler - beim nächsten Intervall erneut versuchen.
+          // Vorübergehender Netzwerkfehler - beim nächsten Intervall erneut
+          // versuchen, aber ebenfalls gegen die Aufgabe-Schwelle zählen.
+          consecutiveFailures += 1;
+          if (consecutiveFailures >= MAX_CONSECUTIVE_POLL_FAILURES) giveUp();
         }
       }, POLL_INTERVAL_MS);
     },

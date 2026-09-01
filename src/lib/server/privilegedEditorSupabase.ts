@@ -24,17 +24,16 @@
  */
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
+// Fund 2026-08-30 (Fallgenerierung scheiterte in Produktion mit
+// "Supabase-URL fehlt", Jobs vom 27.08.): rohe process.env.VITE_*-Reads
+// sind im Worker leer - zentrale Kette mit import.meta.env-Fallback nutzen.
+import { readSupabasePublishableKey, readSupabaseUrl } from "./supabaseEnv";
 
 const SERVICE_ACCOUNT_EMAIL =
   process.env.CASE_GENERATION_SERVICE_EMAIL ?? "admin@rechtkompass.local";
 
-function readUrl(): string | undefined {
-  return process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL;
-}
-
-function readPublishableKey(): string | undefined {
-  return process.env.SUPABASE_PUBLISHABLE_KEY ?? process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-}
+const readUrl = readSupabaseUrl;
+const readPublishableKey = readSupabasePublishableKey;
 
 function isNewSupabaseApiKey(value: string): boolean {
   return value.startsWith("sb_publishable_") || value.startsWith("sb_secret_");

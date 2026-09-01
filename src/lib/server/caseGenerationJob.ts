@@ -51,6 +51,39 @@ class DuplicateCaseError extends Error {
   }
 }
 
+/**
+ * Fund 2026-08-30 (Produktionstest der Fallgenerierung): die Pipeline rief
+ * ihre drei KI-Schritte per HTTP über die EIGENE öffentliche Domain auf
+ * (`fetch(`${apiOrigin}/api/ai-...`)`). Auf Cloudflare Workers schlägt ein
+ * solcher Selbstaufruf über die eigene Zone fehl (error code 522) - lokal
+ * unter Bun fiel das nie auf. Statt die drei komplexen Routen-Handler zu
+ * duplizieren oder umzubauen, werden sie hier IN-PROCESS mit einem
+ * synthetischen Request aufgerufen: identische Logik, identisches
+ * Response-Handling, nur ohne Netzwerk-Schleife über Cloudflare.
+ */
+type RouteWithPost = { options?: { server?: { handlers?: { POST?: (ctx: { request: Request; params: Record<string, never> }) => Promise<Response> | Response } } } };
+
+async function callInternalApi(routeModule: Promise<{ Route: unknown }>, path: string, payload: unknown): Promise<Response> {
+  const { Route } = await routeModule;
+  const handler = (Route as RouteWithPost).options?.server?.handlers?.POST;
+  if (typeof handler !== "function") {
+    throw new Error(`Interner API-Aufruf ${path}: POST-Handler nicht gefunden.`);
+  }
+  const request = new Request(`http://internal${path}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  return await handler({ request, params: {} });
+}
+
+const callDraftBatchItem = (payload: unknown) =>
+  callInternalApi(import("@/routes/api/ai-draft-batch-item"), "/api/ai-draft-batch-item", payload);
+const callValidateLegalClaims = (payload: unknown) =>
+  callInternalApi(import("@/routes/api/ai-validate-legal-claims"), "/api/ai-validate-legal-claims", payload);
+const callDraftDecisionTree = (payload: unknown) =>
+  callInternalApi(import("@/routes/api/ai-draft-decision-tree"), "/api/ai-draft-decision-tree", payload);
+
 async function updateJob(
   service: ReturnType<typeof createServiceSupabase>,
   jobId: string,
@@ -117,18 +150,14 @@ async function runPipeline(jobId: string, sketch: string, apiOrigin: string): Pr
     category: (c.category as string | null) ?? null,
   }));
 
-  const draftRes = await fetch(`${apiOrigin}/api/ai-draft-batch-item`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      title: "",
-      sketch,
-      categories: (cats as Array<{ name: string }>).map((c) => c.name),
-      keywords: (kws as Array<{ keyword: string }>).map((k) => k.keyword),
-      templates: templateRefs,
-      sections: sectionRefs,
-      cases: existingCases.slice(0, 100).map((c) => ({ id: c.id, label: c.title, category: c.category ?? undefined })),
-    }),
+  const draftRes = await callDraftBatchItem({
+    title: "",
+    sketch,
+    categories: (cats as Array<{ name: string }>).map((c) => c.name),
+    keywords: (kws as Array<{ keyword: string }>).map((k) => k.keyword),
+    templates: templateRefs,
+    sections: sectionRefs,
+    cases: existingCases.slice(0, 100).map((c) => ({ id: c.id, label: c.title, category: c.category ?? undefined })),
   });
   if (!draftRes.ok) throw new Error(`Fallentwurf fehlgeschlagen: ${await draftRes.text()}`);
   const { draft } = (await draftRes.json()) as { draft: Record<string, unknown> };
@@ -239,17 +268,14 @@ async function runPipeline(jobId: string, sketch: string, apiOrigin: string): Pr
     const commonMistakesItems = toArray(caseRow2.common_mistakes).map((text, i) => ({ id: `common_mistakes-${i}`, ...parseTieredItem(text) }));
     const documentationItems = toArray(caseRow2.documentation).map((text, i) => ({ id: `documentation-${i}`, ...parseTieredItem(text) }));
 
-    const valRes = await fetch(`${apiOrigin}/api/ai-validate-legal-claims`, {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        title: caseRow2.title, category: caseRow2.category,
-        legal_vorgegeben: split.vorgegeben, legal_einordnung: split.einordnung,
-        short_answer: caseRow2.short_answer,
-        recommendation: caseRow2.recommendation,
-        checklist: checklistItems, practice_tip: practiceTipItems, common_mistakes: commonMistakesItems,
-        documentation: documentationItems,
-        sources,
-      }),
+    const valRes = await callValidateLegalClaims({
+      title: caseRow2.title, category: caseRow2.category,
+      legal_vorgegeben: split.vorgegeben, legal_einordnung: split.einordnung,
+      short_answer: caseRow2.short_answer,
+      recommendation: caseRow2.recommendation,
+      checklist: checklistItems, practice_tip: practiceTipItems, common_mistakes: commonMistakesItems,
+      documentation: documentationItems,
+      sources,
     });
     if (valRes.ok) {
       const val = (await valRes.json()) as {
@@ -341,11 +367,7 @@ async function runPipeline(jobId: string, sketch: string, apiOrigin: string): Pr
   await updateJob(service, jobId, { phase: "entscheidungsbaum" });
   const { data: freshRow } = await service.from("practice_cases").select("*").eq("id", caseId).limit(1);
   const caseRow = (freshRow ?? [])[0];
-  const treeRes = await fetch(`${apiOrigin}/api/ai-draft-decision-tree`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ caseRow }),
-  });
+  const treeRes = await callDraftDecisionTree({ caseRow });
   if (!treeRes.ok) throw new Error(`Entscheidungsbaum-Generierung fehlgeschlagen: ${await treeRes.text()}`);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { tree } = (await treeRes.json()) as { tree: any };

@@ -83,6 +83,10 @@ const callValidateLegalClaims = (payload: unknown) =>
   callInternalApi(import("@/routes/api/ai-validate-legal-claims"), "/api/ai-validate-legal-claims", payload);
 const callDraftDecisionTree = (payload: unknown) =>
   callInternalApi(import("@/routes/api/ai-draft-decision-tree"), "/api/ai-draft-decision-tree", payload);
+const callReviseLegalCase = (payload: unknown) =>
+  callInternalApi(import("@/routes/api/ai-revise-legal-case"), "/api/ai-revise-legal-case", payload);
+const callMatchLegalSections = (payload: unknown) =>
+  callInternalApi(import("@/routes/api/ai-match-legal-sections"), "/api/ai-match-legal-sections", payload);
 
 async function updateJob(
   service: ReturnType<typeof createServiceSupabase>,
@@ -241,27 +245,159 @@ async function runPipeline(jobId: string, sketch: string, apiOrigin: string): Pr
   // offene Fragen als Flags eintragen, legal_review_status setzen - eine
   // Redaktion sieht den Befund vor jeder manuellen Freigabe.
   await updateJob(service, jobId, { phase: "rechtspruefung" });
-  {
-    const { parseTieredItem, splitLegalExplanation } = await import("@/lib/caseEnrichment");
-    const sectionIds2 = (links as Array<{ legal_section_id: string }>).map((l) => l.legal_section_id).filter(Boolean);
+
+  // Fund 2026-09-01 ("Ziel: generierte Fälle so grün wie möglich"): die
+  // Prüfung läuft jetzt als wiederholbare Runde. Fällt Runde 1 nicht grün
+  // aus, saniert EINE Nachsanierungsrunde die beanstandeten Felder mit den
+  // frischen Befunden (verankern/abstufen/streichen - dieselbe Route wie
+  // die Bestands-Textsanierung), danach prüft Runde 2 erneut. Rot bleibt
+  // dann nur noch, wo die Wissensbasis die zentrale Rechtsfrage schlicht
+  // nicht deckt - und genau so soll es sein.
+  const loadSourcesForCase = async () => {
+    // Bewusst frisch aus der DB statt aus dem Phase-3-Closure: die
+    // Relink-Runde (unten) kann die Verknüpfungen zwischenzeitlich ändern.
+    const { data: linkRows } = await (service.from("case_legal_links") as any)
+      .select("legal_section_id").eq("case_id", caseId);
+    const sectionIds2 = ((linkRows ?? []) as Array<{ legal_section_id: string }>).map((l) => l.legal_section_id).filter(Boolean);
     const { data: fullSectionRows } = sectionIds2.length
       ? await (service.from("legal_sections") as any)
           .select("id, section_number, title, full_text, legal_sources(name)")
           .in("id", sectionIds2)
       : { data: [] };
-    const sources = ((fullSectionRows ?? []) as any[]).map((s) => ({
+    return ((fullSectionRows ?? []) as any[]).map((s) => ({
       id: s.id, reference: s.section_number ?? "", title: s.title ?? null,
       full_text: s.full_text ?? null, source_name: s.legal_sources?.name ?? null,
     }));
+  };
+
+  // Fund 2026-09-01 (A/B-Test der Nachsanierung): der Fall zitierte § 53
+  // SchulG und § 66 VwVfG im Text, verlinkt war aber nur § 1 SchulG - die
+  // Sanierung kann nur in VERLINKTEN Quellen verankern. Diese Runde wählt
+  // deshalb mit dem VOLLEN Falltext (der die zitierten Normen nennt) neue
+  // Kandidaten aus und verlinkt sie - dieselbe Mechanik, die den Bestand
+  // saniert hat (scripts/_relink-apo-bk-cases.ts).
+  const runRelinkRound = async (): Promise<boolean> => {
+    const { filterRelevantSections } = await import("@/routes/api/ai-draft-batch-item");
+    const { createLegalLink } = await import("@/lib/coreBuilder");
+    const { data: caseRows } = await service.from("practice_cases").select("*").eq("id", caseId).limit(1);
+    const c = (caseRows ?? [])[0] as any;
+    const { data: linkRows } = await (service.from("case_legal_links") as any)
+      .select("legal_section_id").eq("case_id", caseId);
+    const linkedIds = new Set(((linkRows ?? []) as any[]).map((l) => l.legal_section_id));
+
+    const queryText = [
+      c.title, c.short_description, c.category, c.subcategory,
+      c.legal_explanation, c.recommendation, c.immediate_actions, "Berufskolleg",
+    ].filter(Boolean).join(" ");
+    const candidates = filterRelevantSections(sectionRefs, queryText, 400).map((ref) => {
+      const s = publishedSecs.find((x) => x.id === ref.id) as any;
+      return {
+        id: ref.id,
+        source_short: s?.legal_sources?.short_name ?? s?.legal_sources?.name ?? "",
+        section_number: (s?.section_number as string) ?? "",
+        title: (s?.title as string) ?? "",
+      };
+    });
+    const res = await callMatchLegalSections({
+      title: c.title ?? "", short_description: c.short_description ?? "",
+      category: c.category ?? "", subcategory: c.subcategory ?? "",
+      bildungsgang: "Berufskolleg",
+      recommendation: c.recommendation ?? "", immediate_actions: c.immediate_actions ?? "",
+      responsibilities: c.responsibilities ?? "",
+      sections: candidates,
+    });
+    if (!res.ok) {
+      console.error("[caseGenerationJob] Relink-Runde fehlgeschlagen:", await res.text());
+      return false;
+    }
+    const match = (await res.json()) as { matches: Array<{ id: string; confidence: number; relevance_tier?: string; reason: string }> };
+    const toAdd = (match.matches ?? []).filter((m) => !linkedIds.has(m.id) && m.confidence >= 55);
+    for (const m of toAdd) {
+      const relevance = m.relevance_tier === "primary" ? "high" : m.relevance_tier === "supporting" ? "medium" : "low";
+      await createLegalLink(caseId, m.id, m.reason?.slice(0, 500) || undefined, relevance as "low" | "medium" | "high");
+    }
+    return toAdd.length > 0;
+  };
+
+  const toArray = (v: unknown): string[] =>
+    Array.isArray(v) ? v.filter((x): x is string => typeof x === "string" && x.trim().length > 0)
+      : typeof v === "string" && v.trim() ? v.split(/\r?\n/).map((s) => s.replace(/^[-*]\s*/, "").trim()).filter(Boolean)
+      : [];
+
+  const runRevisionRound = async (): Promise<boolean> => {
+    const { splitLegalExplanation } = await import("@/lib/caseEnrichment");
+    const sources = await loadSourcesForCase();
+    const { data: caseRows } = await service.from("practice_cases").select("*").eq("id", caseId).limit(1);
+    const c = (caseRows ?? [])[0] as any;
+    const split = splitLegalExplanation(c.legal_explanation);
+    const { data: flagRows } = await ((service as any).from("case_legal_review_flags"))
+      .select("id, reason").eq("case_id", caseId).is("resolved_at", null);
+    const openFlags = ((flagRows ?? []) as Array<{ id: string; reason: string | null }>);
+
+    const res = await callReviseLegalCase({
+      title: c.title, category: c.category,
+      legal_vorgegeben: split.vorgegeben, legal_einordnung: split.einordnung,
+      short_answer: c.short_answer, recommendation: c.recommendation,
+      immediate_actions: c.immediate_actions,
+      checklist: toArray(c.checklist), practice_tip: c.practice_tip ?? "",
+      common_mistakes: toArray(c.common_mistakes), documentation: toArray(c.documentation),
+      sources,
+      findings: {
+        reasoning: c.legal_review_reasoning ?? "",
+        open_flags: openFlags.map((f) => f.reason).filter((r): r is string => !!r?.trim()),
+      },
+    });
+    if (!res.ok) {
+      console.error("[caseGenerationJob] Nachsanierung fehlgeschlagen:", await res.text());
+      return false;
+    }
+    const rev = (await res.json()) as {
+      legal_explanation: { changed: boolean; vorgegeben?: string; einordnung?: string };
+      short_answer: { changed: boolean; text?: string };
+      recommendation: { changed: boolean; text?: string };
+      immediate_actions: { changed: boolean; text?: string };
+      practice_tip: { changed: boolean; text?: string };
+      checklist: { changed: boolean; items?: string[] };
+      common_mistakes: { changed: boolean; items?: string[] };
+      documentation: { changed: boolean; items?: string[] };
+    };
+    const patch: Record<string, unknown> = {};
+    if (rev.legal_explanation.changed && rev.legal_explanation.vorgegeben && rev.legal_explanation.einordnung) {
+      patch.legal_explanation = `RECHTLICH VORGEGEBEN: ${rev.legal_explanation.vorgegeben}\n\nRECHTLICHE EINORDNUNG: ${rev.legal_explanation.einordnung}`;
+    }
+    if (rev.short_answer.changed && rev.short_answer.text?.trim()) patch.short_answer = rev.short_answer.text.trim();
+    if (rev.recommendation.changed && rev.recommendation.text?.trim()) patch.recommendation = rev.recommendation.text.trim();
+    if (rev.immediate_actions.changed && rev.immediate_actions.text?.trim()) patch.immediate_actions = rev.immediate_actions.text.trim();
+    if (rev.practice_tip.changed && rev.practice_tip.text?.trim()) patch.practice_tip = rev.practice_tip.text.trim();
+    if (rev.checklist.changed && rev.checklist.items) patch.checklist = rev.checklist.items;
+    if (rev.common_mistakes.changed && rev.common_mistakes.items) patch.common_mistakes = rev.common_mistakes.items;
+    if (rev.documentation.changed && rev.documentation.items) patch.documentation = rev.documentation.items;
+    if (Object.keys(patch).length === 0) return false;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await updateCase(caseId, patch as any);
+    // In die Sanierung eingeflossene Flags gelten als adressiert - die
+    // anschließende Prüfrunde legt für weiterhin Offenes frische an.
+    if (openFlags.length) {
+      await ((service as any).from("case_legal_review_flags"))
+        .update({ resolved_at: new Date().toISOString() })
+        .eq("case_id", caseId).is("resolved_at", null);
+    }
+    return true;
+  };
+
+  const runLegalReviewRound = async (): Promise<{ color: "gruen" | "gelb" | "rot" | null; changes: number }> => {
+    const { parseTieredItem, splitLegalExplanation } = await import("@/lib/caseEnrichment");
+    const sources = await loadSourcesForCase();
+    // Jede Runde leitet die offenen Fragen vollständig neu her - alte,
+    // ungelöste Flags dieses (frisch generierten) Falls vorher auflösen,
+    // damit Mehrfachrunden keine Duplikate stapeln.
+    await ((service as any).from("case_legal_review_flags"))
+      .update({ resolved_at: new Date().toISOString() })
+      .eq("case_id", caseId).is("resolved_at", null);
 
     const { data: caseRows2 } = await service.from("practice_cases").select("*").eq("id", caseId).limit(1);
     const caseRow2 = (caseRows2 ?? [])[0] as any;
     const split = splitLegalExplanation(caseRow2.legal_explanation);
-
-    const toArray = (v: unknown): string[] =>
-      Array.isArray(v) ? v.filter((x): x is string => typeof x === "string" && x.trim().length > 0)
-        : typeof v === "string" && v.trim() ? v.split(/\r?\n/).map((s) => s.replace(/^[-*]\s*/, "").trim()).filter(Boolean)
-        : [];
 
     const checklistItems = toArray(caseRow2.checklist).map((text, i) => ({ id: `checklist-${i}`, ...parseTieredItem(text) }));
     const practiceTipItems = toArray(caseRow2.practice_tip).map((text, i) => ({ id: `practice_tip-${i}`, ...parseTieredItem(text) }));
@@ -277,6 +413,8 @@ async function runPipeline(jobId: string, sketch: string, apiOrigin: string): Pr
       documentation: documentationItems,
       sources,
     });
+    let roundColor: "gruen" | "gelb" | "rot" | null = null;
+    let roundChanges = 0;
     if (valRes.ok) {
       const val = (await valRes.json()) as {
         legal_explanation_revision: { changed: boolean; vorgegeben?: string; einordnung?: string };
@@ -290,6 +428,11 @@ async function runPipeline(jobId: string, sketch: string, apiOrigin: string): Pr
         release_gate_flags: Array<{ claimId: string; flagType: string; message: string }>;
         claims: Array<{ id: string; section: string; text: string; classification: string; isCentral: boolean; sourceId?: string | null }>;
       };
+      roundColor = val.quality_color;
+      roundChanges =
+        val.item_verdicts.filter((v) => v.verdict !== "bestaetigt").length +
+        (val.legal_explanation_revision.changed ? 1 : 0) +
+        (val.short_answer_revision.changed ? 1 : 0);
       const verdictById = new Map(val.item_verdicts.map((v) => [v.id, v]));
       const openQuestionTexts: string[] = [...val.new_open_questions];
 
@@ -360,6 +503,25 @@ async function runPipeline(jobId: string, sketch: string, apiOrigin: string): Pr
           : `[${flag.flagType}] ${flag.message}`;
         await createLegalReviewFlag(caseId, reviewText);
       }
+    }
+    return { color: roundColor, changes: roundChanges };
+  };
+
+  const first = await runLegalReviewRound();
+  if (first.color && first.color !== "gruen") {
+    await runRelinkRound();
+    // Konvergenzschleife (A/B-Funde 2026-09-01): (a) jede Prüfrunde benotet
+    // den Zustand VOR ihren eigenen Korrekturen - die Note hinkt dem Inhalt
+    // eine Runde hinterher; (b) die Prüfrunde kann Labels nur abschwächen,
+    // Verschärfungen (z.B. "sollte 'Rechtlich problematisch' sein") kann
+    // nur die Nachsanierungsrunde über die offenen Flags umsetzen. Deshalb
+    // Nachsanieren und Prüfen im Wechsel, bis grün erreicht ist oder eine
+    // Runde nichts mehr bewegt. Deckel: 3 Zyklen.
+    for (let cycle = 0; cycle < 3; cycle++) {
+      const revised = await runRevisionRound();
+      const review = await runLegalReviewRound();
+      if (!review.color || review.color === "gruen") break;
+      if (!revised && review.changes === 0) break;
     }
   }
 

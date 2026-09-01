@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import {
   BookOpen,
   ChevronRight,
@@ -11,6 +11,7 @@ import {
   Search,
 } from "lucide-react";
 import { TileIntakeContainer } from "@/components/assistant/tile-intake";
+import { DescriptionIntake } from "@/components/assistant/DescriptionIntake";
 import { useTileIntake } from "@/hooks/assistant/useTileIntake";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 
@@ -77,6 +78,21 @@ function caseMatchesQuery(c: CaseData, q: string): boolean {
 function AssistentPage() {
   const assistant = useTileIntake();
   const { data: cases, isLoading, error } = usePublishedCases();
+
+  // Fall-schildern-Neubau 2026-09-01: die strukturierte Kachel-Erfassung ist
+  // kein Einstieg mehr, sondern ein Dokumentationswerkzeug, das erst auf der
+  // Ergebnisseite (oder bewusst hier unten) geöffnet wird.
+  const [docOpen, setDocOpen] = useState(false);
+  const [docDescription, setDocDescription] = useState("");
+  const docSectionRef = useRef<HTMLDetailsElement | null>(null);
+
+  const openDocumentation = (description: string) => {
+    setDocDescription(description);
+    setDocOpen(true);
+    requestAnimationFrame(() => {
+      docSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  };
 
   const [category, setCategory] = useState<string | null>(null);
   const [subcategory, setSubcategory] = useState<string | null>(null);
@@ -167,9 +183,32 @@ function AssistentPage() {
         </div>
       </div>
 
-      <TileIntakeContainer controller={assistant} />
+      <DescriptionIntake onDocument={openDocumentation} />
 
-      <details className="mt-8 rounded-2xl border border-border bg-card p-4">
+      <details
+        ref={docSectionRef}
+        open={docOpen}
+        onToggle={(e) => setDocOpen((e.target as HTMLDetailsElement).open)}
+        className="mt-8 rounded-2xl border border-border bg-card p-4"
+      >
+        <summary className="cursor-pointer text-sm font-semibold">
+          Vorfall strukturiert dokumentieren (Fallakte)
+        </summary>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Schritt für Schritt: Beteiligte, Zeitpunkt, Nachweise und Maßnahmen erfassen – z. B. nach einer
+          Einschätzung oben.
+        </p>
+        {docDescription && (
+          <div className="mt-3 rounded-xl border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
+            <span className="font-semibold text-foreground">Ihre Schilderung:</span> {docDescription}
+          </div>
+        )}
+        <div className="mt-4">
+          <TileIntakeContainer controller={assistant} />
+        </div>
+      </details>
+
+      <details className="mt-4 rounded-2xl border border-border bg-card p-4">
         <summary className="cursor-pointer text-sm font-semibold">
           Stattdessen selbst nach einem Praxisfall suchen
         </summary>

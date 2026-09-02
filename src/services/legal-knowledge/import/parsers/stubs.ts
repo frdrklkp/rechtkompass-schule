@@ -96,6 +96,8 @@ export { jarbschgParser } from "./jarbschgParser";
 import { jarbschgParser } from "./jarbschgParser";
 export { bgbParser, stgbParser, sgb7Parser, juschgParser } from "./gesetzeImInternetParserFactory";
 import { bgbParser, stgbParser, sgb7Parser, juschgParser } from "./gesetzeImInternetParserFactory";
+export { aiActParser } from "./aiActParser";
+import { aiActParser } from "./aiActParser";
 
 export const erlassParser = makeStub({
   id: "erlass-generic",
@@ -149,6 +151,7 @@ export const preparedParsers = [
   stgbParser,
   sgb7Parser,
   juschgParser,
+  aiActParser,
   dsgvoParser,
   bassNrwParser,
   erlassParser,

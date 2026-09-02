@@ -8,7 +8,7 @@
  * Aufruf: bun run scripts/_import-backlog-sources.ts
  */
 import { createClient } from "@supabase/supabase-js";
-import { bbigParser, bgbParser, dsgNrwParser, jarbschgParser, juschgParser, kunsturhgParser, sgb7Parser, sgb8Parser, stgbParser } from "../src/services/legal-knowledge/import";
+import { aiActParser, bbigParser, bgbParser, dsgNrwParser, jarbschgParser, juschgParser, kunsturhgParser, sgb7Parser, sgb8Parser, stgbParser } from "../src/services/legal-knowledge/import";
 import { mergeDocuments } from "../src/services/legal-knowledge/connectors/OfficialSourceConnectorService";
 import type { LegalImportInput, LegalImportParser, LegalNode } from "../src/services/legal-knowledge/import/types";
 import {
@@ -35,7 +35,11 @@ const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, { auth: { persistS
 // begrenzt den Import auf die schulrelevanten Paragraphen (Whitelist,
 // abgeglichen ohne "§ "-Präfix, z.B. "823" oder "201a"). Ohne `sections`
 // wird wie bisher das komplette Gesetz importiert.
-const TARGETS: Array<{ url: string; label: string; sourceId: string; parser: LegalImportParser; legalDomain: string; bund: boolean; sections?: string[] }> = [
+// `rawFile` (Runde 2): eur-lex.europa.eu blockt serverseitige Abrufe per
+// AWS-WAF - der Rohtext wird über einen echten Browser geholt und hier als
+// lokale Datei übergeben; der Crawl-Schritt entfällt für solche Ziele.
+// `jurisdiction` übersteuert das Bund/NRW-Paar (z.B. "EU").
+const TARGETS: Array<{ url: string; label: string; sourceId: string; parser: LegalImportParser; legalDomain: string; bund: boolean; sections?: string[]; rawFile?: string; jurisdiction?: string; authority?: string }> = [
   {
     url: "https://recht.nrw.de/lrgv/gesetz/01042026-datenschutzgesetz-nordrhein-westfalen/",
     label: "DSG NRW",
@@ -121,6 +125,22 @@ const TARGETS: Array<{ url: string; label: string; sourceId: string; parser: Leg
     // die Klassenfahrt-Standardfragen.
     sections: ["1", "9", "10"],
   },
+  {
+    url: "https://eur-lex.europa.eu/legal-content/DE/TXT/HTML/?uri=CELEX:32024R1689",
+    label: "KI-VO (Auszug)",
+    sourceId: "ai-act",
+    parser: aiActParser,
+    legalDomain: "KI im Unterricht",
+    bund: true,
+    jurisdiction: "EU",
+    authority: "Europäisches Parlament und Rat der Europäischen Union",
+    rawFile: "ai_act_raw.txt",
+    // Art. 2 Anwendungsbereich, Art. 4 KI-Kompetenz, Art. 5 verbotene
+    // Praktiken (u.a. Emotionserkennung in Bildungseinrichtungen), Art. 6
+    // Hochrisiko-Einstufung, Art. 26 Betreiberpflichten, Art. 50
+    // Transparenzpflichten; Anhang III (Nr. 3: Bildung als Hochrisiko).
+    sections: ["Art 2", "Art 4", "Art 5", "Art 6", "Art 26", "Art 50", "Anhang III"],
+  },
 ];
 
 async function getAuthToken(): Promise<string> {
@@ -170,12 +190,12 @@ function collectParagraphs(node: LegalNode, ancestry: string[], out: FlatParagra
   for (const child of node.children) collectParagraphs(child, isBlock ? ancestry : nextAncestry, out, currentHeading);
 }
 
-async function upsertSource(sourceKey: string, title: string, shortName: string | null, officialUrl: string, versionLabel: string | null, legalDomain: string, bund: boolean): Promise<string> {
+async function upsertSource(sourceKey: string, title: string, shortName: string | null, officialUrl: string, versionLabel: string | null, legalDomain: string, bund: boolean, jurisdictionOverride?: string, authorityOverride?: string): Promise<string> {
   const id = deterministicUuid(`legal_source:${sourceKey}`);
   const { error } = await supabase.from("legal_sources").upsert({
     id, name: title, title, short_name: shortName, source_type: "law", status: "active",
-    official_url: officialUrl, jurisdiction: bund ? "Bund" : "NRW",
-    authority: bund ? "Bundesrepublik Deutschland" : "Land Nordrhein-Westfalen",
+    official_url: officialUrl, jurisdiction: jurisdictionOverride ?? (bund ? "Bund" : "NRW"),
+    authority: authorityOverride ?? (bund ? "Bundesrepublik Deutschland" : "Land Nordrhein-Westfalen"),
     federal_state: bund ? null : "NRW",
     legal_domain: legalDomain, version_label: versionLabel, official_source: true, authority_verified: true,
     verification_status: "unverified", lifecycle_status: "active", source_language: "de",
@@ -265,24 +285,37 @@ async function embedChunks(sourceId: string): Promise<{ embedded: number; skippe
 
 async function importOne(target: (typeof TARGETS)[number], authToken: string): Promise<void> {
   console.log(`\n=== ${target.label} ===`);
-  const crawlRes = await fetch(`${API_BASE}/api/legal-source-crawl`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${authToken}` },
-    body: JSON.stringify({ source_id: target.sourceId, url: target.url, max_pages: 5, max_depth: 0 }),
-  });
-  const crawl = await crawlRes.json();
-  if (!crawlRes.ok || crawl.error || !crawl.documents?.length) {
-    throw new Error(crawl.error ?? "Kein Dokument geladen");
+  let raw: string;
+  let detectedTitle: string | null = null;
+  let detectedVersion: string | null = null;
+  if (target.rawFile) {
+    const { readFileSync } = await import("fs");
+    const { isAbsolute, join } = await import("path");
+    const rawPath = isAbsolute(target.rawFile) ? target.rawFile : join(process.env.RAW_IMPORT_DIR ?? ".", target.rawFile);
+    raw = readFileSync(rawPath, "utf-8");
+    console.log(`  Rohtext aus Datei: ${rawPath} (${Math.round(raw.length / 1024)} kB)`);
+  } else {
+    const crawlRes = await fetch(`${API_BASE}/api/legal-source-crawl`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${authToken}` },
+      body: JSON.stringify({ source_id: target.sourceId, url: target.url, max_pages: 5, max_depth: 0 }),
+    });
+    const crawl = await crawlRes.json();
+    if (!crawlRes.ok || crawl.error || !crawl.documents?.length) {
+      throw new Error(crawl.error ?? "Kein Dokument geladen");
+    }
+    console.log(`  Gecrawlt: ${crawl.documents.length} Dokument(e), Titel: "${crawl.documents[0]?.title ?? "?"}"`);
+    raw = mergeDocuments(crawl.documents);
+    detectedTitle = crawl.documents[0]?.title ?? null;
+    detectedVersion = crawl.documents.find((d: { versionHint?: string | null }) => d.versionHint)?.versionHint ?? null;
   }
-  console.log(`  Gecrawlt: ${crawl.documents.length} Dokument(e), Titel: "${crawl.documents[0]?.title ?? "?"}"`);
 
-  const raw = mergeDocuments(crawl.documents);
   const input: LegalImportInput = {
     raw,
     hint: {
       officialUrl: target.url,
-      detectedTitle: crawl.documents[0]?.title ?? null,
-      detectedVersion: crawl.documents.find((d: { versionHint?: string | null }) => d.versionHint)?.versionHint ?? null,
+      detectedTitle,
+      detectedVersion,
     },
   };
 
@@ -291,19 +324,19 @@ async function importOne(target: (typeof TARGETS)[number], authToken: string): P
   collectParagraphs(document.root, [], paragraphs);
 
   if (target.sections) {
-    const wanted = new Set(target.sections);
+    // Einträge wie "823" meinen "§ 823"; "Art 5" und "Anhang III" werden
+    // wörtlich gegen die Referenz-Segmente (ancestry-Pfad) abgeglichen.
+    const wanted = target.sections.map((s) => (/^\d/.test(s) ? `§ ${s}` : s));
     const before = paragraphs.length;
-    const kept = paragraphs.filter((p) => {
-      const m = /§\s*(\d+[a-z]?)(?:\D|$)/.exec(p.reference);
-      return m !== null && wanted.has(m[1]);
-    });
+    const matchesEntry = (p: FlatParagraph, entry: string) =>
+      p.reference.split(".").some((seg) => seg.trim() === entry);
+    const kept = paragraphs.filter((p) => wanted.some((w) => matchesEntry(p, w)));
     paragraphs.length = 0;
     paragraphs.push(...kept);
-    const found = new Set(kept.map((p) => /§\s*(\d+[a-z]?)/.exec(p.reference)?.[1]));
-    const missing = target.sections.filter((s) => !found.has(s));
-    console.log(`  Whitelist: ${kept.length}/${before} Paragraphen behalten (${target.sections.length} gewünscht).`);
+    const missing = wanted.filter((w) => !kept.some((p) => matchesEntry(p, w)));
+    console.log(`  Whitelist: ${kept.length}/${before} Abschnitte behalten (${target.sections.length} gewünscht).`);
     if (missing.length > 0) {
-      console.log(`  WARNUNG: nicht gefunden: § ${missing.join(", § ")}`);
+      console.log(`  WARNUNG: nicht gefunden: ${missing.join(", ")}`);
     }
   }
   const seenPaths = new Map<string, number>();
@@ -322,7 +355,7 @@ async function importOne(target: (typeof TARGETS)[number], authToken: string): P
   }
   console.log(`  Beispiel: ${paragraphs[0].reference} ${paragraphs[0].title ?? ""} -> "${paragraphs[0].fullText.slice(0, 100)}..."`);
 
-  const rowId = await upsertSource(target.sourceId, document.source.title, document.source.shortName, target.url, document.version.label, target.legalDomain, target.bund);
+  const rowId = await upsertSource(target.sourceId, document.source.title, document.source.shortName, target.url, document.version.label, target.legalDomain, target.bund, target.jurisdiction, target.authority);
   const sectionIdByPath = await upsertSections(rowId, target.sourceId, document.version.label, paragraphs, target.parser.id, target.url);
   await upsertChunks(rowId, target.sourceId, document.source.title, paragraphs, sectionIdByPath);
   const embedStats = await embedChunks(rowId);

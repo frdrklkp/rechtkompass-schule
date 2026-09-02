@@ -227,6 +227,16 @@ export const OFFICIAL_SOURCES: OfficialSourceDefinition[] = [
     maxDepth: 0,
   },
   {
+    id: "ai-act",
+    label: "KI-VO (Auszug)",
+    description: "EU-KI-Verordnung 2024/1689 - Auszug: KI-Kompetenz, verbotene Praktiken, Hochrisiko (Bildung), Betreiberpflichten, Transparenz",
+    defaultUrl: "https://eur-lex.europa.eu/legal-content/DE/TXT/HTML/?uri=CELEX:32024R1689",
+    parserId: "ai-act",
+    hosts: ["eur-lex.europa.eu"],
+    maxPages: 5,
+    maxDepth: 0,
+  },
+  {
     id: "sgb-8",
     label: "SGB VIII",
     description: "Kinder- und Jugendhilfe (Bund, u.a. § 8a Kindeswohl)",

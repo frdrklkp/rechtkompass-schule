@@ -8,6 +8,8 @@ export type SendEmailInput = {
   text?: string;
   from?: string;
   replyTo?: string;
+  /** Anhänge, content base64-kodiert (Resend-API-Format). */
+  attachments?: Array<{ filename: string; content: string }>;
 };
 
 export type SendEmailResult = {
@@ -37,6 +39,7 @@ export async function sendEmail(input: SendEmailInput): Promise<SendEmailResult>
       html: input.html,
       text: input.text,
       reply_to: input.replyTo,
+      attachments: input.attachments,
     }),
   });
 

@@ -49,6 +49,11 @@ export const DocumentGenerationApi = {
     api<{ ok: boolean }>(`/api/workflow-sessions/${sessionId}/documents/${docId}`, {
       method: "DELETE",
     }),
+  sendEmail: (sessionId: string, docId: string, recipientEmail: string, message?: string) =>
+    api<{ ok: boolean; id: string | null }>(`/api/workflow-sessions/${sessionId}/documents/${docId}/email`, {
+      method: "POST",
+      body: JSON.stringify({ recipient_email: recipientEmail, message }),
+    }),
   async download(sessionId: string, docId: string, format: "md" | "docx" | "pdf") {
     const headers = { ...(await authHeader()) };
     const res = await fetch(

@@ -8,6 +8,7 @@ import {
   Download,
   FileText,
   Loader2,
+  Mail,
   RefreshCw,
   Sparkles,
   Trash2,
@@ -16,6 +17,8 @@ import {
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { useAuthSession } from "@/lib/adminAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
@@ -67,6 +70,7 @@ export function WorkflowDocumentsSection({ sessionId }: { sessionId: string }) {
   const regenerate = useRegenerateDocument(sessionId);
   const remove = useDeleteDocument(sessionId);
   const [preview, setPreview] = useState<GeneratedDocument | null>(null);
+  const [emailDoc, setEmailDoc] = useState<GeneratedDocument | null>(null);
 
   const templates = data?.templates ?? [];
   const documents = data?.documents ?? [];
@@ -118,6 +122,7 @@ export function WorkflowDocumentsSection({ sessionId }: { sessionId: string }) {
                 onRegenerate={(docId) => regenerate.mutate({ docId })}
                 onDelete={(docId) => remove.mutate(docId)}
                 onPreview={(doc) => setPreview(doc)}
+                onEmail={(doc) => setEmailDoc(doc)}
                 busy={generate.isPending || regenerate.isPending}
               />
             ))}
@@ -126,6 +131,7 @@ export function WorkflowDocumentsSection({ sessionId }: { sessionId: string }) {
       </CardContent>
 
       <PreviewDialog doc={preview} onClose={() => setPreview(null)} />
+      <EmailDialog doc={emailDoc} onClose={() => setEmailDoc(null)} />
     </Card>
   );
 }
@@ -137,6 +143,7 @@ function TemplateRow({
   onRegenerate,
   onDelete,
   onPreview,
+  onEmail,
   busy,
 }: {
   template: DocumentTemplateInput;
@@ -145,6 +152,7 @@ function TemplateRow({
   onRegenerate: (id: string) => void;
   onDelete: (id: string) => void;
   onPreview: (doc: GeneratedDocument) => void;
+  onEmail: (doc: GeneratedDocument) => void;
   busy: boolean;
 }) {
   return (
@@ -202,6 +210,9 @@ function TemplateRow({
                 </Button>
                 <Button size="sm" variant="ghost" onClick={() => downloadExport(d, "pdf")} title="PDF herunterladen">
                   <Download className="mr-1 h-3.5 w-3.5" /> PDF
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => onEmail(d)} title="Als PDF per E-Mail senden">
+                  <Mail className="mr-1 h-3.5 w-3.5" /> E-Mail
                 </Button>
                 <Button size="sm" variant="ghost" onClick={() => onRegenerate(d.id)}>
                   <RefreshCw className="mr-1 h-3.5 w-3.5" /> Neu erzeugen
@@ -293,4 +304,89 @@ function reasonLabel(r: string): string {
     case "ai_disabled": return "KI-Feld nicht gefüllt";
     default: return r;
   }
+}
+
+/**
+ * E-Mail-Versand eines Vorgangs-Dokuments als PDF-Anhang (2026-09-02).
+ * Empfänger vorbefüllt mit der eigenen Login-Adresse; Versand läuft über
+ * die authentifizierte Route /api/workflow-sessions/:id/documents/:docId/email.
+ */
+function EmailDialog({ doc, onClose }: { doc: GeneratedDocument | null; onClose: () => void }) {
+  const { user } = useAuthSession();
+  const [recipient, setRecipient] = useState("");
+  const [message, setMessage] = useState("");
+  const [sending, setSending] = useState(false);
+  const [lastDocId, setLastDocId] = useState<string | null>(null);
+
+  if (doc && doc.id !== lastDocId) {
+    setLastDocId(doc.id);
+    setRecipient(user?.email ?? "");
+    setMessage("");
+  }
+  if (!doc) return null;
+
+  const valid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(recipient.trim());
+
+  const send = async () => {
+    if (!valid || sending) return;
+    setSending(true);
+    try {
+      await DocumentGenerationApi.sendEmail(doc.sessionId, doc.id, recipient.trim(), message.trim() || undefined);
+      toast.success("Dokument wurde als PDF per E-Mail versendet.");
+      onClose();
+    } catch (err) {
+      toast.error((err as Error)?.message || "Versand fehlgeschlagen.");
+    } finally {
+      setSending(false);
+    }
+  };
+
+  return (
+    <Dialog open={!!doc} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Mail className="h-4 w-4" /> Dokument per E-Mail senden
+          </DialogTitle>
+          <DialogDescription>
+            „{doc.title}" wird als PDF-Anhang versendet – z.&nbsp;B. an das eigene Postfach zur Ablage
+            oder an die Schulleitung.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div>
+            <label className="mb-1 block text-xs font-medium">Empfänger-E-Mail</label>
+            <Input
+              type="email"
+              value={recipient}
+              onChange={(e) => setRecipient(e.target.value)}
+              placeholder="name@schule.de"
+            />
+            {recipient.trim() && !valid && (
+              <p className="mt-1 text-xs text-destructive">Ungültige E-Mail-Adresse.</p>
+            )}
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-medium">Nachricht (optional)</label>
+            <textarea
+              value={message}
+              onChange={(e) => setMessage(e.target.value.slice(0, 2000))}
+              rows={3}
+              className="w-full rounded-md border border-input bg-background p-2 text-sm outline-none focus:border-primary"
+              placeholder="Kurze Anmerkung für den Empfänger …"
+            />
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button size="sm" variant="outline" onClick={onClose} disabled={sending}>
+              Abbrechen
+            </Button>
+            <Button size="sm" onClick={send} disabled={!valid || sending}>
+              {sending ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <Mail className="mr-1 h-4 w-4" />}
+              Senden
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
 }

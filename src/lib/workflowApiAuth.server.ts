@@ -27,8 +27,13 @@ export class WorkflowApiAuthError extends Error {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function authenticateWorkflowRequest(request: Request): Promise<{ supabase: SupabaseClient<any, any, any>; userId: string }> {
-  const url = process.env.SUPABASE_URL;
-  const key = process.env.SUPABASE_PUBLISHABLE_KEY;
+  // Fund 2026-09-02 (lokal 500 "Supabase-Konfiguration fehlt"): gleiche
+  // Env-Krankheit wie apiAuthGuard/searchEmbeddings - rohe SUPABASE_*-Namen
+  // existieren nur, wenn sie als eigene Bindings gesetzt sind. Zentrale
+  // Fallback-Kette aus supabaseEnv.ts verwenden (VITE_-Namen, import.meta.env).
+  const { readSupabaseUrl, readSupabasePublishableKey } = await import("@/lib/server/supabaseEnv");
+  const url = readSupabaseUrl();
+  const key = readSupabasePublishableKey();
   if (!url || !key) throw new WorkflowApiAuthError("Supabase-Konfiguration fehlt.", 500);
 
   const authHeader = request.headers.get("authorization");

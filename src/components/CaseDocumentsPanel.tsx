@@ -654,7 +654,8 @@ function SendEmailDialog({
     setSending(true);
     setError(null);
     try {
-      const res = await fetch("/api/send-case-document-email", {
+      const { apiFetch } = await import("@/lib/apiFetch");
+      const res = await apiFetch("/api/send-case-document-email", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

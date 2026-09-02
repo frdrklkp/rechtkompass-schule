@@ -73,10 +73,29 @@ export const Route = createFileRoute("/api/send-case-document-email")({
           );
         }
 
+        // Fund 2026-09-02: Die Rollen-RLS-Härtung vom 24.07. hat case_documents
+        // für anon gesperrt ("permission denied") - der anonyme Client kann das
+        // Dokument nicht mehr laden. Seit der Pilot-Freischaltung (Migration
+        // 2026-09-02_case_documents_pilot_access) gilt ein Eigentümer-Modell:
+        // Der Versand läuft daher authentifiziert über einen Token-gebundenen
+        // Client, sodass RLS genau die eigenen Dokumente (bzw. Redaktion: alle)
+        // durchlässt. Nebeneffekt: der Versand ist Pilot-Nutzern vorbehalten,
+        // was das Spam-Relais-Risiko zusätzlich senkt.
         let supabase;
         try {
-          const { createPublicSupabase } = await import("@/lib/searchEmbeddings.supabase.server");
-          supabase = createPublicSupabase();
+          const { requireApiAuth } = await import("@/integrations/supabase/apiAuthGuard");
+          const auth = await requireApiAuth(request);
+          if (auth instanceof Response) return auth;
+          const { createClient } = await import("@supabase/supabase-js");
+          const { readSupabaseUrl, readSupabasePublishableKey } = await import("@/lib/server/supabaseEnv");
+          const url = readSupabaseUrl();
+          const key = readSupabasePublishableKey();
+          if (!url || !key) throw new Error("Supabase-Konfiguration fehlt.");
+          const token = (request.headers.get("authorization") ?? "").replace("Bearer ", "").trim();
+          supabase = createClient(url, key, {
+            global: { headers: { Authorization: `Bearer ${token}` } },
+            auth: { persistSession: false, autoRefreshToken: false },
+          });
         } catch (err) {
           const message = err instanceof Error ? err.message : "unbekannter Fehler";
           console.error("[send-case-document-email] Supabase-Client-Init fehlgeschlagen:", message);

@@ -8,7 +8,7 @@
  * Aufruf: bun run scripts/_import-backlog-sources.ts
  */
 import { createClient } from "@supabase/supabase-js";
-import { bbigParser, dsgNrwParser, jarbschgParser, kunsturhgParser, sgb8Parser } from "../src/services/legal-knowledge/import";
+import { bbigParser, bgbParser, dsgNrwParser, jarbschgParser, juschgParser, kunsturhgParser, sgb7Parser, sgb8Parser, stgbParser } from "../src/services/legal-knowledge/import";
 import { mergeDocuments } from "../src/services/legal-knowledge/connectors/OfficialSourceConnectorService";
 import type { LegalImportInput, LegalImportParser, LegalNode } from "../src/services/legal-knowledge/import/types";
 import {
@@ -30,7 +30,12 @@ const ADMIN_EMAIL = "admin@rechtkompass.local";
 
 const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, { auth: { persistSession: false } });
 
-const TARGETS: Array<{ url: string; label: string; sourceId: string; parser: LegalImportParser; legalDomain: string; bund: boolean }> = [
+// Quellenerweiterung Runde 1 (2026-09-02): Große Bundesgesetze (BGB ~2400 §§)
+// würden die Treffersuche mit irrelevanten Normen fluten - `sections`
+// begrenzt den Import auf die schulrelevanten Paragraphen (Whitelist,
+// abgeglichen ohne "§ "-Präfix, z.B. "823" oder "201a"). Ohne `sections`
+// wird wie bisher das komplette Gesetz importiert.
+const TARGETS: Array<{ url: string; label: string; sourceId: string; parser: LegalImportParser; legalDomain: string; bund: boolean; sections?: string[] }> = [
   {
     url: "https://recht.nrw.de/lrgv/gesetz/01042026-datenschutzgesetz-nordrhein-westfalen/",
     label: "DSG NRW",
@@ -70,6 +75,51 @@ const TARGETS: Array<{ url: string; label: string; sourceId: string; parser: Leg
     parser: jarbschgParser,
     legalDomain: "Ausbildungsrecht",
     bund: true,
+  },
+  {
+    url: "https://www.gesetze-im-internet.de/bgb/BJNR001950896.html",
+    label: "BGB (Auszug)",
+    sourceId: "bgb",
+    parser: bgbParser,
+    legalDomain: "Haftung und Aufsicht",
+    bund: true,
+    // Geschäftsfähigkeit Minderjähriger; Deliktsrecht inkl. Aufsichtspflicht
+    // und Amtshaftung; elterliche Sorge und Vertretung; Kindeswohlgefährdung.
+    sections: ["104", "106", "107", "110", "823", "828", "831", "832", "839", "1626", "1629", "1631", "1666"],
+  },
+  {
+    url: "https://www.gesetze-im-internet.de/stgb/BJNR001270871.html",
+    label: "StGB (Auszug)",
+    sourceId: "stgb",
+    parser: stgbParser,
+    legalDomain: "Strafrecht Schule",
+    bund: true,
+    // Hausfriedensbruch; Beleidigungsdelikte; Wort-/Bildaufnahmen;
+    // Körperverletzung; Nötigung/Bedrohung; Sachbeschädigung; unterlassene
+    // Hilfeleistung - die in Mobbing-/Gewalt-/Film-Fällen zitierten Normen.
+    sections: ["123", "185", "186", "187", "201", "201a", "223", "229", "240", "241", "303", "323c"],
+  },
+  {
+    url: "https://www.gesetze-im-internet.de/sgb_7/BJNR125410996.html",
+    label: "SGB VII (Auszug)",
+    sourceId: "sgb-7",
+    parser: sgb7Parser,
+    legalDomain: "Haftung und Aufsicht",
+    bund: true,
+    // Schülerunfallversicherung (§ 2 Abs. 1 Nr. 8b), Arbeitsunfall-Begriff,
+    // Haftungsbeschränkung - beantwortet die "Wer haftet/zahlt?"-Fälle.
+    sections: ["2", "8", "105", "106"],
+  },
+  {
+    url: "https://www.gesetze-im-internet.de/juschg/BJNR273000002.html",
+    label: "JuSchG (Auszug)",
+    sourceId: "juschg",
+    parser: juschgParser,
+    legalDomain: "Jugendschutz",
+    bund: true,
+    // Begriffsbestimmungen; Alkohol und Rauchen in der Öffentlichkeit -
+    // die Klassenfahrt-Standardfragen.
+    sections: ["1", "9", "10"],
   },
 ];
 
@@ -239,6 +289,23 @@ async function importOne(target: (typeof TARGETS)[number], authToken: string): P
   const document = target.parser.parse(input);
   const paragraphs: FlatParagraph[] = [];
   collectParagraphs(document.root, [], paragraphs);
+
+  if (target.sections) {
+    const wanted = new Set(target.sections);
+    const before = paragraphs.length;
+    const kept = paragraphs.filter((p) => {
+      const m = /§\s*(\d+[a-z]?)(?:\D|$)/.exec(p.reference);
+      return m !== null && wanted.has(m[1]);
+    });
+    paragraphs.length = 0;
+    paragraphs.push(...kept);
+    const found = new Set(kept.map((p) => /§\s*(\d+[a-z]?)/.exec(p.reference)?.[1]));
+    const missing = target.sections.filter((s) => !found.has(s));
+    console.log(`  Whitelist: ${kept.length}/${before} Paragraphen behalten (${target.sections.length} gewünscht).`);
+    if (missing.length > 0) {
+      console.log(`  WARNUNG: nicht gefunden: § ${missing.join(", § ")}`);
+    }
+  }
   const seenPaths = new Map<string, number>();
   for (const p of paragraphs) {
     const seen = seenPaths.get(p.path) ?? 0;
@@ -267,7 +334,11 @@ async function main() {
   const authToken = await getAuthToken();
   console.log("Token bereit.");
 
+  const onlyIdx = process.argv.indexOf("--only");
+  const only = onlyIdx >= 0 ? new Set(process.argv[onlyIdx + 1].split(",").map((s) => s.trim())) : null;
+
   for (const target of TARGETS) {
+    if (only && !only.has(target.sourceId)) continue;
     try {
       await importOne(target, authToken);
     } catch (e) {

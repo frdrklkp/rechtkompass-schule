@@ -101,7 +101,7 @@ const TARGETS: Array<{ url: string; label: string; sourceId: string; parser: Leg
     // Hausfriedensbruch; Beleidigungsdelikte; Wort-/Bildaufnahmen;
     // Körperverletzung; Nötigung/Bedrohung; Sachbeschädigung; unterlassene
     // Hilfeleistung - die in Mobbing-/Gewalt-/Film-Fällen zitierten Normen.
-    sections: ["123", "185", "186", "187", "201", "201a", "223", "229", "240", "241", "303", "323c"],
+    sections: ["123", "177", "184i", "185", "186", "187", "201", "201a", "223", "229", "240", "241", "303", "323c"],
   },
   {
     url: "https://www.gesetze-im-internet.de/sgb_7/BJNR125410996.html",
@@ -227,6 +227,16 @@ async function upsertSections(sourceId: string, sourceKey: string, versionLabel:
 
 async function upsertChunks(sourceId: string, sourceKey: string, displayTitle: string, paragraphs: FlatParagraph[], sectionIdByPath: Map<string, string>): Promise<void> {
   const chunkRepo = new SupabaseChunkRepository(supabase);
+  // Fund 2026-09-06: chunk_id enthält die laufende Nummer (buildChunkId mit
+  // order). Kommen bei einem Re-Import neue Paragraphen HINZU, verschieben
+  // sich die Nummern aller nachfolgenden Chunks - der Upsert (onConflict
+  // source_id,chunk_id,chunk_version) findet dann keinen Treffer, versucht
+  // ein INSERT und kollidiert mit dem deterministischen Primärschlüssel.
+  // Deshalb: Chunks der Quelle vorher löschen und frisch schreiben; die
+  // Embeddings der unveränderten Inhalte bleiben über die stabilen IDs
+  // erhalten bzw. werden per contentHash-Vergleich übersprungen.
+  const { error: delErr } = await supabase.from("legal_chunks").delete().eq("source_id", sourceId);
+  if (delErr) throw new Error(`Chunk-Bereinigung fehlgeschlagen: ${delErr.message}`);
   const chunks: PersistedChunk[] = paragraphs.map((p, order) => {
     const path = `${sourceKey}/${p.path}`;
     const normalizedContent = p.fullText || p.title || p.reference;

@@ -535,8 +535,10 @@ async function runPipeline(jobId: string, sketch: string, apiOrigin: string): Pr
   // erhalten). Nur bei rot bleiben die Flags offen - dort beschreiben
   // sie echte Lücken, die die Redaktion sehen muss.
   {
-    const { data: finalRow } = await service
-      .from("practice_cases")
+    // legal_review_status fehlt in den generierten Supabase-Typen (wie
+    // case_legal_review_flags) - Cast nötig.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: finalRow } = await ((service as any).from("practice_cases"))
       .select("legal_review_status")
       .eq("id", caseId)
       .limit(1);

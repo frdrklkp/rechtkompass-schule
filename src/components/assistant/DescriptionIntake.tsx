@@ -73,11 +73,48 @@ export interface DescriptionIntakeProps {
   onDocument: (description: string) => void;
 }
 
+// Pilot-Feedback 06.09.2026: Wer einen Treffer öffnet und mit "Zurück"
+// zur Schilderung kommt, verlor Eingabe UND Ergebnis (reiner React-State).
+// Schilderung + Ergebnis werden deshalb je Tab in sessionStorage gehalten -
+// übersteht Zurück-Navigation, verschwindet beim Schließen des Tabs.
+const STORAGE_KEY = "rk-fallschilderung";
+
+function restoreStored(): { description: string; response: AnalysisResponse | null } {
+  try {
+    const raw = sessionStorage.getItem(STORAGE_KEY);
+    if (!raw) return { description: "", response: null };
+    const parsed = JSON.parse(raw) as { description?: string; response?: AnalysisResponse | null };
+    return {
+      description: typeof parsed.description === "string" ? parsed.description : "",
+      response: parsed.response && parsed.response.status ? parsed.response : null,
+    };
+  } catch {
+    return { description: "", response: null };
+  }
+}
+
+function persistStored(description: string, response: AnalysisResponse | null): void {
+  try {
+    if (!description && !response) sessionStorage.removeItem(STORAGE_KEY);
+    else sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ description, response }));
+  } catch {
+    /* Storage gesperrt (z.B. Privatmodus) - Feature degradiert still. */
+  }
+}
+
 export function DescriptionIntake({ onDocument }: DescriptionIntakeProps) {
   const { ready, user } = useAuthSession();
-  const [description, setDescription] = useState("");
-  const [phase, setPhase] = useState<Phase>({ name: "describe" });
+  const [restored] = useState(restoreStored);
+  const [description, setDescriptionRaw] = useState(restored.description);
+  const [phase, setPhase] = useState<Phase>(
+    restored.response ? { name: "result", response: restored.response } : { name: "describe" },
+  );
   const [error, setError] = useState<string | null>(null);
+
+  const setDescription = useCallback((value: string) => {
+    setDescriptionRaw(value);
+    persistStored(value, null);
+  }, []);
 
   const analyze = useCallback(
     async (clarifications: Array<{ question: string; answer: string }>, round: number) => {
@@ -102,6 +139,7 @@ export function DescriptionIntake({ onDocument }: DescriptionIntakeProps) {
           setPhase({ name: "clarify", questions: data.clarifying_questions, index: 0, answers: [] });
         } else {
           setPhase({ name: "result", response: data });
+          persistStored(description.trim(), data);
         }
       } catch {
         setError("Die Analyse ist fehlgeschlagen. Bitte prüfen Sie Ihre Verbindung und versuchen Sie es erneut.");
@@ -126,9 +164,10 @@ export function DescriptionIntake({ onDocument }: DescriptionIntakeProps) {
   );
 
   const restart = useCallback(() => {
-    setDescription("");
+    setDescriptionRaw("");
     setError(null);
     setPhase({ name: "describe" });
+    persistStored("", null);
   }, []);
 
   if (!ready) return null;

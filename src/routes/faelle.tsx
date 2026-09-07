@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { z } from "zod";
 import { ChevronRight, Search } from "lucide-react";
 import { CASES as STATIC_CASES } from "../data/cases";
@@ -55,7 +55,18 @@ function CaseListSkeleton() {
 
 function FaellePage() {
   const { cat, ampel } = Route.useSearch();
-  const [q, setQ] = useState("");
+  // Pilot-Feedback 06.09.2026: Kategorie/Ampel stehen in der URL und
+  // überleben die Zurück-Navigation - der Suchtext war reiner React-State
+  // und ging verloren. Je Tab in sessionStorage halten.
+  const [q, setQ] = useState(() => {
+    try { return sessionStorage.getItem("rk-faelle-suche") ?? ""; } catch { return ""; }
+  });
+  useEffect(() => {
+    try {
+      if (q) sessionStorage.setItem("rk-faelle-suche", q);
+      else sessionStorage.removeItem("rk-faelle-suche");
+    } catch { /* Storage gesperrt - Suche läuft ohne Persistenz. */ }
+  }, [q]);
   const navigate = Route.useNavigate();
   const { data: dbCases, isLoading, error } = usePublishedCases();
 

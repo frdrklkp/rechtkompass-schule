@@ -525,6 +525,31 @@ async function runPipeline(jobId: string, sketch: string, apiOrigin: string): Pr
     }
   }
 
+  // Pilot-Feedback 06.09.2026: Jede Prüfrunde legt auch für nicht
+  // sachentscheidende Randfragen offene Flags an - dadurch war JEDER
+  // generierte Fall im Quality Gate blockiert ("Keine offenen
+  // Legal-Review-Flags"), selbst bei Endnote grün. Politik seither:
+  // Endet die Pipeline mit grün oder gelb, gelten die verbliebenen
+  // Randfragen als automatisch dokumentiert-und-geschlossen (der Fall
+  // behauptet zu ihnen nichts; Wortlaut bleibt über resolved_at-Historie
+  // erhalten). Nur bei rot bleiben die Flags offen - dort beschreiben
+  // sie echte Lücken, die die Redaktion sehen muss.
+  {
+    const { data: finalRow } = await service
+      .from("practice_cases")
+      .select("legal_review_status")
+      .eq("id", caseId)
+      .limit(1);
+    const finalColor = (finalRow ?? [])[0]?.legal_review_status as string | null | undefined;
+    if (finalColor === "gruen" || finalColor === "gelb") {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await ((service as any).from("case_legal_review_flags"))
+        .update({ resolved_at: new Date().toISOString() })
+        .eq("case_id", caseId)
+        .is("resolved_at", null);
+    }
+  }
+
   // ---- 4) Entscheidungsbaum ----
   await updateJob(service, jobId, { phase: "entscheidungsbaum" });
   const { data: freshRow } = await service.from("practice_cases").select("*").eq("id", caseId).limit(1);

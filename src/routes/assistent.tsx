@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   BookOpen,
   ChevronRight,
@@ -75,6 +75,23 @@ function caseMatchesQuery(c: CaseData, q: string): boolean {
     .every((token) => hay.includes(token));
 }
 
+// Pilot-Feedback 06.09.2026: Zurück-Navigation von einer Fallseite warf die
+// eingegebene Suche weg. Suchzustand je Tab in sessionStorage halten.
+const SEARCH_STORAGE_KEY = "rk-fallsuche";
+
+function restoreSearch(): { query: string; category: string | null; subcategory: string | null } {
+  try {
+    const raw = sessionStorage.getItem(SEARCH_STORAGE_KEY);
+    if (raw) {
+      const p = JSON.parse(raw) as { query?: string; category?: string | null; subcategory?: string | null };
+      return { query: p.query ?? "", category: p.category ?? null, subcategory: p.subcategory ?? null };
+    }
+  } catch {
+    /* Storage gesperrt - ohne Wiederherstellung starten. */
+  }
+  return { query: "", category: null, subcategory: null };
+}
+
 function AssistentPage() {
   const assistant = useTileIntake();
   const { data: cases, isLoading, error } = usePublishedCases();
@@ -94,9 +111,19 @@ function AssistentPage() {
     });
   };
 
-  const [category, setCategory] = useState<string | null>(null);
-  const [subcategory, setSubcategory] = useState<string | null>(null);
-  const [query, setQuery] = useState("");
+  const [restoredSearch] = useState(restoreSearch);
+  const [category, setCategory] = useState<string | null>(restoredSearch.category);
+  const [subcategory, setSubcategory] = useState<string | null>(restoredSearch.subcategory);
+  const [query, setQuery] = useState(restoredSearch.query);
+
+  useEffect(() => {
+    try {
+      if (!query && !category && !subcategory) sessionStorage.removeItem(SEARCH_STORAGE_KEY);
+      else sessionStorage.setItem(SEARCH_STORAGE_KEY, JSON.stringify({ query, category, subcategory }));
+    } catch {
+      /* Storage gesperrt - Suche funktioniert ohne Persistenz weiter. */
+    }
+  }, [query, category, subcategory]);
 
   const published = cases ?? [];
 

@@ -597,6 +597,54 @@ async function runPipeline(jobId: string, sketch: string, apiOrigin: string): Pr
   await updateJob(service, jobId, { phase: "einreichen" });
   await EditorialWorkflowService.submitForReview({ caseId });
 
+  // Nutzeranforderung 07.09.2026: Die Redaktion per E-Mail benachrichtigen,
+  // sobald ein Kollege einen Fall generiert hat und dieser zur Prüfung
+  // bereitliegt. Konfiguration über REVIEW_NOTIFY_EMAIL (+ RESEND_API_KEY);
+  // fehlt eine der beiden, wird still übersprungen. Ein Mailfehler darf den
+  // erfolgreichen Job NIEMALS scheitern lassen (try/catch, nur Log).
+  try {
+    const notifyTo = process.env.REVIEW_NOTIFY_EMAIL;
+    if (notifyTo && process.env.RESEND_API_KEY) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: caseInfo } = await ((service as any).from("practice_cases"))
+        .select("title, category, legal_review_status")
+        .eq("id", caseId)
+        .limit(1);
+      const info = (caseInfo ?? [])[0] ?? {};
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: jobRow } = await ((service as any).from("case_generation_jobs"))
+        .select("requested_by")
+        .eq("id", jobId)
+        .limit(1);
+      let requesterEmail = "unbekannt";
+      const requesterId = (jobRow ?? [])[0]?.requested_by;
+      if (requesterId) {
+        const { data: u } = await service.auth.admin.getUserById(requesterId);
+        requesterEmail = u?.user?.email ?? requesterId;
+      }
+      const AMPEL: Record<string, string> = { gruen: "Grün", gelb: "Gelb", rot: "Rot" };
+      const pruef = AMPEL[info.legal_review_status as string] ?? "unbekannt";
+      const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+      const { sendEmail } = await import("@/lib/mail/resend.server");
+      await sendEmail({
+        to: notifyTo,
+        subject: `Neuer Fall zur Prüfung: ${info.title ?? "Ohne Titel"} (${pruef})`,
+        html: [
+          `<p style="margin:0 0 12px 0;">Ein neuer Praxisfall wurde generiert und wartet auf redaktionelle Prüfung:</p>`,
+          `<p style="margin:0 0 4px 0;"><strong>${esc(info.title ?? "Ohne Titel")}</strong></p>`,
+          `<p style="margin:0 0 12px 0;color:#555;">Kategorie: ${esc(info.category ?? "–")} · Prüfstatus: ${pruef} · Erstellt von: ${esc(requesterEmail)}</p>`,
+          `<p style="margin:0 0 12px 0;"><a href="https://www.rechtkompass-schule.de/admin/faelle/${caseId}">Fall im Admin öffnen</a> · <a href="https://www.rechtkompass-schule.de/admin/editorial/reviews">Zur Review-Übersicht</a></p>`,
+          `<p style="margin:16px 0 0 0;font-size:12px;color:#666;">Automatische Benachrichtigung des RechtKompass Schule.</p>`,
+        ].join("\n"),
+      });
+    }
+  } catch (err) {
+    console.error(
+      `[caseGenerationJob] Review-Benachrichtigung fehlgeschlagen (Job ${jobId}):`,
+      err instanceof Error ? err.message : err,
+    );
+  }
+
   await updateJob(service, jobId, { status: "succeeded", phase: "fertig" });
 }
 

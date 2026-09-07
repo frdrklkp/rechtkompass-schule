@@ -32,4 +32,9 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           CASE_GENERATION_SERVICE_PASSWORD: ${{ secrets.CASE_GENERATION_SERVICE_PASSWORD }}
+          # Review-Benachrichtigung (07.09.2026): Mail an die Redaktion nach
+          # jeder erfolgreichen Generierung. Fehlen die Secrets, wird der
+          # Versand still übersprungen - der Runner läuft unverändert.
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          REVIEW_NOTIFY_EMAIL: ${{ secrets.REVIEW_NOTIFY_EMAIL }}
         run: bun run scripts/_process-generation-queue.ts

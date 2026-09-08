@@ -1,4 +1,4 @@
-import { createFileRoute, Link, redirect } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect, useRouter } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
 import {
   ArrowLeft,
@@ -389,6 +389,14 @@ function CaseDetail({ c }: { c: CaseData }) {
   const [alleEbenenOffen] = useState(
     () => typeof window !== "undefined" && new URLSearchParams(window.location.search).get("ebenen") === "alle",
   );
+  const router = useRouter();
+  const goBack = useCallback(() => {
+    if (typeof window !== "undefined" && window.history.length > 1) {
+      router.history.back();
+    } else {
+      void router.navigate({ to: "/faelle" });
+    }
+  }, [router]);
   const tips = getPracticeTips(c);
   const tipsTiered = getPracticeTipsTiered(c);
   const mistakes = getCommonMistakes(c);
@@ -520,12 +528,17 @@ function CaseDetail({ c }: { c: CaseData }) {
         />
       </div>
 
-      <Link
-        to="/faelle"
+      {/* Pilot-Feedback 08.09.2026: fester Link auf /faelle warf Nutzer aus
+          ihrem Suchergebnis (Startseite/Fall schildern) - jetzt echte
+          Zurück-Navigation; Fallback /faelle nur bei Direktaufruf ohne
+          Verlauf (z.B. geteilter Link). */}
+      <button
+        type="button"
+        onClick={goBack}
         className="mb-4 inline-flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground"
       >
         <ArrowLeft className="h-3.5 w-3.5" /> Zurück
-      </Link>
+      </button>
 
       {/* FALLKOPF */}
       <header className="rounded-3xl border border-border bg-card p-5 sm:p-6">

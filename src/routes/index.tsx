@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Search,
   ArrowRight,
@@ -109,8 +109,25 @@ function ResultCard({ result, primary }: { result: SearchResult; primary?: boole
 
 function Home() {
   const navigate = useNavigate();
-  const [q, setQ] = useState("");
-  const [submitted, setSubmitted] = useState("");
+  // Pilot-Feedback 08.09.2026: Zurück von einer Fallseite landete auf der
+  // unsortierten Fallliste statt beim Suchergebnis - Suchtext und
+  // abgeschickte Anfrage je Tab in sessionStorage halten, damit die
+  // Ergebnisseite beim Zurückkommen wiederhergestellt wird (die Treffer
+  // selbst liefert der React-Query-Cache bzw. eine erneute Suche).
+  const [q, setQ] = useState(() => {
+    try { return sessionStorage.getItem("rk-start-suche-q") ?? ""; } catch { return ""; }
+  });
+  const [submitted, setSubmitted] = useState(() => {
+    try { return sessionStorage.getItem("rk-start-suche-submitted") ?? ""; } catch { return ""; }
+  });
+  useEffect(() => {
+    try {
+      if (q) sessionStorage.setItem("rk-start-suche-q", q);
+      else sessionStorage.removeItem("rk-start-suche-q");
+      if (submitted) sessionStorage.setItem("rk-start-suche-submitted", submitted);
+      else sessionStorage.removeItem("rk-start-suche-submitted");
+    } catch { /* Storage gesperrt - Suche läuft ohne Persistenz. */ }
+  }, [q, submitted]);
   const { profile } = useProfile();
   const { data: dbCases, isLoading } = usePublishedCases();
 

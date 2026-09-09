@@ -37,7 +37,18 @@ export const Route = createFileRoute("/api/ai-draft-case")({
         const categories = body.categories ?? [];
         const keywords = body.keywords ?? [];
         const templates = body.templates ?? [];
-        const sections = body.sections ?? [];
+        // Pilot-Fund 2026-09-09: der Aufrufer (AiDraftCaseButton) sendet die
+        // Rechtsabschnitte ungefiltert - mit dem vollen Bestand sprengt das
+        // den Kontext bzw. sieht die KI nur einen willkürlichen Ausschnitt.
+        // Gleicher Relevanz-Vorfilter samt Quellen-Garantie wie in
+        // ai-match-legal-sections.
+        const { filterRelevantSections } = await import("./ai-draft-batch-item");
+        const sections = filterRelevantSections(
+          body.sections ?? [],
+          [description, (body.categories ?? []).join(" "), (body.keywords ?? []).join(" "), "Berufskolleg Schule"].join(" "),
+          400,
+          { sourceFloor: true },
+        );
         const cases = body.cases ?? [];
 
         const system = [
@@ -53,6 +64,12 @@ export const Route = createFileRoute("/api/ai-draft-case")({
           "Prüfe zuerst die Wissensbasis ('bekannte_praxisfaelle') auf ähnliche, bereits veröffentlichte Fälle und wiederverwende Formulierungen, wo sinnvoll. Nenne ähnliche Fälle als 'related_hints' (nur Titel).",
           "Falls nur ein Titel vorliegt, analysiere ihn semantisch (Thema, Handlungsfeld, Rechtsbereich) und erzeuge dennoch einen vollständigen Entwurf.",
           "AMPEL-EINSTUFUNG (ampel) - verbindliche Kriterien, NICHT standardmäßig 'gruen' wählen: 'gruen' NUR bei einfacher Alltagssituation ohne Anhörungspflicht, ohne drohende Ordnungsmaßnahme, ohne Meldepflicht, eigenständig durch die Lehrkraft lösbar. 'gelb' bei formalen Verfahrensschritten (Anhörung nach § 66 VwVfG NRW, Dokumentationspflicht, mögliche Ordnungsmaßnahme, Rücksprache mit vorgesetzter Stelle nötig) OHNE akute Gefährdung. 'rot' bei akuter Gefährdung, Straftatverdacht, Meldepflicht an externe Stellen (Jugendamt, Polizei) oder Fällen, die sofortige Eskalation erfordern. Fülle ZUERST 'ampel_begruendung' aus (1-2 Sätze: welches der drei Kriterien trifft zu, insbesondere ob Anhörung/Ordnungsmaßnahme/Meldepflicht vorliegt) und leite DANN 'ampel' aus dieser Begründung ab - nicht umgekehrt.",
+          // Pilot-Fund 2026-09-09: Über KI-Feldvorschläge erzeugte Fälle kamen
+          // OHNE Tier-Labels an - dieser Endpunkt hatte die Label-Konvention
+          // der Pipeline (ai-draft-batch-item) nie übernommen. Wortgleich
+          // synchronisiert; bei Änderungen BEIDE Routen pflegen.
+          "LABEL-PRÄFIX FÜR ARRAY-FELDER (checklist/common_mistakes/documentation): jedes Array-Element beginnt mit exakt einem Label-Präfix in eckigen Klammern (wortwörtlich, dann Leerzeichen, dann Text). 'checklist': '[Rechtlich erforderlich]', '[Organisatorisch empfohlen]', '[Rechtlich zu prüfen]' oder '[Optional]'. 'common_mistakes': '[Rechtlich problematisch]' oder '[Organisatorisch ungünstig]'. 'documentation': GENAU '[Rechtlich erforderlich]' (die zitierte Quelle verlangt diese Angabe ausdrücklich) oder '[Zur Nachvollziehbarkeit empfohlen]' (sinnvolle Praxis ohne Rechtspflicht). KEIN Element ohne Präfix.",
+          "LABEL-PRÄFIX FÜR practice_tip: jede Zeile im Format '- [Label] Text', Label eines von '[Rechtlich erforderlich]', '[Praktisch empfohlen]' oder '[Bei Unsicherheit]'. Ein Label 'Rechtlich ...' NUR, wenn eine übergebene Rechtsgrundlage die Aussage unmittelbar trägt - im Zweifel das schwächere organisatorische Label wählen.",
           "DON'TS (common_mistakes) - KEIN Fließtext: 3-6 EIGENSTÄNDIGE Array-Elemente, niemals ein einzelner String mit mehreren durch Gedankenstriche/Aufzählung verketteten Punkten. Jedes Element: EIN konkreter Fehler, ein Satz, maximal 20 Wörter. Gehören mehrere Fehlerpunkte zusammen, als SEPARATE Array-Elemente liefern, nicht in einem Element verketten.",
           "DO'S (practice_tip) - Kürze: jede Zeile EIN konkreter Handlungsschritt, maximal 20 Wörter, mit echtem Zeilenumbruch getrennt. Keine mehrsätzigen Begründungen pro Zeile, keine Verkettung mehrerer Empfehlungen in einer Zeile.",
           "ZUSTÄNDIGKEITEN (responsibilities): nenne die tatsächlich passende Ebene, nicht automatisch Schulleitung. Bei echten Alltagsroutinen (ampel='gruen') ist meist die Lehrkraft, Klassenleitung, Abteilungsleitung oder Ausbildungskoordination zuständig - Schulleitung NUR nennen, wenn der Sachverhalt das nach den obigen Ampel-Kriterien tatsächlich erfordert (ampel='gelb'/'rot').",

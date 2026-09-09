@@ -49,6 +49,7 @@ import { Route as AdminSuchindexRouteImport } from './routes/admin.suchindex'
 import { Route as AdminSuchtestRouteImport } from './routes/admin.suchtest'
 import { Route as AdminVerknuepfungenRouteImport } from './routes/admin.verknuepfungen'
 import { Route as AdminVorlagenRouteImport } from './routes/admin.vorlagen'
+import { Route as ApiAiAnalyzeCaseDescriptionRouteImport } from './routes/api/ai-analyze-case-description'
 import { Route as ApiAiCondenseCaseRouteImport } from './routes/api/ai-condense-case'
 import { Route as ApiAiDraftBatchItemRouteImport } from './routes/api/ai-draft-batch-item'
 import { Route as ApiAiDraftCaseRouteImport } from './routes/api/ai-draft-case'
@@ -137,6 +138,7 @@ import { Route as ApiWorkflowSessionsIdPauseRouteImport } from './routes/api/wor
 import { Route as ApiWorkflowSessionsIdResumeRouteImport } from './routes/api/workflow-sessions.$id.resume'
 import { Route as ApiWorkflowSessionsIdTransitionsRouteImport } from './routes/api/workflow-sessions.$id.transitions'
 import { Route as ApiWorkflowSessionsIdDocumentsDocIdRouteImport } from './routes/api/workflow-sessions.$id.documents.$docId'
+import { Route as ApiWorkflowSessionsIdDocumentsDocIdEmailRouteImport } from './routes/api/workflow-sessions.$id.documents.$docId.email'
 import { Route as ApiWorkflowSessionsIdDocumentsDocIdExportRouteImport } from './routes/api/workflow-sessions.$id.documents.$docId.export'
 
 const IndexRoute = IndexRouteImport.update({
@@ -341,6 +343,12 @@ const AdminVorlagenRoute = AdminVorlagenRouteImport.update({
   path: '/vorlagen',
   getParentRoute: () => AdminRoute,
 } as any)
+const ApiAiAnalyzeCaseDescriptionRoute =
+  ApiAiAnalyzeCaseDescriptionRouteImport.update({
+    id: '/api/ai-analyze-case-description',
+    path: '/api/ai-analyze-case-description',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiAiCondenseCaseRoute = ApiAiCondenseCaseRouteImport.update({
   id: '/api/ai-condense-case',
   path: '/api/ai-condense-case',
@@ -820,6 +828,12 @@ const ApiWorkflowSessionsIdDocumentsDocIdRoute =
     path: '/$docId',
     getParentRoute: () => ApiWorkflowSessionsIdDocumentsRoute,
   } as any)
+const ApiWorkflowSessionsIdDocumentsDocIdEmailRoute =
+  ApiWorkflowSessionsIdDocumentsDocIdEmailRouteImport.update({
+    id: '/email',
+    path: '/email',
+    getParentRoute: () => ApiWorkflowSessionsIdDocumentsDocIdRoute,
+  } as any)
 const ApiWorkflowSessionsIdDocumentsDocIdExportRoute =
   ApiWorkflowSessionsIdDocumentsDocIdExportRouteImport.update({
     id: '/export',
@@ -867,6 +881,7 @@ export interface FileRoutesByFullPath {
   '/admin/suchtest': typeof AdminSuchtestRoute
   '/admin/verknuepfungen': typeof AdminVerknuepfungenRoute
   '/admin/vorlagen': typeof AdminVorlagenRoute
+  '/api/ai-analyze-case-description': typeof ApiAiAnalyzeCaseDescriptionRoute
   '/api/ai-condense-case': typeof ApiAiCondenseCaseRoute
   '/api/ai-draft-batch-item': typeof ApiAiDraftBatchItemRoute
   '/api/ai-draft-case': typeof ApiAiDraftCaseRoute
@@ -956,6 +971,7 @@ export interface FileRoutesByFullPath {
   '/admin/editorial/faelle/': typeof AdminEditorialFaelleIndexRoute
   '/admin/editorial/workflows/': typeof AdminEditorialWorkflowsIndexRoute
   '/api/workflow-sessions/$id/documents/$docId': typeof ApiWorkflowSessionsIdDocumentsDocIdRouteWithChildren
+  '/api/workflow-sessions/$id/documents/$docId/email': typeof ApiWorkflowSessionsIdDocumentsDocIdEmailRoute
   '/api/workflow-sessions/$id/documents/$docId/export': typeof ApiWorkflowSessionsIdDocumentsDocIdExportRoute
 }
 export interface FileRoutesByTo {
@@ -993,6 +1009,7 @@ export interface FileRoutesByTo {
   '/admin/suchtest': typeof AdminSuchtestRoute
   '/admin/verknuepfungen': typeof AdminVerknuepfungenRoute
   '/admin/vorlagen': typeof AdminVorlagenRoute
+  '/api/ai-analyze-case-description': typeof ApiAiAnalyzeCaseDescriptionRoute
   '/api/ai-condense-case': typeof ApiAiCondenseCaseRoute
   '/api/ai-draft-batch-item': typeof ApiAiDraftBatchItemRoute
   '/api/ai-draft-case': typeof ApiAiDraftCaseRoute
@@ -1081,6 +1098,7 @@ export interface FileRoutesByTo {
   '/admin/editorial/faelle': typeof AdminEditorialFaelleIndexRoute
   '/admin/editorial/workflows': typeof AdminEditorialWorkflowsIndexRoute
   '/api/workflow-sessions/$id/documents/$docId': typeof ApiWorkflowSessionsIdDocumentsDocIdRouteWithChildren
+  '/api/workflow-sessions/$id/documents/$docId/email': typeof ApiWorkflowSessionsIdDocumentsDocIdEmailRoute
   '/api/workflow-sessions/$id/documents/$docId/export': typeof ApiWorkflowSessionsIdDocumentsDocIdExportRoute
 }
 export interface FileRoutesById {
@@ -1124,6 +1142,7 @@ export interface FileRoutesById {
   '/admin/suchtest': typeof AdminSuchtestRoute
   '/admin/verknuepfungen': typeof AdminVerknuepfungenRoute
   '/admin/vorlagen': typeof AdminVorlagenRoute
+  '/api/ai-analyze-case-description': typeof ApiAiAnalyzeCaseDescriptionRoute
   '/api/ai-condense-case': typeof ApiAiCondenseCaseRoute
   '/api/ai-draft-batch-item': typeof ApiAiDraftBatchItemRoute
   '/api/ai-draft-case': typeof ApiAiDraftCaseRoute
@@ -1213,6 +1232,7 @@ export interface FileRoutesById {
   '/admin/editorial/faelle/': typeof AdminEditorialFaelleIndexRoute
   '/admin/editorial/workflows/': typeof AdminEditorialWorkflowsIndexRoute
   '/api/workflow-sessions/$id/documents/$docId': typeof ApiWorkflowSessionsIdDocumentsDocIdRouteWithChildren
+  '/api/workflow-sessions/$id/documents/$docId/email': typeof ApiWorkflowSessionsIdDocumentsDocIdEmailRoute
   '/api/workflow-sessions/$id/documents/$docId/export': typeof ApiWorkflowSessionsIdDocumentsDocIdExportRoute
 }
 export interface FileRouteTypes {
@@ -1257,6 +1277,7 @@ export interface FileRouteTypes {
     | '/admin/suchtest'
     | '/admin/verknuepfungen'
     | '/admin/vorlagen'
+    | '/api/ai-analyze-case-description'
     | '/api/ai-condense-case'
     | '/api/ai-draft-batch-item'
     | '/api/ai-draft-case'
@@ -1346,6 +1367,7 @@ export interface FileRouteTypes {
     | '/admin/editorial/faelle/'
     | '/admin/editorial/workflows/'
     | '/api/workflow-sessions/$id/documents/$docId'
+    | '/api/workflow-sessions/$id/documents/$docId/email'
     | '/api/workflow-sessions/$id/documents/$docId/export'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -1383,6 +1405,7 @@ export interface FileRouteTypes {
     | '/admin/suchtest'
     | '/admin/verknuepfungen'
     | '/admin/vorlagen'
+    | '/api/ai-analyze-case-description'
     | '/api/ai-condense-case'
     | '/api/ai-draft-batch-item'
     | '/api/ai-draft-case'
@@ -1471,6 +1494,7 @@ export interface FileRouteTypes {
     | '/admin/editorial/faelle'
     | '/admin/editorial/workflows'
     | '/api/workflow-sessions/$id/documents/$docId'
+    | '/api/workflow-sessions/$id/documents/$docId/email'
     | '/api/workflow-sessions/$id/documents/$docId/export'
   id:
     | '__root__'
@@ -1513,6 +1537,7 @@ export interface FileRouteTypes {
     | '/admin/suchtest'
     | '/admin/verknuepfungen'
     | '/admin/vorlagen'
+    | '/api/ai-analyze-case-description'
     | '/api/ai-condense-case'
     | '/api/ai-draft-batch-item'
     | '/api/ai-draft-case'
@@ -1602,6 +1627,7 @@ export interface FileRouteTypes {
     | '/admin/editorial/faelle/'
     | '/admin/editorial/workflows/'
     | '/api/workflow-sessions/$id/documents/$docId'
+    | '/api/workflow-sessions/$id/documents/$docId/email'
     | '/api/workflow-sessions/$id/documents/$docId/export'
   fileRoutesById: FileRoutesById
 }
@@ -1619,6 +1645,7 @@ export interface RootRouteChildren {
   PraesentationRoute: typeof PraesentationRoute
   RechtsgrundlagenRoute: typeof RechtsgrundlagenRouteWithChildren
   VorgaengeRoute: typeof VorgaengeRouteWithChildren
+  ApiAiAnalyzeCaseDescriptionRoute: typeof ApiAiAnalyzeCaseDescriptionRoute
   ApiAiCondenseCaseRoute: typeof ApiAiCondenseCaseRoute
   ApiAiDraftBatchItemRoute: typeof ApiAiDraftBatchItemRoute
   ApiAiDraftCaseRoute: typeof ApiAiDraftCaseRoute
@@ -1946,6 +1973,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/vorlagen'
       preLoaderRoute: typeof AdminVorlagenRouteImport
       parentRoute: typeof AdminRoute
+    }
+    '/api/ai-analyze-case-description': {
+      id: '/api/ai-analyze-case-description'
+      path: '/api/ai-analyze-case-description'
+      fullPath: '/api/ai-analyze-case-description'
+      preLoaderRoute: typeof ApiAiAnalyzeCaseDescriptionRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/api/ai-condense-case': {
       id: '/api/ai-condense-case'
@@ -2563,6 +2597,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiWorkflowSessionsIdDocumentsDocIdRouteImport
       parentRoute: typeof ApiWorkflowSessionsIdDocumentsRoute
     }
+    '/api/workflow-sessions/$id/documents/$docId/email': {
+      id: '/api/workflow-sessions/$id/documents/$docId/email'
+      path: '/email'
+      fullPath: '/api/workflow-sessions/$id/documents/$docId/email'
+      preLoaderRoute: typeof ApiWorkflowSessionsIdDocumentsDocIdEmailRouteImport
+      parentRoute: typeof ApiWorkflowSessionsIdDocumentsDocIdRoute
+    }
     '/api/workflow-sessions/$id/documents/$docId/export': {
       id: '/api/workflow-sessions/$id/documents/$docId/export'
       path: '/export'
@@ -2818,11 +2859,14 @@ const ApiCaseGenerationJobsRouteWithChildren =
   )
 
 interface ApiWorkflowSessionsIdDocumentsDocIdRouteChildren {
+  ApiWorkflowSessionsIdDocumentsDocIdEmailRoute: typeof ApiWorkflowSessionsIdDocumentsDocIdEmailRoute
   ApiWorkflowSessionsIdDocumentsDocIdExportRoute: typeof ApiWorkflowSessionsIdDocumentsDocIdExportRoute
 }
 
 const ApiWorkflowSessionsIdDocumentsDocIdRouteChildren: ApiWorkflowSessionsIdDocumentsDocIdRouteChildren =
   {
+    ApiWorkflowSessionsIdDocumentsDocIdEmailRoute:
+      ApiWorkflowSessionsIdDocumentsDocIdEmailRoute,
     ApiWorkflowSessionsIdDocumentsDocIdExportRoute:
       ApiWorkflowSessionsIdDocumentsDocIdExportRoute,
   }
@@ -2910,6 +2954,7 @@ const rootRouteChildren: RootRouteChildren = {
   PraesentationRoute: PraesentationRoute,
   RechtsgrundlagenRoute: RechtsgrundlagenRouteWithChildren,
   VorgaengeRoute: VorgaengeRouteWithChildren,
+  ApiAiAnalyzeCaseDescriptionRoute: ApiAiAnalyzeCaseDescriptionRoute,
   ApiAiCondenseCaseRoute: ApiAiCondenseCaseRoute,
   ApiAiDraftBatchItemRoute: ApiAiDraftBatchItemRoute,
   ApiAiDraftCaseRoute: ApiAiDraftCaseRoute,

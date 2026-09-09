@@ -158,6 +158,26 @@
           "permissive": "PERMISSIVE"
         },
         {
+          "name": "kw read all",
+          "check": null,
+          "roles": [
+            "public"
+          ],
+          "using": "true",
+          "command": "SELECT",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "_role_delete_admin",
+          "check": null,
+          "roles": [
+            "authenticated"
+          ],
+          "using": "is_admin()",
+          "command": "DELETE",
+          "permissive": "PERMISSIVE"
+        },
+        {
           "name": "_role_update_editor",
           "check": "is_editor()",
           "roles": [
@@ -178,16 +198,6 @@
           "permissive": "PERMISSIVE"
         },
         {
-          "name": "kw read all",
-          "check": null,
-          "roles": [
-            "public"
-          ],
-          "using": "true",
-          "command": "SELECT",
-          "permissive": "PERMISSIVE"
-        },
-        {
           "name": "_role_select",
           "check": null,
           "roles": [
@@ -196,16 +206,6 @@
           ],
           "using": "true",
           "command": "SELECT",
-          "permissive": "PERMISSIVE"
-        },
-        {
-          "name": "_role_delete_admin",
-          "check": null,
-          "roles": [
-            "authenticated"
-          ],
-          "using": "is_admin()",
-          "command": "DELETE",
           "permissive": "PERMISSIVE"
         }
       ],
@@ -320,6 +320,160 @@
       ],
       "rls_enabled": true,
       "foreign_keys": []
+    },
+    "case_files": {
+      "name": "case_files",
+      "columns": [
+        {
+          "udt": "uuid",
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "nullable": false
+        },
+        {
+          "udt": "int8",
+          "name": "file_no",
+          "type": "bigint",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "case_number",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "uuid",
+          "name": "owner_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "title",
+          "type": "text",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "category",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "jsonb",
+          "name": "situation_snapshot",
+          "type": "jsonb",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "jsonb",
+          "name": "assessment_snapshot",
+          "type": "jsonb",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "jsonb",
+          "name": "actions_snapshot",
+          "type": "jsonb",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "jsonb",
+          "name": "legal_snapshot",
+          "type": "jsonb",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "jsonb",
+          "name": "documents_snapshot",
+          "type": "jsonb",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "jsonb",
+          "name": "open_points",
+          "type": "jsonb",
+          "default": "'[]'::jsonb",
+          "nullable": false
+        },
+        {
+          "udt": "uuid",
+          "name": "practice_case_id",
+          "type": "uuid",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "timestamptz",
+          "name": "closed_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "nullable": false
+        },
+        {
+          "udt": "timestamptz",
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "nullable": false
+        }
+      ],
+      "policies": [
+        {
+          "name": "case_files: owner delete",
+          "check": null,
+          "roles": [
+            "authenticated"
+          ],
+          "using": "(owner_id = auth.uid())",
+          "command": "DELETE",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "case_files: owner insert",
+          "check": "(owner_id = auth.uid())",
+          "roles": [
+            "authenticated"
+          ],
+          "using": null,
+          "command": "INSERT",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "case_files: owner select",
+          "check": null,
+          "roles": [
+            "authenticated"
+          ],
+          "using": "(owner_id = auth.uid())",
+          "command": "SELECT",
+          "permissive": "PERMISSIVE"
+        }
+      ],
+      "primary_key": [
+        "id"
+      ],
+      "rls_enabled": true,
+      "foreign_keys": [
+        {
+          "name": "case_files_practice_case_id_fkey",
+          "column": "practice_case_id",
+          "referenced_table": "practice_cases",
+          "referenced_column": "id"
+        }
+      ]
     },
     "case_roles": {
       "name": "case_roles",
@@ -470,16 +624,6 @@
       ],
       "policies": [
         {
-          "name": "case_events_no_client_write",
-          "check": "false",
-          "roles": [
-            "authenticated"
-          ],
-          "using": null,
-          "command": "INSERT",
-          "permissive": "PERMISSIVE"
-        },
-        {
           "name": "case_events_select_editor",
           "check": null,
           "roles": [
@@ -487,6 +631,16 @@
           ],
           "using": "(is_editor() AND (EXISTS ( SELECT 1\n   FROM practice_cases pc\n  WHERE ((pc.id = case_events.case_id) AND (is_admin() OR (pc.workflow_status <> 'archived'::case_workflow_status))))))",
           "command": "SELECT",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "case_events_no_client_write",
+          "check": "false",
+          "roles": [
+            "authenticated"
+          ],
+          "using": null,
+          "command": "INSERT",
           "permissive": "PERMISSIVE"
         }
       ],
@@ -497,21 +651,9 @@
       "foreign_keys": [
         {
           "name": "case_events_case_version_fk",
-          "column": "case_id",
-          "referenced_table": "case_versions",
-          "referenced_column": "case_id"
-        },
-        {
-          "name": "case_events_case_version_fk",
-          "column": "case_id",
-          "referenced_table": "case_versions",
-          "referenced_column": "id"
-        },
-        {
-          "name": "case_events_case_version_fk",
           "column": "case_version_id",
           "referenced_table": "case_versions",
-          "referenced_column": "case_id"
+          "referenced_column": "id"
         },
         {
           "name": "case_events_case_id_fkey",
@@ -521,9 +663,21 @@
         },
         {
           "name": "case_events_case_version_fk",
-          "column": "case_version_id",
+          "column": "case_id",
           "referenced_table": "case_versions",
           "referenced_column": "id"
+        },
+        {
+          "name": "case_events_case_version_fk",
+          "column": "case_version_id",
+          "referenced_table": "case_versions",
+          "referenced_column": "case_id"
+        },
+        {
+          "name": "case_events_case_version_fk",
+          "column": "case_id",
+          "referenced_table": "case_versions",
+          "referenced_column": "case_id"
         }
       ]
     },
@@ -582,23 +736,13 @@
       ],
       "policies": [
         {
-          "name": "Public read published faq entries",
+          "name": "_role_delete_admin",
           "check": null,
-          "roles": [
-            "public"
-          ],
-          "using": "(status = 'published'::text)",
-          "command": "SELECT",
-          "permissive": "PERMISSIVE"
-        },
-        {
-          "name": "_role_insert_editor",
-          "check": "is_editor()",
           "roles": [
             "authenticated"
           ],
-          "using": null,
-          "command": "INSERT",
+          "using": "is_admin()",
+          "command": "DELETE",
           "permissive": "PERMISSIVE"
         },
         {
@@ -623,13 +767,23 @@
           "permissive": "PERMISSIVE"
         },
         {
-          "name": "_role_delete_admin",
-          "check": null,
+          "name": "_role_insert_editor",
+          "check": "is_editor()",
           "roles": [
             "authenticated"
           ],
-          "using": "is_admin()",
-          "command": "DELETE",
+          "using": null,
+          "command": "INSERT",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "Public read published faq entries",
+          "check": null,
+          "roles": [
+            "public"
+          ],
+          "using": "(status = 'published'::text)",
+          "command": "SELECT",
           "permissive": "PERMISSIVE"
         },
         {
@@ -774,26 +928,6 @@
       ],
       "policies": [
         {
-          "name": "_role_delete_admin",
-          "check": null,
-          "roles": [
-            "authenticated"
-          ],
-          "using": "is_admin()",
-          "command": "DELETE",
-          "permissive": "PERMISSIVE"
-        },
-        {
-          "name": "_role_select",
-          "check": null,
-          "roles": [
-            "authenticated"
-          ],
-          "using": "is_editor()",
-          "command": "SELECT",
-          "permissive": "PERMISSIVE"
-        },
-        {
           "name": "_role_insert_editor",
           "check": "is_editor()",
           "roles": [
@@ -811,6 +945,26 @@
           ],
           "using": "is_editor()",
           "command": "UPDATE",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "_role_delete_admin",
+          "check": null,
+          "roles": [
+            "authenticated"
+          ],
+          "using": "is_admin()",
+          "command": "DELETE",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "_role_select",
+          "check": null,
+          "roles": [
+            "authenticated"
+          ],
+          "using": "is_editor()",
+          "command": "SELECT",
           "permissive": "PERMISSIVE"
         }
       ],
@@ -913,16 +1067,6 @@
           "permissive": "PERMISSIVE"
         },
         {
-          "name": "case_reviews_no_client_write",
-          "check": "false",
-          "roles": [
-            "authenticated"
-          ],
-          "using": null,
-          "command": "INSERT",
-          "permissive": "PERMISSIVE"
-        },
-        {
           "name": "case_reviews_no_client_update",
           "check": "false",
           "roles": [
@@ -930,6 +1074,16 @@
           ],
           "using": "false",
           "command": "UPDATE",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "case_reviews_no_client_write",
+          "check": "false",
+          "roles": [
+            "authenticated"
+          ],
+          "using": null,
+          "command": "INSERT",
           "permissive": "PERMISSIVE"
         }
       ],
@@ -939,14 +1093,14 @@
       "rls_enabled": true,
       "foreign_keys": [
         {
-          "name": "case_reviews_case_version_fk",
+          "name": "case_reviews_case_id_fkey",
           "column": "case_id",
-          "referenced_table": "case_versions",
+          "referenced_table": "practice_cases",
           "referenced_column": "id"
         },
         {
           "name": "case_reviews_case_version_fk",
-          "column": "case_version_id",
+          "column": "case_id",
           "referenced_table": "case_versions",
           "referenced_column": "id"
         },
@@ -957,9 +1111,9 @@
           "referenced_column": "case_id"
         },
         {
-          "name": "case_reviews_case_id_fkey",
-          "column": "case_id",
-          "referenced_table": "practice_cases",
+          "name": "case_reviews_case_version_fk",
+          "column": "case_version_id",
+          "referenced_table": "case_versions",
           "referenced_column": "id"
         },
         {
@@ -1235,24 +1389,23 @@
       ],
       "policies": [
         {
-          "name": "_role_select",
-          "check": null,
+          "name": "_role_update_editor",
+          "check": "is_editor()",
           "roles": [
-            "anon",
             "authenticated"
           ],
-          "using": "true",
-          "command": "SELECT",
+          "using": "is_editor()",
+          "command": "UPDATE",
           "permissive": "PERMISSIVE"
         },
         {
-          "name": "ck read all",
-          "check": null,
+          "name": "_role_insert_editor",
+          "check": "is_editor()",
           "roles": [
-            "public"
+            "authenticated"
           ],
-          "using": "true",
-          "command": "SELECT",
+          "using": null,
+          "command": "INSERT",
           "permissive": "PERMISSIVE"
         },
         {
@@ -1276,23 +1429,24 @@
           "permissive": "PERMISSIVE"
         },
         {
-          "name": "_role_update_editor",
-          "check": "is_editor()",
+          "name": "_role_select",
+          "check": null,
           "roles": [
+            "anon",
             "authenticated"
           ],
-          "using": "is_editor()",
-          "command": "UPDATE",
+          "using": "true",
+          "command": "SELECT",
           "permissive": "PERMISSIVE"
         },
         {
-          "name": "_role_insert_editor",
-          "check": "is_editor()",
+          "name": "ck read all",
+          "check": null,
           "roles": [
-            "authenticated"
+            "public"
           ],
-          "using": null,
-          "command": "INSERT",
+          "using": "true",
+          "command": "SELECT",
           "permissive": "PERMISSIVE"
         }
       ],
@@ -1459,16 +1613,6 @@
       ],
       "policies": [
         {
-          "name": "_role_update_editor",
-          "check": "is_editor()",
-          "roles": [
-            "authenticated"
-          ],
-          "using": "is_editor()",
-          "command": "UPDATE",
-          "permissive": "PERMISSIVE"
-        },
-        {
           "name": "_role_select",
           "check": null,
           "roles": [
@@ -1480,13 +1624,13 @@
           "permissive": "PERMISSIVE"
         },
         {
-          "name": "_role_insert_editor",
+          "name": "_role_update_editor",
           "check": "is_editor()",
           "roles": [
             "authenticated"
           ],
-          "using": null,
-          "command": "INSERT",
+          "using": "is_editor()",
+          "command": "UPDATE",
           "permissive": "PERMISSIVE"
         },
         {
@@ -1497,6 +1641,16 @@
           ],
           "using": "is_admin()",
           "command": "DELETE",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "_role_insert_editor",
+          "check": "is_editor()",
+          "roles": [
+            "authenticated"
+          ],
+          "using": null,
+          "command": "INSERT",
           "permissive": "PERMISSIVE"
         }
       ],
@@ -1799,13 +1953,13 @@
       ],
       "policies": [
         {
-          "name": "_role_insert_editor",
-          "check": "is_editor()",
+          "name": "_role_delete_admin",
+          "check": null,
           "roles": [
             "authenticated"
           ],
-          "using": null,
-          "command": "INSERT",
+          "using": "is_admin()",
+          "command": "DELETE",
           "permissive": "PERMISSIVE"
         },
         {
@@ -1819,23 +1973,13 @@
           "permissive": "PERMISSIVE"
         },
         {
-          "name": "_role_delete_admin",
-          "check": null,
+          "name": "_role_insert_editor",
+          "check": "is_editor()",
           "roles": [
             "authenticated"
           ],
-          "using": "is_admin()",
-          "command": "DELETE",
-          "permissive": "PERMISSIVE"
-        },
-        {
-          "name": "sources write pilot",
-          "check": "true",
-          "roles": [
-            "public"
-          ],
-          "using": "true",
-          "command": "ALL",
+          "using": null,
+          "command": "INSERT",
           "permissive": "PERMISSIVE"
         },
         {
@@ -1857,6 +2001,16 @@
           ],
           "using": "true",
           "command": "SELECT",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "sources write pilot",
+          "check": "true",
+          "roles": [
+            "public"
+          ],
+          "using": "true",
+          "command": "ALL",
           "permissive": "PERMISSIVE"
         }
       ],
@@ -1934,26 +2088,6 @@
       ],
       "policies": [
         {
-          "name": "user_profiles: self update",
-          "check": "(auth.uid() = id)",
-          "roles": [
-            "authenticated"
-          ],
-          "using": "(auth.uid() = id)",
-          "command": "UPDATE",
-          "permissive": "PERMISSIVE"
-        },
-        {
-          "name": "user_profiles: admin read all",
-          "check": null,
-          "roles": [
-            "authenticated"
-          ],
-          "using": "(has_role(auth.uid(), 'admin'::app_role) OR has_role(auth.uid(), 'superadmin'::app_role))",
-          "command": "SELECT",
-          "permissive": "PERMISSIVE"
-        },
-        {
           "name": "user_profiles: self select",
           "check": null,
           "roles": [
@@ -1970,6 +2104,26 @@
             "authenticated"
           ],
           "using": "(has_role(auth.uid(), 'admin'::app_role) OR has_role(auth.uid(), 'superadmin'::app_role))",
+          "command": "UPDATE",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "user_profiles: admin read all",
+          "check": null,
+          "roles": [
+            "authenticated"
+          ],
+          "using": "(has_role(auth.uid(), 'admin'::app_role) OR has_role(auth.uid(), 'superadmin'::app_role))",
+          "command": "SELECT",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "user_profiles: self update",
+          "check": "(auth.uid() = id)",
+          "roles": [
+            "authenticated"
+          ],
+          "using": "(auth.uid() = id)",
           "command": "UPDATE",
           "permissive": "PERMISSIVE"
         }
@@ -2070,23 +2224,13 @@
       ],
       "policies": [
         {
-          "name": "_role_insert_editor",
-          "check": "is_editor()",
-          "roles": [
-            "authenticated"
-          ],
-          "using": null,
-          "command": "INSERT",
-          "permissive": "PERMISSIVE"
-        },
-        {
-          "name": "_role_update_editor",
-          "check": "is_editor()",
+          "name": "_role_select",
+          "check": null,
           "roles": [
             "authenticated"
           ],
           "using": "is_editor()",
-          "command": "UPDATE",
+          "command": "SELECT",
           "permissive": "PERMISSIVE"
         },
         {
@@ -2100,13 +2244,23 @@
           "permissive": "PERMISSIVE"
         },
         {
-          "name": "_role_select",
-          "check": null,
+          "name": "_role_update_editor",
+          "check": "is_editor()",
           "roles": [
             "authenticated"
           ],
           "using": "is_editor()",
-          "command": "SELECT",
+          "command": "UPDATE",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "_role_insert_editor",
+          "check": "is_editor()",
+          "roles": [
+            "authenticated"
+          ],
+          "using": null,
+          "command": "INSERT",
           "permissive": "PERMISSIVE"
         }
       ],
@@ -2177,16 +2331,6 @@
       ],
       "policies": [
         {
-          "name": "_role_delete_admin",
-          "check": null,
-          "roles": [
-            "authenticated"
-          ],
-          "using": "is_admin()",
-          "command": "DELETE",
-          "permissive": "PERMISSIVE"
-        },
-        {
           "name": "_role_select",
           "check": null,
           "roles": [
@@ -2195,6 +2339,16 @@
           ],
           "using": "true",
           "command": "SELECT",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "_role_update_editor",
+          "check": "is_editor()",
+          "roles": [
+            "authenticated"
+          ],
+          "using": "is_editor()",
+          "command": "UPDATE",
           "permissive": "PERMISSIVE"
         },
         {
@@ -2208,13 +2362,13 @@
           "permissive": "PERMISSIVE"
         },
         {
-          "name": "_role_update_editor",
-          "check": "is_editor()",
+          "name": "_role_delete_admin",
+          "check": null,
           "roles": [
             "authenticated"
           ],
-          "using": "is_editor()",
-          "command": "UPDATE",
+          "using": "is_admin()",
+          "command": "DELETE",
           "permissive": "PERMISSIVE"
         }
       ],
@@ -2292,13 +2446,13 @@
       ],
       "policies": [
         {
-          "name": "_role_insert_editor",
+          "name": "_role_update_editor",
           "check": "is_editor()",
           "roles": [
             "authenticated"
           ],
-          "using": null,
-          "command": "INSERT",
+          "using": "is_editor()",
+          "command": "UPDATE",
           "permissive": "PERMISSIVE"
         },
         {
@@ -2310,16 +2464,6 @@
           ],
           "using": "((status = 'published'::text) OR is_editor())",
           "command": "SELECT",
-          "permissive": "PERMISSIVE"
-        },
-        {
-          "name": "_role_update_editor",
-          "check": "is_editor()",
-          "roles": [
-            "authenticated"
-          ],
-          "using": "is_editor()",
-          "command": "UPDATE",
           "permissive": "PERMISSIVE"
         },
         {
@@ -2340,6 +2484,16 @@
           ],
           "using": "is_editor()",
           "command": "SELECT",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "_role_insert_editor",
+          "check": "is_editor()",
+          "roles": [
+            "authenticated"
+          ],
+          "using": null,
+          "command": "INSERT",
           "permissive": "PERMISSIVE"
         }
       ],
@@ -2660,16 +2814,6 @@
           "permissive": "PERMISSIVE"
         },
         {
-          "name": "_role_delete_admin",
-          "check": null,
-          "roles": [
-            "authenticated"
-          ],
-          "using": "is_admin()",
-          "command": "DELETE",
-          "permissive": "PERMISSIVE"
-        },
-        {
           "name": "sections write pilot",
           "check": "true",
           "roles": [
@@ -2677,6 +2821,16 @@
           ],
           "using": "true",
           "command": "ALL",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "_role_delete_admin",
+          "check": null,
+          "roles": [
+            "authenticated"
+          ],
+          "using": "is_admin()",
+          "command": "DELETE",
           "permissive": "PERMISSIVE"
         },
         {
@@ -2690,16 +2844,6 @@
           "permissive": "PERMISSIVE"
         },
         {
-          "name": "_role_insert_editor",
-          "check": "is_editor()",
-          "roles": [
-            "authenticated"
-          ],
-          "using": null,
-          "command": "INSERT",
-          "permissive": "PERMISSIVE"
-        },
-        {
           "name": "_role_update_editor",
           "check": "is_editor()",
           "roles": [
@@ -2707,6 +2851,16 @@
           ],
           "using": "is_editor()",
           "command": "UPDATE",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "_role_insert_editor",
+          "check": "is_editor()",
+          "roles": [
+            "authenticated"
+          ],
+          "using": null,
+          "command": "INSERT",
           "permissive": "PERMISSIVE"
         }
       ],
@@ -3009,27 +3163,31 @@
           "type": "numeric",
           "default": null,
           "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "legal_review_status",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "legal_review_reasoning",
+          "type": "text",
+          "default": null,
+          "nullable": true
         }
       ],
       "policies": [
         {
-          "name": "practice_cases_delete_admin",
+          "name": "practice_cases: anon reads published",
           "check": null,
           "roles": [
-            "authenticated"
+            "anon"
           ],
-          "using": "is_admin()",
-          "command": "DELETE",
-          "permissive": "PERMISSIVE"
-        },
-        {
-          "name": "practice_cases_update_editor",
-          "check": "is_editor()",
-          "roles": [
-            "authenticated"
-          ],
-          "using": "is_editor()",
-          "command": "UPDATE",
+          "using": "(status = 'published'::case_status)",
+          "command": "SELECT",
           "permissive": "PERMISSIVE"
         },
         {
@@ -3044,33 +3202,13 @@
           "permissive": "PERMISSIVE"
         },
         {
-          "name": "practice_cases_insert_editor",
-          "check": "(is_editor() AND (workflow_status = 'draft'::case_workflow_status) AND (publication_tier = 'internal'::case_publication_tier) AND ((created_by IS NULL) OR (created_by = auth.uid())))",
+          "name": "practice_cases_update_editor",
+          "check": "is_editor()",
           "roles": [
             "authenticated"
           ],
-          "using": null,
-          "command": "INSERT",
-          "permissive": "PERMISSIVE"
-        },
-        {
-          "name": "practice_cases: authenticated reads published, own or editor",
-          "check": null,
-          "roles": [
-            "authenticated"
-          ],
-          "using": "((status = 'published'::case_status) OR is_editor() OR (EXISTS ( SELECT 1\n   FROM case_generation_jobs j\n  WHERE ((j.case_id = practice_cases.id) AND (j.requested_by = auth.uid())))))",
-          "command": "SELECT",
-          "permissive": "PERMISSIVE"
-        },
-        {
-          "name": "practice_cases: anon reads published",
-          "check": null,
-          "roles": [
-            "anon"
-          ],
-          "using": "(status = 'published'::case_status)",
-          "command": "SELECT",
+          "using": "is_editor()",
+          "command": "UPDATE",
           "permissive": "PERMISSIVE"
         },
         {
@@ -3084,6 +3222,16 @@
           "permissive": "PERMISSIVE"
         },
         {
+          "name": "practice_cases_delete_admin",
+          "check": null,
+          "roles": [
+            "authenticated"
+          ],
+          "using": "is_admin()",
+          "command": "DELETE",
+          "permissive": "PERMISSIVE"
+        },
+        {
           "name": "practice_cases_select_admin",
           "check": null,
           "roles": [
@@ -3091,6 +3239,26 @@
           ],
           "using": "is_admin()",
           "command": "SELECT",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "practice_cases: authenticated reads published, own or editor",
+          "check": null,
+          "roles": [
+            "authenticated"
+          ],
+          "using": "((status = 'published'::case_status) OR is_editor() OR (EXISTS ( SELECT 1\n   FROM case_generation_jobs j\n  WHERE ((j.case_id = practice_cases.id) AND (j.requested_by = auth.uid())))))",
+          "command": "SELECT",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "practice_cases_insert_editor",
+          "check": "(is_editor() AND (workflow_status = 'draft'::case_workflow_status) AND (publication_tier = 'internal'::case_publication_tier) AND ((created_by IS NULL) OR (created_by = auth.uid())))",
+          "roles": [
+            "authenticated"
+          ],
+          "using": null,
+          "command": "INSERT",
           "permissive": "PERMISSIVE"
         }
       ],
@@ -3180,6 +3348,16 @@
       ],
       "policies": [
         {
+          "name": "wf_rule_write",
+          "check": "is_editor()",
+          "roles": [
+            "authenticated"
+          ],
+          "using": "is_editor()",
+          "command": "ALL",
+          "permissive": "PERMISSIVE"
+        },
+        {
           "name": "wf_rule_read",
           "check": null,
           "roles": [
@@ -3188,16 +3366,6 @@
           ],
           "using": "true",
           "command": "SELECT",
-          "permissive": "PERMISSIVE"
-        },
-        {
-          "name": "wf_rule_write",
-          "check": "is_editor()",
-          "roles": [
-            "authenticated"
-          ],
-          "using": "is_editor()",
-          "command": "ALL",
           "permissive": "PERMISSIVE"
         }
       ],
@@ -3351,6 +3519,66 @@
         }
       ]
     },
+    "pilot_allowlist": {
+      "name": "pilot_allowlist",
+      "columns": [
+        {
+          "udt": "text",
+          "name": "email",
+          "type": "text",
+          "default": null,
+          "nullable": false
+        },
+        {
+          "udt": "text",
+          "name": "name",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "note",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "timestamptz",
+          "name": "added_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "nullable": false
+        }
+      ],
+      "policies": [
+        {
+          "name": "pilot_allowlist: admin manage",
+          "check": "(has_role(auth.uid(), 'admin'::app_role) OR has_role(auth.uid(), 'superadmin'::app_role))",
+          "roles": [
+            "authenticated"
+          ],
+          "using": "(has_role(auth.uid(), 'admin'::app_role) OR has_role(auth.uid(), 'superadmin'::app_role))",
+          "command": "ALL",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "pilot_allowlist: admin read",
+          "check": null,
+          "roles": [
+            "authenticated"
+          ],
+          "using": "(has_role(auth.uid(), 'admin'::app_role) OR has_role(auth.uid(), 'superadmin'::app_role))",
+          "command": "SELECT",
+          "permissive": "PERMISSIVE"
+        }
+      ],
+      "primary_key": [
+        "email"
+      ],
+      "rls_enabled": true,
+      "foreign_keys": []
+    },
     "workflow_events": {
       "name": "workflow_events",
       "columns": [
@@ -3487,6 +3715,16 @@
       ],
       "policies": [
         {
+          "name": "wf_phase_write",
+          "check": "is_editor()",
+          "roles": [
+            "authenticated"
+          ],
+          "using": "is_editor()",
+          "command": "ALL",
+          "permissive": "PERMISSIVE"
+        },
+        {
           "name": "wf_phase_read",
           "check": null,
           "roles": [
@@ -3495,16 +3733,6 @@
           ],
           "using": "(EXISTS ( SELECT 1\n   FROM workflow_templates t\n  WHERE ((t.id = workflow_phases.template_id) AND ((t.workflow_status = 'published'::workflow_template_status) OR is_editor()))))",
           "command": "SELECT",
-          "permissive": "PERMISSIVE"
-        },
-        {
-          "name": "wf_phase_write",
-          "check": "is_editor()",
-          "roles": [
-            "authenticated"
-          ],
-          "using": "is_editor()",
-          "command": "ALL",
           "permissive": "PERMISSIVE"
         }
       ],
@@ -3579,27 +3807,39 @@
           "type": "text",
           "default": null,
           "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "content_summary",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "content_summary_kind",
+          "type": "text",
+          "default": null,
+          "nullable": true
+        },
+        {
+          "udt": "text",
+          "name": "precise_reference",
+          "type": "text",
+          "default": null,
+          "nullable": true
         }
       ],
       "policies": [
         {
-          "name": "_role_delete_admin",
+          "name": "_role_select",
           "check": null,
           "roles": [
+            "anon",
             "authenticated"
           ],
-          "using": "is_admin()",
-          "command": "DELETE",
-          "permissive": "PERMISSIVE"
-        },
-        {
-          "name": "links write pilot",
-          "check": "true",
-          "roles": [
-            "public"
-          ],
           "using": "true",
-          "command": "ALL",
+          "command": "SELECT",
           "permissive": "PERMISSIVE"
         },
         {
@@ -3613,14 +3853,13 @@
           "permissive": "PERMISSIVE"
         },
         {
-          "name": "_role_select",
-          "check": null,
+          "name": "links write pilot",
+          "check": "true",
           "roles": [
-            "anon",
-            "authenticated"
+            "public"
           ],
           "using": "true",
-          "command": "SELECT",
+          "command": "ALL",
           "permissive": "PERMISSIVE"
         },
         {
@@ -3641,6 +3880,16 @@
           ],
           "using": "is_editor()",
           "command": "UPDATE",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "_role_delete_admin",
+          "check": null,
+          "roles": [
+            "authenticated"
+          ],
+          "using": "is_admin()",
+          "command": "DELETE",
           "permissive": "PERMISSIVE"
         }
       ],
@@ -3732,26 +3981,6 @@
       ],
       "policies": [
         {
-          "name": "_role_update_editor",
-          "check": "is_editor()",
-          "roles": [
-            "authenticated"
-          ],
-          "using": "is_editor()",
-          "command": "UPDATE",
-          "permissive": "PERMISSIVE"
-        },
-        {
-          "name": "_role_select",
-          "check": null,
-          "roles": [
-            "authenticated"
-          ],
-          "using": "is_editor()",
-          "command": "SELECT",
-          "permissive": "PERMISSIVE"
-        },
-        {
           "name": "_role_insert_editor",
           "check": "is_editor()",
           "roles": [
@@ -3762,6 +3991,16 @@
           "permissive": "PERMISSIVE"
         },
         {
+          "name": "_role_update_editor",
+          "check": "is_editor()",
+          "roles": [
+            "authenticated"
+          ],
+          "using": "is_editor()",
+          "command": "UPDATE",
+          "permissive": "PERMISSIVE"
+        },
+        {
           "name": "_role_delete_admin",
           "check": null,
           "roles": [
@@ -3769,6 +4008,16 @@
           ],
           "using": "is_admin()",
           "command": "DELETE",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "_role_select",
+          "check": null,
+          "roles": [
+            "authenticated"
+          ],
+          "using": "is_editor()",
+          "command": "SELECT",
           "permissive": "PERMISSIVE"
         }
       ],
@@ -3839,6 +4088,16 @@
       ],
       "policies": [
         {
+          "name": "_role_update_editor",
+          "check": "is_editor()",
+          "roles": [
+            "authenticated"
+          ],
+          "using": "is_editor()",
+          "command": "UPDATE",
+          "permissive": "PERMISSIVE"
+        },
+        {
           "name": "_role_select",
           "check": null,
           "roles": [
@@ -3850,13 +4109,13 @@
           "permissive": "PERMISSIVE"
         },
         {
-          "name": "_role_update_editor",
-          "check": "is_editor()",
+          "name": "_role_delete_admin",
+          "check": null,
           "roles": [
             "authenticated"
           ],
-          "using": "is_editor()",
-          "command": "UPDATE",
+          "using": "is_admin()",
+          "command": "DELETE",
           "permissive": "PERMISSIVE"
         },
         {
@@ -3867,16 +4126,6 @@
           ],
           "using": null,
           "command": "INSERT",
-          "permissive": "PERMISSIVE"
-        },
-        {
-          "name": "_role_delete_admin",
-          "check": null,
-          "roles": [
-            "authenticated"
-          ],
-          "using": "is_admin()",
-          "command": "DELETE",
           "permissive": "PERMISSIVE"
         }
       ],
@@ -3992,6 +4241,26 @@
           "permissive": "PERMISSIVE"
         },
         {
+          "name": "tpl write pilot",
+          "check": "true",
+          "roles": [
+            "public"
+          ],
+          "using": "true",
+          "command": "ALL",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "tpl read all",
+          "check": null,
+          "roles": [
+            "public"
+          ],
+          "using": "true",
+          "command": "SELECT",
+          "permissive": "PERMISSIVE"
+        },
+        {
           "name": "_role_select",
           "check": null,
           "roles": [
@@ -4010,26 +4279,6 @@
           ],
           "using": "is_admin()",
           "command": "DELETE",
-          "permissive": "PERMISSIVE"
-        },
-        {
-          "name": "tpl read all",
-          "check": null,
-          "roles": [
-            "public"
-          ],
-          "using": "true",
-          "command": "SELECT",
-          "permissive": "PERMISSIVE"
-        },
-        {
-          "name": "tpl write pilot",
-          "check": "true",
-          "roles": [
-            "public"
-          ],
-          "using": "true",
-          "command": "ALL",
           "permissive": "PERMISSIVE"
         },
         {
@@ -4252,16 +4501,6 @@
       ],
       "policies": [
         {
-          "name": "_role_delete_admin",
-          "check": null,
-          "roles": [
-            "authenticated"
-          ],
-          "using": "is_admin()",
-          "command": "DELETE",
-          "permissive": "PERMISSIVE"
-        },
-        {
           "name": "_role_select",
           "check": null,
           "roles": [
@@ -4272,13 +4511,13 @@
           "permissive": "PERMISSIVE"
         },
         {
-          "name": "_role_insert_editor",
-          "check": "is_editor()",
+          "name": "_role_delete_admin",
+          "check": null,
           "roles": [
             "authenticated"
           ],
-          "using": null,
-          "command": "INSERT",
+          "using": "is_admin()",
+          "command": "DELETE",
           "permissive": "PERMISSIVE"
         },
         {
@@ -4289,6 +4528,16 @@
           ],
           "using": "is_editor()",
           "command": "UPDATE",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "_role_insert_editor",
+          "check": "is_editor()",
+          "roles": [
+            "authenticated"
+          ],
+          "using": null,
+          "command": "INSERT",
           "permissive": "PERMISSIVE"
         }
       ],
@@ -4401,16 +4650,6 @@
       ],
       "policies": [
         {
-          "name": "wf_tpl_read_editor",
-          "check": null,
-          "roles": [
-            "authenticated"
-          ],
-          "using": "(is_editor() OR (workflow_status = 'published'::workflow_template_status))",
-          "command": "SELECT",
-          "permissive": "PERMISSIVE"
-        },
-        {
           "name": "wf_tpl_read_pub",
           "check": null,
           "roles": [
@@ -4418,6 +4657,16 @@
             "authenticated"
           ],
           "using": "((workflow_status = 'published'::workflow_template_status) AND (publication_tier = 'public'::workflow_publication_tier))",
+          "command": "SELECT",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "wf_tpl_read_editor",
+          "check": null,
+          "roles": [
+            "authenticated"
+          ],
+          "using": "(is_editor() OR (workflow_status = 'published'::workflow_template_status))",
           "command": "SELECT",
           "permissive": "PERMISSIVE"
         },
@@ -4500,26 +4749,6 @@
       ],
       "policies": [
         {
-          "name": "_role_delete_admin",
-          "check": null,
-          "roles": [
-            "authenticated"
-          ],
-          "using": "is_admin()",
-          "command": "DELETE",
-          "permissive": "PERMISSIVE"
-        },
-        {
-          "name": "cat write pilot",
-          "check": "true",
-          "roles": [
-            "public"
-          ],
-          "using": "true",
-          "command": "ALL",
-          "permissive": "PERMISSIVE"
-        },
-        {
           "name": "_role_update_editor",
           "check": "is_editor()",
           "roles": [
@@ -4527,6 +4756,16 @@
           ],
           "using": "is_editor()",
           "command": "UPDATE",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "_role_delete_admin",
+          "check": null,
+          "roles": [
+            "authenticated"
+          ],
+          "using": "is_admin()",
+          "command": "DELETE",
           "permissive": "PERMISSIVE"
         },
         {
@@ -4548,6 +4787,16 @@
           ],
           "using": "true",
           "command": "SELECT",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "cat write pilot",
+          "check": "true",
+          "roles": [
+            "public"
+          ],
+          "using": "true",
+          "command": "ALL",
           "permissive": "PERMISSIVE"
         },
         {
@@ -4697,16 +4946,6 @@
       ],
       "policies": [
         {
-          "name": "wf_role_write",
-          "check": "is_editor()",
-          "roles": [
-            "authenticated"
-          ],
-          "using": "is_editor()",
-          "command": "ALL",
-          "permissive": "PERMISSIVE"
-        },
-        {
           "name": "wf_role_read",
           "check": null,
           "roles": [
@@ -4715,6 +4954,16 @@
           ],
           "using": "true",
           "command": "SELECT",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "wf_role_write",
+          "check": "is_editor()",
+          "roles": [
+            "authenticated"
+          ],
+          "using": "is_editor()",
+          "command": "ALL",
           "permissive": "PERMISSIVE"
         }
       ],
@@ -4800,6 +5049,16 @@
       ],
       "policies": [
         {
+          "name": "case_generation_jobs: block client insert",
+          "check": "false",
+          "roles": [
+            "authenticated"
+          ],
+          "using": null,
+          "command": "INSERT",
+          "permissive": "PERMISSIVE"
+        },
+        {
           "name": "case_generation_jobs: select own or editor",
           "check": null,
           "roles": [
@@ -4817,16 +5076,6 @@
           ],
           "using": "false",
           "command": "UPDATE",
-          "permissive": "PERMISSIVE"
-        },
-        {
-          "name": "case_generation_jobs: block client insert",
-          "check": "false",
-          "roles": [
-            "authenticated"
-          ],
-          "using": null,
-          "command": "INSERT",
           "permissive": "PERMISSIVE"
         },
         {
@@ -5363,16 +5612,6 @@
           "permissive": "PERMISSIVE"
         },
         {
-          "name": "_role_delete_admin",
-          "check": null,
-          "roles": [
-            "authenticated"
-          ],
-          "using": "is_admin()",
-          "command": "DELETE",
-          "permissive": "PERMISSIVE"
-        },
-        {
           "name": "_role_update_editor",
           "check": "is_editor()",
           "roles": [
@@ -5380,6 +5619,16 @@
           ],
           "using": "is_editor()",
           "command": "UPDATE",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "_role_delete_admin",
+          "check": null,
+          "roles": [
+            "authenticated"
+          ],
+          "using": "is_admin()",
+          "command": "DELETE",
           "permissive": "PERMISSIVE"
         },
         {
@@ -5739,17 +5988,6 @@
       ],
       "policies": [
         {
-          "name": "_role_select",
-          "check": null,
-          "roles": [
-            "anon",
-            "authenticated"
-          ],
-          "using": "true",
-          "command": "SELECT",
-          "permissive": "PERMISSIVE"
-        },
-        {
           "name": "_role_insert_editor",
           "check": "is_editor()",
           "roles": [
@@ -5764,6 +6002,17 @@
           "check": null,
           "roles": [
             "public"
+          ],
+          "using": "true",
+          "command": "SELECT",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "_role_select",
+          "check": null,
+          "roles": [
+            "anon",
+            "authenticated"
           ],
           "using": "true",
           "command": "SELECT",
@@ -5858,12 +6107,13 @@
       ],
       "policies": [
         {
-          "name": "clrf_select_editor",
+          "name": "case_legal_review_flags: public reads for published cases",
           "check": null,
           "roles": [
+            "anon",
             "authenticated"
           ],
-          "using": "(is_editor() AND (EXISTS ( SELECT 1\n   FROM practice_cases pc\n  WHERE ((pc.id = case_legal_review_flags.case_id) AND (pc.workflow_status <> 'archived'::case_workflow_status)))))",
+          "using": "(EXISTS ( SELECT 1\n   FROM practice_cases p\n  WHERE ((p.id = case_legal_review_flags.case_id) AND (p.status = 'published'::case_status))))",
           "command": "SELECT",
           "permissive": "PERMISSIVE"
         },
@@ -5878,13 +6128,13 @@
           "permissive": "PERMISSIVE"
         },
         {
-          "name": "clrf_update_reviewer",
-          "check": "is_reviewer()",
+          "name": "clrf_select_editor",
+          "check": null,
           "roles": [
             "authenticated"
           ],
-          "using": "is_reviewer()",
-          "command": "UPDATE",
+          "using": "(is_editor() AND (EXISTS ( SELECT 1\n   FROM practice_cases pc\n  WHERE ((pc.id = case_legal_review_flags.case_id) AND (pc.workflow_status <> 'archived'::case_workflow_status)))))",
+          "command": "SELECT",
           "permissive": "PERMISSIVE"
         },
         {
@@ -5895,6 +6145,16 @@
           ],
           "using": "is_reviewer()",
           "command": "SELECT",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "clrf_update_reviewer",
+          "check": "is_reviewer()",
+          "roles": [
+            "authenticated"
+          ],
+          "using": "is_reviewer()",
+          "command": "UPDATE",
           "permissive": "PERMISSIVE"
         }
       ],
@@ -6193,13 +6453,14 @@
           "permissive": "PERMISSIVE"
         },
         {
-          "name": "_role_update_editor",
-          "check": "is_editor()",
+          "name": "_role_select",
+          "check": null,
           "roles": [
+            "anon",
             "authenticated"
           ],
-          "using": "is_editor()",
-          "command": "UPDATE",
+          "using": "true",
+          "command": "SELECT",
           "permissive": "PERMISSIVE"
         },
         {
@@ -6213,14 +6474,13 @@
           "permissive": "PERMISSIVE"
         },
         {
-          "name": "_role_select",
-          "check": null,
+          "name": "_role_update_editor",
+          "check": "is_editor()",
           "roles": [
-            "anon",
             "authenticated"
           ],
-          "using": "true",
-          "command": "SELECT",
+          "using": "is_editor()",
+          "command": "UPDATE",
           "permissive": "PERMISSIVE"
         }
       ],
@@ -7126,26 +7386,6 @@
       ],
       "policies": [
         {
-          "name": "_role_update_editor",
-          "check": "is_editor()",
-          "roles": [
-            "authenticated"
-          ],
-          "using": "is_editor()",
-          "command": "UPDATE",
-          "permissive": "PERMISSIVE"
-        },
-        {
-          "name": "_role_insert_editor",
-          "check": "is_editor()",
-          "roles": [
-            "authenticated"
-          ],
-          "using": null,
-          "command": "INSERT",
-          "permissive": "PERMISSIVE"
-        },
-        {
           "name": "_role_select",
           "check": null,
           "roles": [
@@ -7165,6 +7405,26 @@
           "using": "is_admin()",
           "command": "DELETE",
           "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "_role_update_editor",
+          "check": "is_editor()",
+          "roles": [
+            "authenticated"
+          ],
+          "using": "is_editor()",
+          "command": "UPDATE",
+          "permissive": "PERMISSIVE"
+        },
+        {
+          "name": "_role_insert_editor",
+          "check": "is_editor()",
+          "roles": [
+            "authenticated"
+          ],
+          "using": null,
+          "command": "INSERT",
+          "permissive": "PERMISSIVE"
         }
       ],
       "primary_key": [
@@ -7181,5 +7441,5 @@
       ]
     }
   },
-  "generated_at": "2026-08-15T18:31:53.501414+00:00"
+  "generated_at": "2026-08-24T21:35:42.036843+00:00"
 }

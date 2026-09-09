@@ -133,13 +133,14 @@ function formatWarning(raw: string): string {
     /^(Vermeiden|Beginnen|Achten|Dokumentieren|Warten|Handeln|Prüfen|Sprechen|Informieren|Melden|Nutzen|Kontaktieren|Klären|Wenden|Setzen|Stellen|Zeigen|Unterlassen|Bewahren|Trennen|Sichern|Reagieren|Erstellen)\s+Sie\b/i;
   const endWithPeriod = (t: string) => (/[.!?]$/.test(t) ? t : t + ".");
   if (imperativeStart.test(s)) return endWithPeriod(s);
-  // Nutzer-Fund 2026-08-29: nach dem Doppelpunkt wurde der Satzrest
-  // kleingeschrieben - das traf auch Substantive ("smartphone"). Nach
-  // einem Doppelpunkt mit Großbuchstaben fortsetzen.
-  const cleaned = s
-    .replace(/^(Keine|Kein|Nie|Niemals|Nicht)\s+/i, "")
-    .replace(/^./, (m) => m.toUpperCase());
-  return endWithPeriod(`Vermeiden Sie unbedingt: ${cleaned}`);
+  // Nutzer-Fund 2026-09-09: das frühere Streichen führender Verneinungen
+  // ("Keine Unterrichtung..." -> "Unterrichtung...") kehrte die Aussage um,
+  // sobald ein Begründungssatz folgte ("Dies verstößt gegen die
+  // Unterrichtungspflicht") - aus dem Gebot wurde scheinbar ein Verbot.
+  // Eine Umformulierung des Inhalts ist nicht sicher automatisierbar;
+  // stattdessen neutraler Vorspann, Originaltext bleibt unangetastet.
+  const cleaned = s.replace(/^./, (m) => m.toUpperCase());
+  return endWithPeriod(`Häufigster Fehler – ${cleaned}`);
 }
 
 /* ---------- Do's / Don'ts mit Aufklappen ---------- */

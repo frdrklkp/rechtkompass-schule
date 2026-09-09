@@ -17,7 +17,13 @@ export type SendEmailResult = {
   provider: "resend";
 };
 
-const DEFAULT_FROM = "RechtKompass Schule <onboarding@resend.dev>";
+// Pilot-Fund 2026-09-09: Der Resend-Testabsender onboarding@resend.dev darf
+// nur an die EIGENE Kontoadresse senden - als stiller Fallback führte er zu
+// einem 403, sobald an Kollegen versendet wurde (RESEND_FROM_EMAIL war in
+// der Worker-Umgebung nicht gesetzt). Die Domain rechtkompass-schule.de ist
+// seit 02.09.2026 bei Resend verifiziert; der Standard-Absender liegt daher
+// fest auf ihr. RESEND_FROM_EMAIL bleibt als Override möglich.
+const DEFAULT_FROM = "RechtKompass Schule <dokumente@rechtkompass-schule.de>";
 
 export async function sendEmail(input: SendEmailInput): Promise<SendEmailResult> {
   const apiKey = process.env.RESEND_API_KEY;

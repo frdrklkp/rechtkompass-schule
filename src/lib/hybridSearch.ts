@@ -81,8 +81,28 @@ export async function searchPracticeCasesHybrid(
     return { ...structured, usedSemantic: false, semanticFallbackReason };
   }
 
-  const combined = combineHybrid(structured.results, semanticHits, cases, { query: q }).slice(0, limit);
-  const asResults = combined.map(toSearchResult);
+  // Pilot-Fund 2026-09-09 ("Projektfahrt"): Die lexikalische Liste erscheint
+  // sofort; traf sie den Suchbegriff klar (z.B. exakter Titelbegriff),
+  // wurde sie ~2 s später von der eintreffenden Semantik komplett neu
+  // gemischt - für Nutzer "sprang" das richtige Ergebnis weg. Deshalb:
+  // Bei STARKEM lexikalischem Bestmatch bleibt die lexikalische Reihenfolge
+  // stabil und die Semantik ergänzt nur zusätzliche Fälle unten. Nur bei
+  // schwachen Worttreffern darf die Semantik neu ordnen.
+  const STRONG_LEXICAL_SCORE = 60;
+  const lexicalStrong = (structured.bestMatch?.relevanceScore ?? 0) >= STRONG_LEXICAL_SCORE;
+  const combined = combineHybrid(structured.results, semanticHits, cases, { query: q });
+  let asResults;
+  if (lexicalStrong) {
+    const lexicalTop = structured.results.slice(0, limit);
+    const known = new Set(lexicalTop.map((r) => r.case.id));
+    const additions = combined
+      .map(toSearchResult)
+      .filter((r) => !known.has(r.case.id))
+      .slice(0, Math.max(0, limit - lexicalTop.length));
+    asResults = [...lexicalTop, ...additions];
+  } else {
+    asResults = combined.slice(0, limit).map(toSearchResult);
+  }
   const bestMatch = asResults[0] ?? null;
   const alternatives = asResults.slice(1);
   const confidence = bestMatch ? bestMatch.relevanceScore / 100 : 0;

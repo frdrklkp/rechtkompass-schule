@@ -9,7 +9,7 @@ import { completeWithValidation, CompletionValidationError } from "@/services/ed
  * der übergebenen Wissensbasis abgeleitet werden.
  */
 
-type Ref = { id: string; label: string };
+type Ref = { id: string; label: string; sourceKey?: string };
 type CaseRef = { id: string; label: string; category?: string; ampel?: string };
 
 type RequestBody = {
@@ -31,10 +31,15 @@ const STOPWORDS = new Set([
 ]);
 
 function tokenize(s: string): Set<string> {
+  // Pilot-Fund 2026-09-09: NFKD zerlegt Umlaute in Buchstabe + Kombinations-
+  // zeichen; das Kombinationszeichen wurde bisher durch ein LEERZEICHEN
+  // ersetzt und zerschnitt jedes Umlaut-Wort ("Schülerinnen" -> "schu" +
+  // "lerinnen"). Kombinationszeichen jetzt entfernen statt ersetzen.
   return new Set(
     s
       .toLowerCase()
       .normalize("NFKD")
+      .replace(/\p{M}/gu, "")
       .replace(/[^\p{L}\p{N}\s]/gu, " ")
       .split(/\s+/)
       .filter((w) => w.length > 2 && !STOPWORDS.has(w)),
@@ -72,11 +77,36 @@ const PER_SOURCE_CAP = 40;
 // drei Aufrufer "<Quellenname> <Nummer> <Titel>", und reale Quellennamen
 // unterscheiden sich innerhalb der ersten 48 Zeichen. So braucht die
 // Ref-Struktur kein zusätzliches Quellenfeld über alle Aufrufer hinweg.
-function sourceKeyOf(label: string): string {
-  return label.slice(0, 48);
+// Pilot-Fund 2026-09-09: Bei kurzen Quellennamen ("BASS Abs. 17 ...") fällt
+// die Abschnittsnummer in die ersten 48 Zeichen - jeder Abschnitt wurde zur
+// eigenen "Quelle". Aufrufer, die die echte Quellen-ID kennen, geben sie als
+// ref.sourceKey mit; das Präfix bleibt nur Fallback.
+function sourceKeyOf(ref: Ref): string {
+  return ref.sourceKey ?? (ref.label ?? "").slice(0, 48);
 }
 
-function overlapScore(queryTokens: Set<string>, label: string): number {
+/**
+ * Pilot-Fund 2026-09-09 (Fall "Projektfahrt ohne weibliche Begleitperson"):
+ * Die Teilwort-Regel griff nur bei vollständigem Enthaltensein
+ * ("Prüfungsteilnahme" enthält "Prüfung"). Zwei Komposita mit gleichem
+ * Grundwort, aber verschiedenem Bestimmungswort ("Klassenfahrt" vs.
+ * "Schulfahrten") trafen sich nie - die Richtlinien für Schulfahrten
+ * erreichten die Top-400 nicht. Deutsche Komposita tragen ihr Grundwort am
+ * ENDE; deshalb zusätzlich Stamm-Kandidaten aus den Suffixen langer
+ * Query-Tokens (Länge 5-8 von Tokens ab 8 Zeichen) mit kleinem Gewicht.
+ */
+function suffixStems(queryTokens: Set<string>): string[] {
+  const stems = new Set<string>();
+  for (const qt of queryTokens) {
+    if (qt.length < 8) continue;
+    for (let len = 5; len <= Math.min(8, qt.length - 2); len++) {
+      stems.add(qt.slice(-len));
+    }
+  }
+  return [...stems];
+}
+
+function overlapScore(queryTokens: Set<string>, label: string, stems: string[] = []): number {
   let score = 0;
   for (const lt of tokenize(label)) {
     if (queryTokens.has(lt)) {
@@ -84,10 +114,20 @@ function overlapScore(queryTokens: Set<string>, label: string): number {
       continue;
     }
     if (lt.length >= 5) {
+      let matched = false;
       for (const qt of queryTokens) {
         if (qt.length >= 5 && (qt.includes(lt) || lt.includes(qt))) {
           score += 0.5;
+          matched = true;
           break;
+        }
+      }
+      if (!matched) {
+        for (const stem of stems) {
+          if (lt.includes(stem)) {
+            score += 0.4;
+            break;
+          }
         }
       }
     }
@@ -95,10 +135,27 @@ function overlapScore(queryTokens: Set<string>, label: string): number {
   return score;
 }
 
-export function filterRelevantSections(sections: Ref[], queryText: string, maxCount = 300): Ref[] {
+/**
+ * opts.sourceFloor (Pilot-Fund 2026-09-09): garantiert, dass JEDE Quelle mit
+ * mindestens ihrem bestbewerteten Abschnitt im Ergebnis vertreten ist - auch
+ * jenseits von maxCount. Hintergrund: lexikalische Scores können ganze
+ * Quellen unsichtbar machen (Richtlinien für Schulfahrten bei der Anfrage
+ * "Projektfahrt ... Begleitperson"), worauf die KI fälschlich "Offizielle
+ * Rechtsgrundlage fehlt" meldete. Die Labels sind kurz (~38 Token); die
+ * Garantie kostet je nach Quellenzahl grob +10-15k Token Kontext und ist
+ * deshalb nur für die Zuordnungs-Route aktiviert, nicht für den
+ * Entwurfs-Prefilter mit seinem größeren Restkontext.
+ */
+export function filterRelevantSections(
+  sections: Ref[],
+  queryText: string,
+  maxCount = 300,
+  opts: { sourceFloor?: boolean } = {},
+): Ref[] {
   if (sections.length <= maxCount) return sections;
   const queryTokens = tokenize(queryText);
-  const scored = sections.map((s) => ({ ref: s, score: overlapScore(queryTokens, s.label ?? "") }));
+  const stems = suffixStems(queryTokens);
+  const scored = sections.map((s) => ({ ref: s, score: overlapScore(queryTokens, s.label ?? "", stems) }));
   scored.sort((a, b) => b.score - a.score);
 
   const perSource = new Map<string, number>();
@@ -106,7 +163,7 @@ export function filterRelevantSections(sections: Ref[], queryText: string, maxCo
   const overflow: Ref[] = [];
   for (const { ref } of scored) {
     if (kept.length >= maxCount) break;
-    const key = sourceKeyOf(ref.label ?? "");
+    const key = sourceKeyOf(ref);
     const n = perSource.get(key) ?? 0;
     if (n < PER_SOURCE_CAP) {
       perSource.set(key, n + 1);
@@ -120,6 +177,17 @@ export function filterRelevantSections(sections: Ref[], queryText: string, maxCo
   for (const ref of overflow) {
     if (kept.length >= maxCount) break;
     kept.push(ref);
+  }
+
+  if (opts.sourceFloor) {
+    const represented = new Set(kept.map((r) => sourceKeyOf(r)));
+    for (const { ref } of scored) {
+      const key = sourceKeyOf(ref);
+      if (!represented.has(key)) {
+        represented.add(key);
+        kept.push(ref);
+      }
+    }
   }
   return kept;
 }

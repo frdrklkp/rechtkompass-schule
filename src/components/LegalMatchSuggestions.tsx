@@ -67,6 +67,7 @@ export function LegalMatchSuggestions({ caseId, caseInput, onLinked }: Props) {
         const src = sourceById.get(s.source_id);
         return {
           id: s.id as string,
+          source_id: (s.source_id ?? "") as string,
           source_short: (src?.short_name ?? src?.name ?? "") as string,
           section_number: (s.section_number ?? s.reference ?? "") as string,
           title: (s.title ?? "") as string,

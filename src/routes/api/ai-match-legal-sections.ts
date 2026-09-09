@@ -5,6 +5,7 @@ import { completeWithValidation, CompletionValidationError } from "@/services/ed
 
 type SectionRef = {
   id: string;
+  source_id?: string;
   source_short?: string;
   section_number?: string;
   title?: string;
@@ -67,7 +68,32 @@ export const Route = createFileRoute("/api/ai-match-legal-sections")({
           return new Response("Invalid JSON", { status: 400 });
         }
 
-        const sections = (body.sections ?? []).slice(0, 400);
+        // Pilot-Fund 2026-09-09 (Fall "Projektfahrt ohne weibliche
+        // Begleitperson"): Das stumpfe slice(0, 400) nahm die ersten 400
+        // Abschnitte in Datenbankreihenfolge - bei inzwischen >16.000
+        // Abschnitten faktisch nur die ältesten Importe. Später importierte
+        // Quellen (z.B. Richtlinien für Schulfahrten) kamen NIE ins Fenster,
+        // und die KI meldete fälschlich "Offizielle Rechtsgrundlage fehlt".
+        // Jetzt: relevanzbasierter Vorfilter (gleiche Mechanik wie im
+        // Entwurfs-Prefilter, inkl. Quellen-Deckelung), Query aus dem
+        // Fallkontext plus "Berufskolleg"-Domänenanker.
+        const { filterRelevantSections } = await import("./ai-draft-batch-item");
+        const rawSections = body.sections ?? [];
+        const prefilterQuery = [
+          body.title ?? "",
+          body.short_description ?? "",
+          body.category ?? "",
+          body.subcategory ?? "",
+          (body.keywords ?? []).join(" "),
+          "Berufskolleg Schule",
+        ].join(" ");
+        const refs = rawSections.map((s) => ({
+          id: s.id,
+          label: [s.source_short, s.section_number, s.title, s.summary].filter(Boolean).join(" "),
+          sourceKey: s.source_id,
+        }));
+        const keptIds = new Set(filterRelevantSections(refs, prefilterQuery, 400, { sourceFloor: true }).map((r) => r.id));
+        const sections = rawSections.filter((s) => keptIds.has(s.id));
         if (sections.length === 0) {
           return new Response(
             JSON.stringify({ matches: [], detected_signals: [], missing_area: null, flags: {} }),

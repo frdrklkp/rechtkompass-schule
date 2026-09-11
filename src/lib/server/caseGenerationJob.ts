@@ -40,7 +40,7 @@ const DUPLICATE_SCORE_THRESHOLD = 0.75;
 function toStringArray(v: unknown): string[] {
   if (Array.isArray(v)) return v.filter((x): x is string => typeof x === "string" && x.trim().length > 0);
   if (typeof v === "string" && v.trim()) {
-    return v.split(/\r?\n/).map((s) => s.replace(/^[-*]\s*/, "").trim()).filter(Boolean);
+    return v.replace(/\s+-\s+(?=\[)/g, "\n").split(/\r?\n/).map((s) => s.replace(/^[-*]\s*/, "").trim()).filter(Boolean);
   }
   return [];
 }
@@ -321,7 +321,7 @@ async function runPipeline(jobId: string, sketch: string, apiOrigin: string): Pr
 
   const toArray = (v: unknown): string[] =>
     Array.isArray(v) ? v.filter((x): x is string => typeof x === "string" && x.trim().length > 0)
-      : typeof v === "string" && v.trim() ? v.split(/\r?\n/).map((s) => s.replace(/^[-*]\s*/, "").trim()).filter(Boolean)
+      : typeof v === "string" && v.trim() ? v.replace(/\s+-\s+(?=\[)/g, "\n").split(/\r?\n/).map((s) => s.replace(/^[-*]\s*/, "").trim()).filter(Boolean)
       : [];
 
   const runRevisionRound = async (): Promise<boolean> => {

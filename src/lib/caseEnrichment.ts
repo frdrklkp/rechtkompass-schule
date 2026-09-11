@@ -64,7 +64,14 @@ function toBullets(input: string[] | string | null | undefined): string[] {
   for (const entry of raw) {
     const s = String(entry ?? "").trim();
     if (!s) continue;
-    const lines = s.split(/\r?\n+/).map((l) => l.trim()).filter(Boolean);
+    // Pilot-Fund 2026-09-11 (Fall "Erweitertes Führungszeugnis"): Die KI
+    // trennt Punkte gelegentlich mit " - [Label] ..." IN EINER Zeile statt
+    // mit echten Zeilenumbrüchen - alle Do's klebten dann in einem einzigen
+    // Listenpunkt. Vor ein Inline-" - [" deshalb einen Zeilenumbruch
+    // einziehen; echte Gedankenstriche im Fließtext (ohne folgendes
+    // Label-Präfix "[") bleiben unberührt.
+    const normalized = s.replace(/\s+-\s+(?=\[)/g, "\n");
+    const lines = normalized.split(/\r?\n+/).map((l) => l.trim()).filter(Boolean);
     if (lines.length > 1 || /^\s*([-*•–—]|\d+[.)])\s+/.test(s)) {
       for (const l of lines) {
         const cleaned = l.replace(/^\s*([-*•–—]|\d+[.)])\s+/, "").trim();

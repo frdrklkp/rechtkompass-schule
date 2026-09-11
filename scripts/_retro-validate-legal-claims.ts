@@ -46,7 +46,7 @@ async function bootstrapSession(): Promise<void> {
 
 const toArray = (v: unknown): string[] =>
   Array.isArray(v) ? v.filter((x): x is string => typeof x === "string" && x.trim().length > 0)
-    : typeof v === "string" && v.trim() ? v.split(/\r?\n/).map((s) => s.replace(/^[-*]\s*/, "").trim()).filter(Boolean)
+    : typeof v === "string" && v.trim() ? v.replace(/\s+-\s+(?=\[)/g, "\n").split(/\r?\n/).map((s) => s.replace(/^[-*]\s*/, "").trim()).filter(Boolean)
     : [];
 
 type ItemVerdict = { id: string; verdict: string; new_label?: string; note?: string };

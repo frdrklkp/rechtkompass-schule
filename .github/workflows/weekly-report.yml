@@ -1,0 +1,32 @@
+# Wochenreport für die Redaktion (Nutzerauftrag 11.09.2026): montags 06:30 Uhr
+# deutscher Zeit eine Mail an REVIEW_NOTIFY_EMAIL mit Fallbestand, neuen
+# Fällen, offenen Reviews/Meldungen, Generierungs-Läufen und Guthaben-Status.
+# Cron läuft in UTC: 04:30 UTC = 06:30 CEST (Sommer) bzw. 05:30 CET (Winter).
+# Manuell auslösbar über Actions-Tab -> "Wochenreport" -> Run workflow.
+name: Wochenreport
+
+on:
+  schedule:
+    - cron: "30 4 * * 1"
+  workflow_dispatch:
+
+jobs:
+  weekly-report:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - name: Abhängigkeiten installieren
+        run: bun install --frozen-lockfile
+      - name: Wochenreport versenden
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          REVIEW_NOTIFY_EMAIL: ${{ secrets.REVIEW_NOTIFY_EMAIL }}
+        run: bun run scripts/_weekly-report.ts

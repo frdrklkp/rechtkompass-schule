@@ -8,7 +8,7 @@
  * Aufruf: bun run scripts/_import-backlog-sources.ts
  */
 import { createClient } from "@supabase/supabase-js";
-import { aiActParser, bbigParser, bgbParser, dsgNrwParser, jarbschgParser, juschgParser, kunsturhgParser, sgb7Parser, sgb8Parser, stgbParser } from "../src/services/legal-knowledge/import";
+import { aiActParser, bbigParser, bgbParser, bzrgParser, dsgNrwParser, jarbschgParser, juschgParser, kunsturhgParser, sgb7Parser, sgb8Parser, stgbParser } from "../src/services/legal-knowledge/import";
 import { mergeDocuments } from "../src/services/legal-knowledge/connectors/OfficialSourceConnectorService";
 import type { LegalImportInput, LegalImportParser, LegalNode } from "../src/services/legal-knowledge/import/types";
 import {
@@ -124,6 +124,18 @@ const TARGETS: Array<{ url: string; label: string; sourceId: string; parser: Leg
     // Begriffsbestimmungen; Alkohol und Rauchen in der Öffentlichkeit -
     // die Klassenfahrt-Standardfragen.
     sections: ["1", "9", "10"],
+  },
+  {
+    url: "https://www.gesetze-im-internet.de/bzrg/BJNR002430971.html",
+    label: "BZRG (Auszug)",
+    sourceId: "bzrg",
+    parser: bzrgParser,
+    legalDomain: "Ausbildungsrecht",
+    bund: true,
+    // Führungszeugnis-Grundlagen für Praktika in kinder- und jugendnahen
+    // Bereichen (Pilot-Fund 11.09.2026): Antrag, erweitertes
+    // Führungszeugnis, Behördenauskunft.
+    sections: ["30", "30a", "31"],
   },
   {
     url: "https://eur-lex.europa.eu/legal-content/DE/TXT/HTML/?uri=CELEX:32024R1689",

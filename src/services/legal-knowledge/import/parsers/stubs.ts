@@ -94,8 +94,8 @@ export { bbigParser } from "./bbigParser";
 import { bbigParser } from "./bbigParser";
 export { jarbschgParser } from "./jarbschgParser";
 import { jarbschgParser } from "./jarbschgParser";
-export { bgbParser, stgbParser, sgb7Parser, juschgParser } from "./gesetzeImInternetParserFactory";
-import { bgbParser, stgbParser, sgb7Parser, juschgParser } from "./gesetzeImInternetParserFactory";
+export { bgbParser, stgbParser, sgb7Parser, juschgParser, bzrgParser } from "./gesetzeImInternetParserFactory";
+import { bgbParser, stgbParser, sgb7Parser, juschgParser, bzrgParser } from "./gesetzeImInternetParserFactory";
 export { aiActParser } from "./aiActParser";
 import { aiActParser } from "./aiActParser";
 
@@ -151,6 +151,7 @@ export const preparedParsers = [
   stgbParser,
   sgb7Parser,
   juschgParser,
+  bzrgParser,
   aiActParser,
   dsgvoParser,
   bassNrwParser,

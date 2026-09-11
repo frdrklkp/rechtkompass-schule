@@ -176,3 +176,12 @@ export const juschgParser = makeGesetzeImInternetParser({
   urlFragment: "gesetze-im-internet.de/juschg",
   detectRe: /Jugendschutzgesetz/i,
 });
+
+export const bzrgParser = makeGesetzeImInternetParser({
+  id: "bzrg",
+  label: "BZRG",
+  shortName: "BZRG",
+  fallbackTitle: "Bundeszentralregistergesetz (BZRG)",
+  urlFragment: "gesetze-im-internet.de/bzrg",
+  detectRe: /Bundeszentralregister/i,
+});

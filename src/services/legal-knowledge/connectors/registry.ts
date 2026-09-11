@@ -227,6 +227,16 @@ export const OFFICIAL_SOURCES: OfficialSourceDefinition[] = [
     maxDepth: 0,
   },
   {
+    id: "bzrg",
+    label: "BZRG (Auszug)",
+    description: "Bundeszentralregistergesetz - Auszug: Führungszeugnis, erweitertes Führungszeugnis",
+    defaultUrl: "https://www.gesetze-im-internet.de/bzrg/BJNR002430971.html",
+    parserId: "bzrg",
+    hosts: ["gesetze-im-internet.de", "www.gesetze-im-internet.de"],
+    maxPages: 5,
+    maxDepth: 0,
+  },
+  {
     id: "ai-act",
     label: "KI-VO (Auszug)",
     description: "EU-KI-Verordnung 2024/1689 - Auszug: KI-Kompetenz, verbotene Praktiken, Hochrisiko (Bildung), Betreiberpflichten, Transparenz",

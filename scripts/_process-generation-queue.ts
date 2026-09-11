@@ -49,8 +49,80 @@ async function markStaleJobs(): Promise<void> {
   else if (data?.length) console.log(`Verwaiste Jobs als failed markiert: ${data.length}`);
 }
 
+/**
+ * Guthaben-Wächter (Nutzerauftrag 11.09.2026): Am 08.09. war die
+ * Fallgenerierung still ausgefallen, weil das Anthropic-Guthaben leer war -
+ * entdeckt nur durch Zufall. Anthropic bietet keine Guthaben-Abfrage per
+ * API; stattdessen prüft jeder Runner-Lauf mit einer Minimalanfrage
+ * (1 Token, ~0,0002 ct), ob die API die "credit balance is too low"-
+ * Meldung liefert, und warnt dann per Mail an REVIEW_NOTIFY_EMAIL.
+ * Entprellung: höchstens eine Warnung je 24 h, Marker in
+ * case_generation_jobs (requested_by-freier Systemeintrag entfällt wegen
+ * NOT NULL - stattdessen Suche nach der jüngsten gesendeten Warnung über
+ * das error-Feld).
+ */
+const CREDIT_WARN_MARKER = "SYSTEM-GUTHABEN-WARNUNG";
+
+async function checkCreditAndWarn(): Promise<void> {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  const notifyTo = process.env.REVIEW_NOTIFY_EMAIL;
+  if (!apiKey || !notifyTo || !process.env.RESEND_API_KEY) return;
+  try {
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "claude-haiku-4-5-20251001",
+        max_tokens: 1,
+        messages: [{ role: "user", content: "." }],
+      }),
+    });
+    if (res.ok) return; // Guthaben vorhanden - nichts zu tun.
+    const text = await res.text();
+    if (!/credit balance is too low/i.test(text)) return; // anderer Fehler - nicht unser Thema.
+
+    // Entprellung: schon in den letzten 24 h gewarnt?
+    const since = new Date(Date.now() - 24 * 60 * 60_000).toISOString();
+    const { data: recent } = await (service as any)
+      .from("case_generation_jobs")
+      .select("id")
+      .ilike("error", `%${CREDIT_WARN_MARKER}%`)
+      .gt("updated_at", since)
+      .limit(1);
+    if (recent?.length) return;
+
+    const { sendEmail } = await import("../src/lib/mail/resend.server");
+    await sendEmail({
+      to: notifyTo,
+      subject: "RechtKompass: Anthropic-Guthaben aufgebraucht - Fallgenerierung steht",
+      html: [
+        `<p style="margin:0 0 12px 0;">Das Anthropic-API-Guthaben ist aufgebraucht. <strong>Fallgenerierung und Fall-schildern-Einschätzung schlagen ab sofort fehl</strong>, bis aufgeladen wird.</p>`,
+        `<p style="margin:0 0 12px 0;"><a href="https://console.anthropic.com/settings/billing">Zum Aufladen: console.anthropic.com &rarr; Plans &amp; Billing</a></p>`,
+        `<p style="margin:16px 0 0 0;font-size:12px;color:#666;">Automatische Warnung des Fallgenerierungs-Runners (höchstens einmal je 24 Stunden).</p>`,
+      ].join("\n"),
+    });
+    // Marker für die Entprellung hinterlegen (als abgeschlossener Job-Eintrag
+    // mit eindeutigem Fehlertext; taucht in keiner Warteschlange auf).
+    await (service as any).from("case_generation_jobs").insert({
+      requested_by: "85d423d1-cde1-47b2-bc27-f9383621b15a",
+      sketch: "SYSTEM: Guthaben-Warnung (automatischer Marker, bitte ignorieren)",
+      status: "failed",
+      phase: "entwurf",
+      error: `${CREDIT_WARN_MARKER}: Warnmail gesendet.`,
+    });
+    console.log("Guthaben-Warnung versendet.");
+  } catch (err) {
+    console.error("Guthaben-Check fehlgeschlagen:", err instanceof Error ? err.message : err);
+  }
+}
+
 async function main() {
   await markStaleJobs();
+  await checkCreditAndWarn();
 
   const { data: queued, error } = await (service as any)
     .from("case_generation_jobs")

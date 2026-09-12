@@ -586,6 +586,25 @@ function CaseDetail({ c }: { c: CaseData }) {
         </div>
       )}
 
+      {/* Redaktions-Entscheidung 12.09.2026: Fälle mit rotem Prüfstatus
+          bleiben sichtbar, tragen aber ein deutliches Banner - die
+          automatische Rechtsprüfung hat hier offene Fragen oder nicht
+          ausreichend belegte Aussagen gefunden. */}
+      {c.legalReviewStatus === "rot" && (
+        <div className="mt-3 rounded-2xl border-l-4 border-danger bg-danger/5 p-4">
+          <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-danger">
+            <TriangleAlert className="h-3.5 w-3.5" /> Noch nicht abschließend quellengeprüft
+          </p>
+          <p className="mt-1 text-xs leading-relaxed text-foreground">
+            Die automatische Rechtsprüfung hat in diesem Fall offene Rechtsfragen oder nicht
+            ausreichend belegte Aussagen gefunden. Die Redaktion arbeitet den Bestand schrittweise
+            ab. Bitte verifizieren Sie rechtliche Angaben (Fristen, Formvorgaben, Zuständigkeiten)
+            vor einer Entscheidung eigenständig – oder melden Sie Unstimmigkeiten direkt über
+            „Problem melden".
+          </p>
+        </div>
+      )}
+
       {/* 3-EBENEN-ACCORDION */}
       <Accordion
         type="multiple"

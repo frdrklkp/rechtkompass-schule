@@ -8,6 +8,11 @@ on:
   schedule:
     - cron: "*/5 * * * *"
   workflow_dispatch:
+  # Sofort-Trigger (26.09.2026): Die Web-App feuert beim Einreihen eines
+  # Jobs ein repository_dispatch-Event - der Runner startet in Sekunden
+  # statt beim nächsten Cron-Tick. Der Cron bleibt als Fallback.
+  repository_dispatch:
+    types: [case-generation]
 
 concurrency:
   group: case-generation-queue
@@ -22,6 +27,14 @@ jobs:
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
+      # Cache spart ~30-60s pro Lauf (26.09.2026); Schlüssel folgt dem
+      # Lockfile, ein Update invalidiert den Cache automatisch.
+      - name: Bun-Cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ runner.os }}-${{ hashFiles('bun.lock', 'bun.lockb') }}
+          restore-keys: bun-${{ runner.os }}-
       - name: Abhängigkeiten installieren
         run: bun install --frozen-lockfile
       - name: Wartende Jobs verarbeiten

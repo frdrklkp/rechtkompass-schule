@@ -637,6 +637,28 @@ async function runPipeline(jobId: string, sketch: string, apiOrigin: string): Pr
           `<p style="margin:16px 0 0 0;font-size:12px;color:#666;">Automatische Benachrichtigung des RechtKompass Schule.</p>`,
         ].join("\n"),
       });
+
+      // Nutzerauftrag 26.09.2026: Auch die ANFRAGENDE Lehrkraft bekommt eine
+      // Fertig-Mail mit Link zum Fall - sie muss dann nicht am Bildschirm
+      // auf die 6-8-minütige Generierung warten. Nicht an das interne
+      // Admin-Konto und nicht doppelt an die Redaktionsadresse senden.
+      if (
+        requesterEmail.includes("@") &&
+        requesterEmail !== "admin@rechtkompass.local" &&
+        requesterEmail.toLowerCase() !== notifyTo.toLowerCase()
+      ) {
+        await sendEmail({
+          to: requesterEmail,
+          subject: `Ihr Praxisfall ist fertig: ${info.title ?? "Ohne Titel"}`,
+          html: [
+            `<p style="margin:0 0 12px 0;">Ihr angefragter Praxisfall wurde erstellt und rechtlich geprüft:</p>`,
+            `<p style="margin:0 0 12px 0;"><strong>${esc(info.title ?? "Ohne Titel")}</strong></p>`,
+            `<p style="margin:0 0 12px 0;"><a href="https://www.rechtkompass-schule.de/faelle/${caseId}">Fall jetzt ansehen</a></p>`,
+            `<p style="margin:0 0 12px 0;color:#555;">Der Fall liegt zusätzlich der Redaktion zur Freigabe vor. Bis dahin sehen nur Sie ihn unter diesem Link; Inhalte können sich durch die redaktionelle Prüfung noch ändern.</p>`,
+            `<p style="margin:16px 0 0 0;font-size:12px;color:#666;">Automatische Benachrichtigung des RechtKompass Schule.</p>`,
+          ].join("\n"),
+        });
+      }
     }
   } catch (err) {
     console.error(

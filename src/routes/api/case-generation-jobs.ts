@@ -95,30 +95,41 @@ export const Route = createFileRoute("/api/case-generation-jobs")({
         const jobId = jobRow.id as string;
         const isLocalDev = process.env.NODE_ENV !== "production";
 
-        // Beschleunigung (Nutzerauftrag 26.09.2026): Statt bis zu 5 Minuten
-        // (bei GitHub-Cron-Verzug auch länger) auf den nächsten Cron-Tick zu
-        // warten, stößt die Einreihung den Runner sofort per
-        // repository_dispatch an. Fire-and-forget: Fehlt das Token oder
-        // schlägt der Aufruf fehl, bleibt der 5-Minuten-Cron der Fallback -
-        // die Einreihung selbst scheitert dadurch nie.
+        // Beschleunigung (Nutzerauftrag 26.09.2026): Statt auf den nächsten
+        // Cron-Tick zu warten (GitHub drosselt den 5-Minuten-Cron real auf
+        // Stunden-Abstände), stößt die Einreihung den Runner sofort per
+        // repository_dispatch an. WICHTIG (Fund 26.09.): Auf Cloudflare
+        // Workers wird ein nicht-awaiteter fetch nach dem Response-Return
+        // abgebrochen - der Aufruf muss deshalb VOR der Antwort abgewartet
+        // werden; das 3s-Timeout hält die Einreihung reaktionsschnell.
+        // Fehlt das Token oder schlägt der Aufruf fehl, bleibt der Cron der
+        // Fallback - die Einreihung selbst scheitert dadurch nie.
         const dispatchToken = process.env.GITHUB_DISPATCH_TOKEN;
         if (!isLocalDev && dispatchToken) {
-          fetch("https://api.github.com/repos/frdrklkp/rechtkompass-schule/dispatches", {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${dispatchToken}`,
-              Accept: "application/vnd.github+json",
-              "Content-Type": "application/json",
-              "User-Agent": "rechtkompass-schule",
-            },
-            body: JSON.stringify({ event_type: "case-generation", client_payload: { jobId } }),
-          })
-            .then((res) => {
-              if (!res.ok) console.error("[case-generation-jobs] repository_dispatch fehlgeschlagen:", res.status);
-            })
-            .catch((err) =>
-              console.error("[case-generation-jobs] repository_dispatch fehlgeschlagen:", err instanceof Error ? err.message : err),
+          try {
+            const dispatchRes = await fetch(
+              "https://api.github.com/repos/frdrklkp/rechtkompass-schule/dispatches",
+              {
+                method: "POST",
+                headers: {
+                  Authorization: `Bearer ${dispatchToken}`,
+                  Accept: "application/vnd.github+json",
+                  "Content-Type": "application/json",
+                  "User-Agent": "rechtkompass-schule",
+                },
+                body: JSON.stringify({ event_type: "case-generation", client_payload: { jobId } }),
+                signal: AbortSignal.timeout(3000),
+              },
             );
+            if (!dispatchRes.ok) {
+              console.error("[case-generation-jobs] repository_dispatch fehlgeschlagen:", dispatchRes.status);
+            }
+          } catch (err) {
+            console.error(
+              "[case-generation-jobs] repository_dispatch fehlgeschlagen:",
+              err instanceof Error ? err.message : err,
+            );
+          }
         }
 
         if (isLocalDev) {

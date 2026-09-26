@@ -101,6 +101,34 @@ async function main() {
   const jobsFailed = await countWhere("case_generation_jobs", (q: any) =>
     q.eq("status", "failed").gt("created_at", weekAgo).not("sketch", "ilike", "SYSTEM:%"));
 
+  // Einreichungen pro Kollege (Nutzerauftrag 26.09.2026): wer hat in der
+  // Woche Fälle generiert - inkl. Fehlschlägen, damit nichts unbemerkt
+  // liegen bleibt.
+  const { data: weekJobs } = await db
+    .from("case_generation_jobs")
+    .select("requested_by, status, case_id, sketch")
+    .gt("created_at", weekAgo)
+    .not("sketch", "ilike", "SYSTEM:%");
+  const perUser = new Map<string, { ok: number; failed: number; pending: number }>();
+  for (const j of weekJobs ?? []) {
+    const cur = perUser.get(j.requested_by) ?? { ok: 0, failed: 0, pending: 0 };
+    if (j.status === "succeeded") cur.ok++;
+    else if (j.status === "failed") cur.failed++;
+    else cur.pending++;
+    perUser.set(j.requested_by, cur);
+  }
+  const userRows: string[] = [];
+  for (const [uid, n] of perUser) {
+    let email = uid;
+    try {
+      const { data: u } = await db.auth.admin.getUserById(uid);
+      email = u?.user?.email ?? uid;
+    } catch { /* uid bleibt */ }
+    userRows.push(
+      `<tr><td style="padding:2px 10px 2px 0;">${esc(email)}</td><td style="padding:2px 10px 2px 0;">${n.ok}</td><td style="padding:2px 10px 2px 0;${n.failed ? "color:#b91c1c;font-weight:600;" : ""}">${n.failed}</td><td style="padding:2px 0;">${n.pending}</td></tr>`,
+    );
+  }
+
   // Erstellte Dokumente der Woche.
   let docsCreated: number | null = null;
   try {
@@ -152,6 +180,9 @@ async function main() {
 
     `<h3 style="margin:16px 0 4px 0;">Fallgenerierung (7 Tage)</h3>`,
     `<p style="margin:0;">${jobsOk} erfolgreich, ${jobsFailed} fehlgeschlagen</p>`,
+    userRows.length
+      ? `<p style="margin:8px 0 2px 0;">Einreichungen pro Kollege:</p><table style="border-collapse:collapse;font-size:13px;"><tr><th style="text-align:left;padding:2px 10px 2px 0;">Konto</th><th style="text-align:left;padding:2px 10px 2px 0;">OK</th><th style="text-align:left;padding:2px 10px 2px 0;">Fehler</th><th style="text-align:left;padding:2px 0;">Offen</th></tr>${userRows.join("")}</table>`
+      : "",
 
     docsCreated !== null ? `<h3 style="margin:16px 0 4px 0;">Dokumente</h3><p style="margin:0;">${docsCreated === 1 ? "1 Dokument" : `${docsCreated} Dokumente`} in der Woche erstellt</p>` : "",
 

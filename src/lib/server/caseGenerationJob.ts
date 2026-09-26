@@ -682,5 +682,45 @@ export async function processCaseGenerationJob(jobId: string, sketch: string, ap
     const message = err instanceof Error ? err.message : "Unbekannter Fehler bei der Fallgenerierung.";
     console.error(`[caseGenerationJob] Job ${jobId} fehlgeschlagen:`, message);
     await updateJob(service, jobId, { status: "failed", error: message });
+
+    // Nutzerauftrag 26.09.2026 (Fund: fehlgeschlagener Pilot-Fall vom 19.09.
+    // blieb eine Woche unbemerkt): Bei jedem Fehlschlag geht eine Mail an
+    // die Redaktion, damit der Auftrag neu angestoßen oder der Kollege
+    // informiert werden kann. Fehler im Mailversand bleiben stumm.
+    try {
+      const notifyTo = process.env.REVIEW_NOTIFY_EMAIL;
+      if (notifyTo && process.env.RESEND_API_KEY) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { data: jobRow } = await ((service as any).from("case_generation_jobs"))
+          .select("requested_by, sketch")
+          .eq("id", jobId)
+          .limit(1);
+        const row = (jobRow ?? [])[0] ?? {};
+        let requesterEmail = row.requested_by ?? "unbekannt";
+        if (row.requested_by) {
+          const { data: u } = await service.auth.admin.getUserById(row.requested_by);
+          requesterEmail = u?.user?.email ?? requesterEmail;
+        }
+        const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        const { sendEmail } = await import("@/lib/mail/resend.server");
+        await sendEmail({
+          to: notifyTo,
+          subject: `Fallgenerierung FEHLGESCHLAGEN (angefragt von ${requesterEmail})`,
+          html: [
+            `<p style="margin:0 0 12px 0;">Ein Fallgenerierungs-Auftrag ist fehlgeschlagen und braucht Aufmerksamkeit:</p>`,
+            `<p style="margin:0 0 12px 0;color:#555;">Angefragt von: ${esc(String(requesterEmail))}</p>`,
+            `<p style="margin:0 0 12px 0;"><strong>Skizze:</strong> ${esc(String(row.sketch ?? "").slice(0, 400))}</p>`,
+            `<p style="margin:0 0 12px 0;color:#b91c1c;"><strong>Fehler:</strong> ${esc(message.slice(0, 300))}</p>`,
+            `<p style="margin:0 0 12px 0;">Meist hilft ein erneutes Einreihen desselben Auftrags (vorübergehender KI-Formatfehler).</p>`,
+            `<p style="margin:16px 0 0 0;font-size:12px;color:#666;">Automatische Benachrichtigung des RechtKompass Schule.</p>`,
+          ].join("\n"),
+        });
+      }
+    } catch (mailErr) {
+      console.error(
+        `[caseGenerationJob] Fehlschlag-Benachrichtigung fehlgeschlagen (Job ${jobId}):`,
+        mailErr instanceof Error ? mailErr.message : mailErr,
+      );
+    }
   }
 }

@@ -1,14 +1,23 @@
 /**
  * POST /api/legal-copilot-ask
- * Body: { question, sessionId?, mode?, filters?, debug?, forceMock? }
+ * Body: { question, sessionId?, mode?, filters?, caseContext?, debug?, forceMock? }
+ *
+ * Auth-Pflicht seit der Konversations-Persistenz (29.09.2026): Sitzungen
+ * werden nutzergebunden in copilot_conversations gespeichert, dafür braucht
+ * die Route die Identität aus dem Bearer-Token. Einziger Client ist der
+ * CaseCopilotDialog hinter dem Pilot-Login.
  */
 import { createFileRoute } from "@tanstack/react-router";
 import { LegalCopilotService, type CopilotAskInput } from "@/services/legal-copilot";
+import { requireApiAuth } from "@/integrations/supabase/apiAuthGuard";
 
 export const Route = createFileRoute("/api/legal-copilot-ask")({
   server: {
     handlers: {
       POST: async ({ request }) => {
+        const auth = await requireApiAuth(request);
+        if (auth instanceof Response) return auth;
+
         let body: Partial<CopilotAskInput>;
         try {
           body = (await request.json()) as Partial<CopilotAskInput>;
@@ -27,14 +36,23 @@ export const Route = createFileRoute("/api/legal-copilot-ask")({
           const { SupabaseWorkflowTemplateRepository } = await import(
             "@/services/legal-workflows/SupabaseWorkflowTemplateRepository"
           );
+          const { SupabaseConversationRepository } = await import(
+            "@/services/legal-copilot/SupabaseConversationRepository"
+          );
           const repo = new SupabaseRetrievalRepository(supabase);
           const workflowTemplateRepo = new SupabaseWorkflowTemplateRepository(supabase);
-          const svc = new LegalCopilotService({ retrievalRepo: repo, workflowTemplateRepo });
+          const conversationRepo = new SupabaseConversationRepository(
+            supabase,
+            auth.userId,
+            body.caseContext?.caseId ?? null,
+          );
+          const svc = new LegalCopilotService({ retrievalRepo: repo, workflowTemplateRepo, conversationRepo });
           const result = await svc.ask({
             question,
             sessionId: body.sessionId ?? null,
             mode: body.mode,
             filters: body.filters,
+            caseContext: body.caseContext ?? null,
             debug: body.debug,
             forceMock: body.forceMock,
           });

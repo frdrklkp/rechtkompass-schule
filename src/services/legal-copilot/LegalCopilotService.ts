@@ -148,9 +148,9 @@ export class LegalCopilotService {
       };
     }
 
-    // 4. Prompt aufbauen
+    // 4. Prompt aufbauen (inkl. optionalem Fallbezug von der Fallseite)
     const context = ContextAssembler.assemble(session, grounded);
-    const prompt = PromptBuilder.build({ mode, question, context });
+    const prompt = PromptBuilder.build({ mode, question, context, caseContext: input.caseContext ?? null });
 
     // 5. LLM (oder synthetische Antwort im Testmodus)
     const llmStart = Date.now();
@@ -355,6 +355,7 @@ export class LegalCopilotService {
         confidence: h.confidence,
         citation: h.citation.display,
         excerpt: (h.excerpt ?? h.content ?? "").slice(0, 240),
+        scoreBreakdown: h.scoreBreakdown,
       })),
       scoreWeights: args.retrieval.hits[0]?.scoreBreakdown.weights ?? null,
       grounding: {

@@ -19,11 +19,28 @@ export interface CopilotFilters {
   sourceIds?: string[];
 }
 
+/**
+ * Fall-Kontext für fallbezogene Rückfragen von der Fallseite.
+ * Reine Verständnis-Hilfe für das LLM: liefert KEINE zitierfähigen
+ * Rechtsgrundlagen (Zitate kommen weiterhin nur aus dem Retrieval).
+ */
+export interface CopilotCaseContext {
+  caseId: string;
+  title: string;
+  category?: string | null;
+  shortAnswer?: string | null;
+  legalExplanation?: string | null;
+  /** Offene, nicht abschließend geklärte Rechtsfragen am Fall. */
+  openQuestions?: string[];
+}
+
 export interface CopilotAskInput {
   question: string;
   sessionId?: string | null;
   mode?: ExplanationMode;
   filters?: CopilotFilters;
+  /** Optionaler Fallbezug: Rückfrage einer Lehrkraft zu einem konkreten Praxisfall. */
+  caseContext?: CopilotCaseContext | null;
   debug?: boolean;
   /** Erzwingt Mock-Provider (Tests). */
   forceMock?: boolean;
@@ -91,6 +108,7 @@ export interface CopilotDebugPayload {
     confidence: number;
     citation: string;
     excerpt: string;
+    scoreBreakdown: RetrievalHit["scoreBreakdown"];
   }>;
   scoreWeights: unknown;
   grounding: {

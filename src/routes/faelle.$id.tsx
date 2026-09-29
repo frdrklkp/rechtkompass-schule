@@ -54,6 +54,7 @@ import {
 } from "@/lib/caseEnrichment";
 import { supabase } from "@/integrations/supabase/client";
 import { FeedbackReportDialog } from "@/components/FeedbackReportDialog";
+import { CaseCopilotDialog } from "@/components/CaseCopilotDialog";
 
 export const Route = createFileRoute("/faelle/$id")({
   // Fund 2026-08-30 (Nutzer-Auftrag "aufräumen"): diese Route ist unter
@@ -427,6 +428,25 @@ function CaseDetail({ c }: { c: CaseData }) {
     staleTime: 60_000,
   });
   const openQuestions = openQuestionsQuery.data ?? [];
+
+  // Quellen der verknüpften Rechtsgrundlagen für den Rückfragen-Copilot:
+  // schränkt dessen Retrieval auf die einschlägigen Gesetze ein (schneller,
+  // relevanter). Leer = Copilot sucht im Gesamtbestand.
+  const copilotSourceIdsQuery = useQuery({
+    queryKey: ["case-copilot-source-ids", c.id],
+    queryFn: async () => {
+      const { data } = await (supabase as any)
+        .from("case_legal_links")
+        .select("legal_sections(source_id)")
+        .eq("case_id", c.id);
+      const ids = ((data ?? []) as Array<{ legal_sections: { source_id: string | null } | null }>)
+        .map((r) => r.legal_sections?.source_id)
+        .filter((s): s is string => !!s);
+      return Array.from(new Set(ids));
+    },
+    staleTime: 5 * 60_000,
+  });
+  const copilotSourceIds = copilotSourceIdsQuery.data ?? [];
   const { data: relatedFromDb } = useRelatedCases(c.id, c.category, 5);
   const related = (relatedFromDb ?? getRelatedCases(c, 5)).filter((r) => r.id !== c.id).slice(0, 5);
   const staticTpls = c.applicableTemplates
@@ -571,6 +591,17 @@ function CaseDetail({ c }: { c: CaseData }) {
             caseTitle={c.title}
             reportedArea="lehrer_fallakte"
             variant="compact"
+          />
+          <CaseCopilotDialog
+            caseContext={{
+              caseId: c.id,
+              title: c.title,
+              category: c.category,
+              shortAnswer: c.shortAnswer,
+              legalExplanation: c.legalExplanation,
+              openQuestions,
+            }}
+            sourceIds={copilotSourceIds}
           />
         </div>
       </header>

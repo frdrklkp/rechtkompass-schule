@@ -15,6 +15,7 @@ export const PromptBuilder = {
     mode: ExplanationMode;
     question: string;
     context: AssembledContext;
+    caseContext?: import("./types").CopilotCaseContext | null;
   }): BuiltPrompt {
     return {
       version: PROMPT_TEMPLATES_VERSION,
@@ -26,6 +27,7 @@ export const PromptBuilder = {
         question: params.question,
         grounded: params.context.groundedForPrompt,
         history: params.context.historyForPrompt,
+        caseContext: params.caseContext ?? null,
       }),
     };
   },

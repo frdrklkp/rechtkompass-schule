@@ -21,6 +21,7 @@ import { Route as KollegeRouteImport } from './routes/kollege'
 import { Route as NavigatorRouteImport } from './routes/navigator'
 import { Route as PraesentationRouteImport } from './routes/praesentation'
 import { Route as RechtsgrundlagenRouteImport } from './routes/rechtsgrundlagen'
+import { Route as UmfrageRouteImport } from './routes/umfrage'
 import { Route as VorgaengeRouteImport } from './routes/vorgaenge'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminAenderungenRouteImport } from './routes/admin.aenderungen'
@@ -199,6 +200,11 @@ const PraesentationRoute = PraesentationRouteImport.update({
 const RechtsgrundlagenRoute = RechtsgrundlagenRouteImport.update({
   id: '/rechtsgrundlagen',
   path: '/rechtsgrundlagen',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const UmfrageRoute = UmfrageRouteImport.update({
+  id: '/umfrage',
+  path: '/umfrage',
   getParentRoute: () => rootRouteImport,
 } as any)
 const VorgaengeRoute = VorgaengeRouteImport.update({
@@ -854,6 +860,7 @@ export interface FileRoutesByFullPath {
   '/navigator': typeof NavigatorRoute
   '/praesentation': typeof PraesentationRoute
   '/rechtsgrundlagen': typeof RechtsgrundlagenRouteWithChildren
+  '/umfrage': typeof UmfrageRoute
   '/vorgaenge': typeof VorgaengeRouteWithChildren
   '/admin/aenderungen': typeof AdminAenderungenRoute
   '/admin/copilot': typeof AdminCopilotRoute
@@ -986,6 +993,7 @@ export interface FileRoutesByTo {
   '/navigator': typeof NavigatorRoute
   '/praesentation': typeof PraesentationRoute
   '/rechtsgrundlagen': typeof RechtsgrundlagenRouteWithChildren
+  '/umfrage': typeof UmfrageRoute
   '/admin/aenderungen': typeof AdminAenderungenRoute
   '/admin/copilot': typeof AdminCopilotRoute
   '/admin/einstellungen': typeof AdminEinstellungenRoute
@@ -1115,6 +1123,7 @@ export interface FileRoutesById {
   '/navigator': typeof NavigatorRoute
   '/praesentation': typeof PraesentationRoute
   '/rechtsgrundlagen': typeof RechtsgrundlagenRouteWithChildren
+  '/umfrage': typeof UmfrageRoute
   '/vorgaenge': typeof VorgaengeRouteWithChildren
   '/admin/aenderungen': typeof AdminAenderungenRoute
   '/admin/copilot': typeof AdminCopilotRoute
@@ -1250,6 +1259,7 @@ export interface FileRouteTypes {
     | '/navigator'
     | '/praesentation'
     | '/rechtsgrundlagen'
+    | '/umfrage'
     | '/vorgaenge'
     | '/admin/aenderungen'
     | '/admin/copilot'
@@ -1382,6 +1392,7 @@ export interface FileRouteTypes {
     | '/navigator'
     | '/praesentation'
     | '/rechtsgrundlagen'
+    | '/umfrage'
     | '/admin/aenderungen'
     | '/admin/copilot'
     | '/admin/einstellungen'
@@ -1510,6 +1521,7 @@ export interface FileRouteTypes {
     | '/navigator'
     | '/praesentation'
     | '/rechtsgrundlagen'
+    | '/umfrage'
     | '/vorgaenge'
     | '/admin/aenderungen'
     | '/admin/copilot'
@@ -1644,6 +1656,7 @@ export interface RootRouteChildren {
   NavigatorRoute: typeof NavigatorRoute
   PraesentationRoute: typeof PraesentationRoute
   RechtsgrundlagenRoute: typeof RechtsgrundlagenRouteWithChildren
+  UmfrageRoute: typeof UmfrageRoute
   VorgaengeRoute: typeof VorgaengeRouteWithChildren
   ApiAiAnalyzeCaseDescriptionRoute: typeof ApiAiAnalyzeCaseDescriptionRoute
   ApiAiCondenseCaseRoute: typeof ApiAiCondenseCaseRoute
@@ -1776,6 +1789,13 @@ declare module '@tanstack/react-router' {
       path: '/rechtsgrundlagen'
       fullPath: '/rechtsgrundlagen'
       preLoaderRoute: typeof RechtsgrundlagenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/umfrage': {
+      id: '/umfrage'
+      path: '/umfrage'
+      fullPath: '/umfrage'
+      preLoaderRoute: typeof UmfrageRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/vorgaenge': {
@@ -2953,6 +2973,7 @@ const rootRouteChildren: RootRouteChildren = {
   NavigatorRoute: NavigatorRoute,
   PraesentationRoute: PraesentationRoute,
   RechtsgrundlagenRoute: RechtsgrundlagenRouteWithChildren,
+  UmfrageRoute: UmfrageRoute,
   VorgaengeRoute: VorgaengeRouteWithChildren,
   ApiAiAnalyzeCaseDescriptionRoute: ApiAiAnalyzeCaseDescriptionRoute,
   ApiAiCondenseCaseRoute: ApiAiCondenseCaseRoute,

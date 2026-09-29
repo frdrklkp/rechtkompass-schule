@@ -2,7 +2,7 @@
  * Versionierte, deterministische Prompt-Templates.
  * Änderungen erhöhen die Version. Keine dynamische Konkatenation im Prompt.
  */
-export const PROMPT_TEMPLATES_VERSION = "grounded-copilot-1.0.0";
+export const PROMPT_TEMPLATES_VERSION = "grounded-copilot-1.1.0";
 
 export const SYSTEM_PROMPT = `Du bist der schulrechtliche Grounded Legal Copilot für Lehrkräfte und Schulleitungen.
 Du beantwortest Fragen AUSSCHLIESSLICH auf Basis der bereitgestellten Retrieval-Ergebnisse (\`RECHTSGRUNDLAGEN\`).
@@ -42,8 +42,15 @@ export function buildUserPrompt(params: {
   question: string;
   grounded: Array<{ refId: string; citation: string; law: string | null; excerpt: string; reviewStatus?: string; score: number }>;
   history: Array<{ role: "user" | "assistant"; text: string }>;
+  caseContext?: {
+    title: string;
+    category?: string | null;
+    shortAnswer?: string | null;
+    legalExplanation?: string | null;
+    openQuestions?: string[];
+  } | null;
 }): string {
-  const { mode, modeInstruction, question, grounded, history } = params;
+  const { mode, modeInstruction, question, grounded, history, caseContext } = params;
   const rechtsblock = grounded.length === 0
     ? "(KEINE RECHTSGRUNDLAGEN GEFUNDEN)"
     : grounded
@@ -60,12 +67,32 @@ export function buildUserPrompt(params: {
     ? "(kein Verlauf)"
     : history.map((h) => `${h.role === "user" ? "Nutzer" : "Copilot"}: ${h.text}`).join("\n");
 
+  const fallBlock = !caseContext
+    ? ""
+    : `
+FALLKONTEXT (die Rückfrage bezieht sich auf diesen Praxisfall; nur zum Verständnis – Zitate ausschließlich über [R#] aus RECHTSGRUNDLAGEN):
+Titel: ${caseContext.title}${caseContext.category ? `\nKategorie: ${caseContext.category}` : ""}${
+        caseContext.shortAnswer ? `\nKurzantwort des Falls: ${caseContext.shortAnswer.replace(/\s+/g, " ").trim().slice(0, 600)}` : ""
+      }${
+        caseContext.legalExplanation
+          ? `\nRechtliche Einordnung des Falls: ${caseContext.legalExplanation.replace(/\s+/g, " ").trim().slice(0, 1200)}`
+          : ""
+      }${
+        caseContext.openQuestions && caseContext.openQuestions.length > 0
+          ? `\nOffene Rechtsfragen dieses Falls (hierzu KEINE spekulative Antwort geben, sondern auf die laufende redaktionelle Prüfung verweisen):\n${caseContext.openQuestions
+              .slice(0, 8)
+              .map((q) => `- ${q.replace(/\s+/g, " ").trim().slice(0, 300)}`)
+              .join("\n")}`
+          : ""
+      }
+`;
+
   return `MODUS: ${mode}
 STIL: ${modeInstruction}
 
 VERLAUF (nur für Kontext, keine neuen Fakten):
 ${histBlock}
-
+${fallBlock}
 FRAGE:
 ${question}
 

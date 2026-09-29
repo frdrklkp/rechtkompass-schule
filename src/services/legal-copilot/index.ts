@@ -26,6 +26,7 @@ export { ConversationMemory } from "./ConversationMemory";
 export { ConversationService } from "./ConversationService";
 export { InMemoryConversationRepository } from "./ConversationRepository";
 export type { ConversationRepositoryPort } from "./ConversationRepository";
+export { SupabaseConversationRepository } from "./SupabaseConversationRepository";
 export { ConversationMapper } from "./ConversationMapper";
 export { CopilotStatisticsBuilder } from "./CopilotStatistics";
 export { DisclaimerBuilder } from "./DisclaimerBuilder";

@@ -185,3 +185,40 @@ export const bzrgParser = makeGesetzeImInternetParser({
   urlFragment: "gesetze-im-internet.de/bzrg",
   detectRe: /Bundeszentralregister/i,
 });
+
+// Schwerbehinderung im schulischen Kontext (Nutzer-Auftrag 01.10.2026).
+export const sgb9Parser = makeGesetzeImInternetParser({
+  id: "sgb-9",
+  label: "SGB IX",
+  shortName: "SGB IX",
+  fallbackTitle: "Sozialgesetzbuch (SGB) Neuntes Buch (IX) - Rehabilitation und Teilhabe von Menschen mit Behinderungen",
+  urlFragment: "gesetze-im-internet.de/sgb_9_2018",
+  detectRe: /Neuntes Buch Sozialgesetzbuch|Rehabilitation und Teilhabe von Menschen mit Behinderungen/i,
+});
+
+export const aggParser = makeGesetzeImInternetParser({
+  id: "agg",
+  label: "AGG",
+  shortName: "AGG",
+  fallbackTitle: "Allgemeines Gleichbehandlungsgesetz (AGG)",
+  urlFragment: "gesetze-im-internet.de/agg",
+  detectRe: /Allgemeines Gleichbehandlungsgesetz/i,
+});
+
+export const bggParser = makeGesetzeImInternetParser({
+  id: "bgg",
+  label: "BGG",
+  shortName: "BGG",
+  fallbackTitle: "Behindertengleichstellungsgesetz (BGG)",
+  urlFragment: "gesetze-im-internet.de/bgg",
+  detectRe: /Behindertengleichstellungsgesetz/i,
+});
+
+export const versmedvParser = makeGesetzeImInternetParser({
+  id: "versmedv",
+  label: "VersMedV",
+  shortName: "VersMedV",
+  fallbackTitle: "Versorgungsmedizin-Verordnung (VersMedV)",
+  urlFragment: "gesetze-im-internet.de/versmedv",
+  detectRe: /Versorgungsmedizin-Verordnung/i,
+});

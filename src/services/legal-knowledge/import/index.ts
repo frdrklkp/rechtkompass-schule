@@ -21,11 +21,12 @@ export { lbgNrwParser } from "./parsers/lbgNrwParser";
 export { ldgNrwParser } from "./parsers/ldgNrwParser";
 export { beamtstgParser } from "./parsers/beamtstgParser";
 export { dsgNrwParser } from "./parsers/dsgNrwParser";
+export { bggNrwParser, lpvgNrwParser } from "./parsers/rechtNrwLawParsers";
 export { kunsturhgParser } from "./parsers/kunsturhgParser";
 export { sgb8Parser } from "./parsers/sgb8Parser";
 export { bbigParser } from "./parsers/bbigParser";
 export { jarbschgParser } from "./parsers/jarbschgParser";
-export { makeGesetzeImInternetParser, bgbParser, stgbParser, sgb7Parser, juschgParser, bzrgParser } from "./parsers/gesetzeImInternetParserFactory";
+export { makeGesetzeImInternetParser, bgbParser, stgbParser, sgb7Parser, juschgParser, bzrgParser, sgb9Parser, aggParser, bggParser, versmedvParser } from "./parsers/gesetzeImInternetParserFactory";
 export { aiActParser } from "./parsers/aiActParser";
 export {
   bassParser,

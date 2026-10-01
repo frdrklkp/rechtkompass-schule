@@ -159,6 +159,16 @@ test("HallucinationGuard blockt unbekannte Gesetzeskürzel", () => {
   assert.ok(rep.violations.some((v) => v.includes("STGB")));
 });
 
+test("HallucinationGuard akzeptiert Gesetzeskürzel aus der Fundstellen-Bezeichnung, nicht aber andere SGB-Bücher", () => {
+  const grounded = fakeGrounded();
+  grounded[0].hit.citation.display = "Neuntes Buch Sozialgesetzbuch - SGB IX) Kapitel 10/§ 208";
+  const ok = HallucinationGuard.check("Der Zusatzurlaub nach SGB IX beträgt fünf Tage [R1].", grounded);
+  assert.equal(ok.ok, true);
+  const other = HallucinationGuard.check("Das regelt SGB VIII [R1].", grounded);
+  assert.equal(other.ok, false);
+  assert.ok(other.violations.some((v) => v.includes("SGB VIII")));
+});
+
 test("ConfidenceCalculator liefert Level und Werte im 0..1-Bereich", () => {
   const grounded = fakeGrounded();
   const retrieval = { hits: grounded.map((g) => g.hit) } as unknown as RetrievalResult;

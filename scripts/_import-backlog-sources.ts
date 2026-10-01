@@ -8,7 +8,7 @@
  * Aufruf: bun run scripts/_import-backlog-sources.ts
  */
 import { createClient } from "@supabase/supabase-js";
-import { aiActParser, bbigParser, bgbParser, bzrgParser, dsgNrwParser, jarbschgParser, juschgParser, kunsturhgParser, sgb7Parser, sgb8Parser, stgbParser } from "../src/services/legal-knowledge/import";
+import { aggParser, bggNrwParser, lpvgNrwParser, aiActParser, bbigParser, bggParser, bgbParser, bzrgParser, dsgNrwParser, jarbschgParser, juschgParser, kunsturhgParser, sgb7Parser, sgb8Parser, sgb9Parser, stgbParser, versmedvParser } from "../src/services/legal-knowledge/import";
 import { mergeDocuments } from "../src/services/legal-knowledge/connectors/OfficialSourceConnectorService";
 import type { LegalImportInput, LegalImportParser, LegalNode } from "../src/services/legal-knowledge/import/types";
 import {
@@ -136,6 +136,62 @@ const TARGETS: Array<{ url: string; label: string; sourceId: string; parser: Leg
     // Bereichen (Pilot-Fund 11.09.2026): Antrag, erweitertes
     // Führungszeugnis, Behördenauskunft.
     sections: ["30", "30a", "31"],
+  },
+  // Schwerbehinderung im schulischen Kontext (Nutzer-Auftrag 01.10.2026):
+  // Bundesrecht komplett, NRW-Erlasse (AO-SF, Richtlinie SGB IX,
+  // Wiedereingliederung, Teilzeit-Ermäßigung) liegen bereits über den
+  // BASS-Import vor. SGB IX vollständig: Teil 1 (Behinderungsbegriff, Teilhabe
+  // an Bildung § 75, Nachteilsausgleich-Grundlagen), Teil 2 (Schulbegleitung
+  // § 112) und Teil 3 (Schwerbehindertenrecht: GdB § 152, Gleichstellung § 2,
+  // SBV §§ 176 ff., Inklusionsvereinbarung § 166, BEM § 167, Kündigungsschutz
+  // §§ 168 ff., Zusatzurlaub § 208).
+  {
+    url: "https://www.gesetze-im-internet.de/sgb_9_2018/BJNR323410016.html",
+    label: "SGB IX",
+    sourceId: "sgb-9",
+    parser: sgb9Parser,
+    legalDomain: "Schwerbehindertenrecht",
+    bund: true,
+  },
+  {
+    url: "https://www.gesetze-im-internet.de/agg/BJNR189710006.html",
+    label: "AGG",
+    sourceId: "agg",
+    parser: aggParser,
+    legalDomain: "Dienstrecht",
+    bund: true,
+  },
+  {
+    url: "https://www.gesetze-im-internet.de/bgg/BJNR146800002.html",
+    label: "BGG",
+    sourceId: "bgg",
+    parser: bggParser,
+    legalDomain: "Schwerbehindertenrecht",
+    bund: true,
+  },
+  {
+    url: "https://www.gesetze-im-internet.de/versmedv/BJNR241200008.html",
+    label: "VersMedV",
+    sourceId: "versmedv",
+    parser: versmedvParser,
+    legalDomain: "Schwerbehindertenrecht",
+    bund: true,
+  },
+  {
+    url: "https://recht.nrw.de/lrgv/gesetz/01092018-gesetz-des-landes-nordrhein-westfalen-zur-gleichstellung-von-menschen-mit/",
+    label: "BGG NRW",
+    sourceId: "bgg-nrw",
+    parser: bggNrwParser,
+    legalDomain: "Schwerbehindertenrecht",
+    bund: false,
+  },
+  {
+    url: "https://recht.nrw.de/lrgv/gesetz/14062023-personalvertretungsgesetz-fuer-das-land-nordrhein-westfalen/",
+    label: "LPVG NRW",
+    sourceId: "lpvg-nrw",
+    parser: lpvgNrwParser,
+    legalDomain: "Dienstrecht",
+    bund: false,
   },
   {
     url: "https://eur-lex.europa.eu/legal-content/DE/TXT/HTML/?uri=CELEX:32024R1689",

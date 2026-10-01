@@ -14,7 +14,8 @@ const REF_RE = /\[(R\d+)\]/g;
 // Verdächtige Freitextzitate (deutsches Recht)
 const FREE_CITE_RE = /(§\s?\d+[a-z]?)(?:\s?Abs\.\s?\d+)?(?:\s?[A-ZÄÖÜ][A-ZÄÖÜa-zäöü]+)?|Art\.?\s?\d+/g;
 // Deutsche Gesetzeskürzel (grob), ohne dass sie mit einer bekannten Citation abgedeckt sind
-const KNOWN_LAW_TOKEN_RE = /\b(SchulG|BASS|DSGVO|GG|SGB|StGB|BGB|APO|GsVO|SoFVO|AO-GS|AO-SF)\b/g;
+// "SGB IX" wird samt Buchnummer erfasst, damit SGB IX nicht SGB VIII mit belegt.
+const KNOWN_LAW_TOKEN_RE = /\b(SchulG|BASS|DSGVO|GG|SGB(?:\s[IVX]+\b)?|StGB|BGB|APO|GsVO|SoFVO|AO-GS|AO-SF)(?!\w)/g;
 
 export const HallucinationGuard = {
   check(answerText: string, grounded: GroundedChunk[]): HallucinationReport {
@@ -54,7 +55,11 @@ export const HallucinationGuard = {
     // 3. Nicht abgedeckte Gesetzeskürzel
     const laws = [...answerText.matchAll(KNOWN_LAW_TOKEN_RE)].map((m) => m[1].toLowerCase());
     for (const l of laws) {
-      const covered = [...allowedLaws].some((al) => al.includes(l) || l.includes(al));
+      // Importierte Chunks tragen kein metadata.law; das Kürzel steht dann nur
+      // in der Fundstellen-Bezeichnung (Gesetzestitel, z.B. "... - SGB IX)").
+      const covered =
+        [...allowedLaws].some((al) => al.includes(l) || l.includes(al)) ||
+        allowedDisplays.some((d) => d.includes(l));
       if (!covered) violations.push(`Nicht belegtes Gesetzeskürzel: ${l.toUpperCase()}`);
     }
 

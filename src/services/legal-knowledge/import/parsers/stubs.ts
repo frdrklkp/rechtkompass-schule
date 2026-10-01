@@ -86,6 +86,8 @@ export { beamtstgParser } from "./beamtstgParser";
 import { beamtstgParser } from "./beamtstgParser";
 export { dsgNrwParser } from "./dsgNrwParser";
 import { dsgNrwParser } from "./dsgNrwParser";
+export { bggNrwParser, lpvgNrwParser } from "./rechtNrwLawParsers";
+import { bggNrwParser, lpvgNrwParser } from "./rechtNrwLawParsers";
 export { kunsturhgParser } from "./kunsturhgParser";
 import { kunsturhgParser } from "./kunsturhgParser";
 export { sgb8Parser } from "./sgb8Parser";
@@ -94,8 +96,8 @@ export { bbigParser } from "./bbigParser";
 import { bbigParser } from "./bbigParser";
 export { jarbschgParser } from "./jarbschgParser";
 import { jarbschgParser } from "./jarbschgParser";
-export { bgbParser, stgbParser, sgb7Parser, juschgParser, bzrgParser } from "./gesetzeImInternetParserFactory";
-import { bgbParser, stgbParser, sgb7Parser, juschgParser, bzrgParser } from "./gesetzeImInternetParserFactory";
+export { bgbParser, stgbParser, sgb7Parser, juschgParser, bzrgParser, sgb9Parser, aggParser, bggParser, versmedvParser } from "./gesetzeImInternetParserFactory";
+import { bgbParser, stgbParser, sgb7Parser, juschgParser, bzrgParser, sgb9Parser, aggParser, bggParser, versmedvParser } from "./gesetzeImInternetParserFactory";
 export { aiActParser } from "./aiActParser";
 import { aiActParser } from "./aiActParser";
 
@@ -141,6 +143,8 @@ export const preparedParsers = [
   lbgNrwParser,
   ldgNrwParser,
   dsgNrwParser,
+  bggNrwParser,
+  lpvgNrwParser,
   grundgesetzParser,
   beamtstgParser,
   kunsturhgParser,
@@ -152,6 +156,10 @@ export const preparedParsers = [
   sgb7Parser,
   juschgParser,
   bzrgParser,
+  sgb9Parser,
+  aggParser,
+  bggParser,
+  versmedvParser,
   aiActParser,
   dsgvoParser,
   bassNrwParser,

@@ -347,7 +347,7 @@ async function main() {
   if (!reviewId) throw new Error("Keine offene Review gefunden.");
   await EditorialWorkflowService.decideReview({
     reviewId, decision: "approved",
-    comment: "Redaktionelle Überarbeitung 01.10.2026: Konstellation Gleichstellung mit Schwerbehinderung ergänzt (SGB IX §§ 2, 151, 156, 164, 167, 178, 181, 207, 208).",
+    comment: process.env.PUBLISH_COMMENT ?? "Redaktionelle Überarbeitung 01.10.2026: Konstellation Gleichstellung mit Schwerbehinderung ergänzt (SGB IX §§ 2, 151, 156, 164, 167, 178, 181, 207, 208).",
   } as any);
   await EditorialWorkflowService.publish({ caseId: CASE_ID, publicationTier: "internal" } as any);
   const after = await loadCase();

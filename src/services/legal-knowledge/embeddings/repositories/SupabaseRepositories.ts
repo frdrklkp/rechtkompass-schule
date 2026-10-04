@@ -200,6 +200,19 @@ export class SupabaseChunkRepository implements ChunkRepositoryPort {
     return data ? toChunk(data as Record<string, unknown>) : null;
   }
 
+  async listByIds(ids: string[], opts?: { activeOnly?: boolean }): Promise<PersistedChunk[]> {
+    const out: PersistedChunk[] = [];
+    // PostgREST-URL-Länge: in Blöcken abfragen.
+    for (let i = 0; i < ids.length; i += 100) {
+      let q = this.client.from("legal_chunks").select("*").in("id", ids.slice(i, i + 100));
+      if (opts?.activeOnly) q = q.eq("active", true);
+      const { data, error } = await q;
+      if (error) throw new Error(error.message);
+      out.push(...((data ?? []) as Record<string, unknown>[]).map(toChunk));
+    }
+    return out;
+  }
+
   async deactivate(sourceId: string, keepIds: string[]): Promise<number> {
     const { data, error } = await this.client
       .from("legal_chunks").update({ active: false })

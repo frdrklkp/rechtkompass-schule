@@ -32,6 +32,7 @@ import { RetrievalDisabledError, RetrievalError } from "./errors";
 import { legalRetrievalFlags } from "./featureFlags";
 import type { RetrievalRepositoryPort } from "./repositories/RetrievalRepository";
 import type {
+  EmbeddingSearchCandidate,
   RetrievalDebugPayload,
   RetrievalFilters,
   RetrievalHit,
@@ -85,15 +86,25 @@ export class HybridRetrievalService {
     retrievalTelemetry.emit({ event: "retrieval_started", searchType: query.searchType });
 
     try {
-      // Corpus laden
-      const corpus = await this.repo.loadCorpus({ sourceIds: query.filters.sourceIds, activeOnly: query.filters.activeOnly ?? true });
+      const activeOnly = query.filters.activeOnly ?? true;
+      const pinnedIds = (query.filters.pinnedChunkIds ?? []).filter(Boolean);
+      // Mit Quellen-Eingrenzung ist der Korpus klein (einige Gesetze) und wird
+      // komplett geladen. Ohne Eingrenzung NICHT den Gesamtbestand laden:
+      // dann liefert die Vektorsuche die Kandidaten, und der Stichwort-Arm
+      // läuft nur über diese (plus verknüpfte Normen). Nur die reine
+      // Stichwortsuche braucht weiterhin den ganzen Korpus.
+      const scoped = (query.filters.sourceIds?.length ?? 0) > 0;
+      const loadWholeCorpus = scoped || query.searchType === "keyword_only";
+      const corpus = loadWholeCorpus
+        ? await this.repo.loadCorpus({ sourceIds: query.filters.sourceIds, activeOnly })
+        : { chunks: [], embeddings: [] };
 
       // Blocklist (rejected/archived) hart entfernen
-      const chunks = corpus.chunks.filter((c) => !MetadataFilter.isBlocked(c));
+      let chunks = corpus.chunks.filter((c) => !MetadataFilter.isBlocked(c));
 
-      // 2 + 3) Vector Search
-      let vectorHits: Awaited<ReturnType<typeof EmbeddingSearch.rank>> = [];
-      if (query.searchType !== "keyword_only" && corpus.embeddings.length > 0) {
+      // 2 + 3) Vector Search (serverseitig im Repository, z. B. pgvector-RPC)
+      let vectorHits: EmbeddingSearchCandidate[] = [];
+      if (query.searchType !== "keyword_only") {
         t = now();
         const q = await EmbeddingSearch.embedQuery(query.normalizedQuery, {
           modelId: input.modelId,
@@ -102,11 +113,47 @@ export class HybridRetrievalService {
         });
         times.embed = now() - t;
         t = now();
-        vectorHits = EmbeddingSearch.rank(q.vector, corpus.embeddings, {
-          topK: cfg.vectorTopK,
-          minSimilarity: cfg.minVectorSimilarity,
-        });
+        try {
+          vectorHits = await this.repo.vectorSearch({
+            queryVector: q.vector,
+            sourceIds: query.filters.sourceIds,
+            activeOnly: query.filters.activeOnly ?? true,
+            topK: cfg.vectorTopK,
+            minSimilarity: cfg.minVectorSimilarity,
+          });
+        } catch (err) {
+          // Hybrid degradiert auf Keyword-Suche; vector_only hat keinen Fallback.
+          if (query.searchType === "vector_only") throw err;
+          retrievalTelemetry.emit({
+            event: "retrieval_failed",
+            searchType: query.searchType,
+            errorCode: "vector_search_failed",
+            data: { message: err instanceof Error ? err.message : "unknown" },
+          });
+        }
         times.vector = now() - t;
+      }
+
+      // Ohne Eingrenzung: Stichwort-Kandidaten datenbankseitig vorselektieren
+      // (längste Suchbegriffe zuerst), damit exakte Begriffe und
+      // Paragraphennummern nicht allein vom Vektor-Arm abhängen.
+      if (!loadWholeCorpus && query.searchType !== "vector_only" && legalRetrievalFlags.keywordSearchEnabled) {
+        t = now();
+        const terms = [...query.keywords].sort((a, b) => b.length - a.length).slice(0, 4);
+        const kwChunks = await this.repo.loadChunksByKeywords(terms, { activeOnly, limit: cfg.keywordTopK * 4 });
+        const seen = new Set(chunks.map((c) => c.id));
+        chunks = chunks.concat(kwChunks.filter((c) => !seen.has(c.id) && !MetadataFilter.isBlocked(c)));
+        times.keyword += now() - t;
+      }
+
+      // Kandidaten-Chunks nachladen: ohne Eingrenzung alle Vektortreffer,
+      // in jedem Fall die verknüpften Normen, die noch nicht im Korpus liegen.
+      const have = new Set(chunks.map((c) => c.id));
+      const missing = [...new Set([...(loadWholeCorpus ? [] : vectorHits.map((v) => v.chunkId)), ...pinnedIds])]
+        .filter((id) => !have.has(id));
+      if (missing.length > 0) {
+        const extra = await this.repo.loadChunksByIds(missing, { activeOnly });
+        chunks = chunks.concat(extra.filter((c) => !MetadataFilter.isBlocked(c)));
       }
 
       // 4) Keyword Search
@@ -127,6 +174,7 @@ export class HybridRetrievalService {
         embeddings: corpus.embeddings,
         vectorHits,
         keywordHits,
+        pinnedChunkIds: pinnedIds,
       });
       times.merge = now() - t;
 

@@ -185,3 +185,25 @@ test("Debug payload exposes candidate breakdown", async () => {
   assert.ok(res.debug);
   assert.ok(res.debug!.candidates.length >= 1);
 });
+
+test("HybridRetrievalService nimmt verknüpfte Normen (pinnedChunkIds) auf und reiht sie vorn ein", async () => {
+  const chunkRepo = new InMemoryChunkRepository();
+  const embRepo = new InMemoryEmbeddingRepository();
+  const chunks: PersistedChunk[] = [
+    fixtureChunk({ id: "chunk-1", content: "Bei LRS und Dyskalkulie wird ein Nachteilsausgleich gewährt." }),
+    fixtureChunk({ id: "chunk-2", content: "Vor Erlass eines Verwaltungsakts ist Gelegenheit zur Äußerung zu geben." }),
+    fixtureChunk({ id: "chunk-3", content: "Nachteilsausgleich für Schülerinnen mit LRS umfasst mehr Zeit." }),
+  ];
+  await chunkRepo.upsertMany(chunks);
+  const provider = new MockEmbeddingProvider();
+  for (const c of chunks) await EmbeddingService.embedChunk({ chunk: c, repo: embRepo, ctx: { provider } });
+  const service = new HybridRetrievalService(new InMemoryRetrievalRepository(chunkRepo, embRepo, ["src-1"]));
+  // Ohne Pin: chunk-2 hat weder Stichwort- noch nennenswerten Vektorbezug zur Frage.
+  const plain = await service.search({ query: "LRS Nachteilsausgleich", forceMock: true });
+  // Mit Pin: chunk-2 ist Kandidat und steht vorn, mit nachvollziehbarem Grund.
+  const pinned = await service.search({ query: "LRS Nachteilsausgleich", forceMock: true, filters: { pinnedChunkIds: ["chunk-2"] } });
+  assert.ok(pinned.hits.some((h) => h.chunkId === "chunk-2"));
+  assert.equal(pinned.hits[0].chunkId, "chunk-2");
+  assert.ok(pinned.hits[0].reasons.some((r) => r.code === "editorial_link"));
+  assert.ok(plain.hits.length >= 1);
+});

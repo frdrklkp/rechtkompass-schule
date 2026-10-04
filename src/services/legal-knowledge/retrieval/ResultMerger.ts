@@ -16,13 +16,16 @@ export const ResultMerger = {
     embeddings: EmbeddingRecord[];
     vectorHits: EmbeddingSearchCandidate[];
     keywordHits: KeywordSearchCandidate[];
+    /** Immer aufnehmen, auch ohne Vektor-/Stichworttreffer (müssen in `chunks` liegen). */
+    pinnedChunkIds?: string[];
   }): CandidateBundle[] {
     const chunkById = new Map(args.chunks.map((c) => [c.id, c] as const));
     const embByChunk = new Map(args.embeddings.map((e) => [e.chunkId, e] as const));
     const vectorMap = new Map(args.vectorHits.map((v) => [v.chunkId, v] as const));
     const keywordMap = new Map(args.keywordHits.map((k) => [k.chunkId, k] as const));
+    const pinned = new Set(args.pinnedChunkIds ?? []);
 
-    const ids = new Set<string>([...vectorMap.keys(), ...keywordMap.keys()]);
+    const ids = new Set<string>([...pinned, ...vectorMap.keys(), ...keywordMap.keys()]);
     const bundles: CandidateBundle[] = [];
     for (const id of ids) {
       const chunk = chunkById.get(id);
@@ -36,6 +39,7 @@ export const ResultMerger = {
         keywordScore: k?.score ?? 0,
         matchedFields: k?.matchedFields ?? [],
         matchedTerms: k?.matchedTerms ?? [],
+        pinned: pinned.has(id),
       });
     }
     return bundles;

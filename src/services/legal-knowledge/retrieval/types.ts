@@ -24,6 +24,12 @@ export interface RetrievalFilters {
   article?: string;
   activeOnly?: boolean;
   validAtDate?: string | null;
+  /**
+   * Chunks, die unabhängig von Vektor-/Stichworttreffern in die Kandidaten
+   * aufgenommen und beim Ranking bevorzugt werden - z. B. die redaktionell
+   * am Praxisfall verknüpften Normen (Phase 1, 04.10.2026).
+   */
+  pinnedChunkIds?: string[];
 }
 
 export interface RetrievalQuery {
@@ -201,4 +207,6 @@ export interface CandidateBundle {
   keywordScore: number;
   matchedFields: string[];
   matchedTerms: string[];
+  /** Redaktionell vorgegebener Kandidat (siehe RetrievalFilters.pinnedChunkIds). */
+  pinned?: boolean;
 }

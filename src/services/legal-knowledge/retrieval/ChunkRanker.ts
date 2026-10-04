@@ -90,7 +90,8 @@ export const ChunkRanker = {
         reference * w.reference +
         quality * w.quality +
         parser * w.parserConfidence +
-        review * w.reviewBoost,
+        review * w.reviewBoost +
+        (bundle.pinned ? config.pinBoost : 0),
       );
 
       const breakdown: RetrievalScoreBreakdown = {
@@ -100,6 +101,7 @@ export const ChunkRanker = {
       };
 
       const reasons: RetrievalReason[] = [];
+      if (bundle.pinned) reasons.push({ code: "editorial_link", message: "Redaktionell am Fall verknüpfte Norm" });
       if (vector > 0) reasons.push({ code: "semantic_match", message: `Semantische Nähe: ${(vector * 100).toFixed(0)} %` });
       if (keyword > 0) reasons.push({
         code: "keyword_match",

@@ -13,6 +13,8 @@ export interface RetrievalConfig {
   weights: RetrievalWeights;
   reviewStatusBoost: Record<string, number>;
   lifecycleBoost: Record<string, number>;
+  /** Additiver Bonus für redaktionell vorgegebene Kandidaten (pinnedChunkIds). */
+  pinBoost: number;
 }
 
 export const DEFAULT_RETRIEVAL_CONFIG: RetrievalConfig = {
@@ -25,6 +27,9 @@ export const DEFAULT_RETRIEVAL_CONFIG: RetrievalConfig = {
   minFinalScore: 0.05,
   highlightsPerHit: 5,
   excerptChars: 320,
+  // Hebt eine verknüpfte Norm über alle reinen Ähnlichkeitstreffer (deren
+  // Endscore in der Praxis bei 0,3-0,65 liegt), ohne den Score auf 1 zu setzen.
+  pinBoost: 0.35,
   weights: DEFAULT_WEIGHTS,
   reviewStatusBoost: {
     authority_verified: 1.0,

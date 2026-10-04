@@ -34,3 +34,4 @@ dist-ssr
 # Secrets
 .env
 .env.*
+.claude/settings.local.json

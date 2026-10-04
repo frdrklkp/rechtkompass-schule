@@ -12,11 +12,13 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AssistentRouteImport } from './routes/assistent'
+import { Route as DatenschutzRouteImport } from './routes/datenschutz'
 import { Route as DebugRouteImport } from './routes/debug'
 import { Route as DokumentationRouteImport } from './routes/dokumentation'
 import { Route as DokumenteRouteImport } from './routes/dokumente'
 import { Route as EinstellungenRouteImport } from './routes/einstellungen'
 import { Route as FaelleRouteImport } from './routes/faelle'
+import { Route as ImpressumRouteImport } from './routes/impressum'
 import { Route as KollegeRouteImport } from './routes/kollege'
 import { Route as NavigatorRouteImport } from './routes/navigator'
 import { Route as PraesentationRouteImport } from './routes/praesentation'
@@ -157,6 +159,11 @@ const AssistentRoute = AssistentRouteImport.update({
   path: '/assistent',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DatenschutzRoute = DatenschutzRouteImport.update({
+  id: '/datenschutz',
+  path: '/datenschutz',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DebugRoute = DebugRouteImport.update({
   id: '/debug',
   path: '/debug',
@@ -180,6 +187,11 @@ const EinstellungenRoute = EinstellungenRouteImport.update({
 const FaelleRoute = FaelleRouteImport.update({
   id: '/faelle',
   path: '/faelle',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ImpressumRoute = ImpressumRouteImport.update({
+  id: '/impressum',
+  path: '/impressum',
   getParentRoute: () => rootRouteImport,
 } as any)
 const KollegeRoute = KollegeRouteImport.update({
@@ -851,11 +863,13 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
   '/assistent': typeof AssistentRoute
+  '/datenschutz': typeof DatenschutzRoute
   '/debug': typeof DebugRoute
   '/dokumentation': typeof DokumentationRoute
   '/dokumente': typeof DokumenteRoute
   '/einstellungen': typeof EinstellungenRoute
   '/faelle': typeof FaelleRouteWithChildren
+  '/impressum': typeof ImpressumRoute
   '/kollege': typeof KollegeRoute
   '/navigator': typeof NavigatorRoute
   '/praesentation': typeof PraesentationRoute
@@ -984,11 +998,13 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/assistent': typeof AssistentRoute
+  '/datenschutz': typeof DatenschutzRoute
   '/debug': typeof DebugRoute
   '/dokumentation': typeof DokumentationRoute
   '/dokumente': typeof DokumenteRoute
   '/einstellungen': typeof EinstellungenRoute
   '/faelle': typeof FaelleRouteWithChildren
+  '/impressum': typeof ImpressumRoute
   '/kollege': typeof KollegeRoute
   '/navigator': typeof NavigatorRoute
   '/praesentation': typeof PraesentationRoute
@@ -1114,11 +1130,13 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
   '/assistent': typeof AssistentRoute
+  '/datenschutz': typeof DatenschutzRoute
   '/debug': typeof DebugRoute
   '/dokumentation': typeof DokumentationRoute
   '/dokumente': typeof DokumenteRoute
   '/einstellungen': typeof EinstellungenRoute
   '/faelle': typeof FaelleRouteWithChildren
+  '/impressum': typeof ImpressumRoute
   '/kollege': typeof KollegeRoute
   '/navigator': typeof NavigatorRoute
   '/praesentation': typeof PraesentationRoute
@@ -1250,11 +1268,13 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/assistent'
+    | '/datenschutz'
     | '/debug'
     | '/dokumentation'
     | '/dokumente'
     | '/einstellungen'
     | '/faelle'
+    | '/impressum'
     | '/kollege'
     | '/navigator'
     | '/praesentation'
@@ -1383,11 +1403,13 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/assistent'
+    | '/datenschutz'
     | '/debug'
     | '/dokumentation'
     | '/dokumente'
     | '/einstellungen'
     | '/faelle'
+    | '/impressum'
     | '/kollege'
     | '/navigator'
     | '/praesentation'
@@ -1512,11 +1534,13 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/assistent'
+    | '/datenschutz'
     | '/debug'
     | '/dokumentation'
     | '/dokumente'
     | '/einstellungen'
     | '/faelle'
+    | '/impressum'
     | '/kollege'
     | '/navigator'
     | '/praesentation'
@@ -1647,11 +1671,13 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRouteWithChildren
   AssistentRoute: typeof AssistentRoute
+  DatenschutzRoute: typeof DatenschutzRoute
   DebugRoute: typeof DebugRoute
   DokumentationRoute: typeof DokumentationRoute
   DokumenteRoute: typeof DokumenteRoute
   EinstellungenRoute: typeof EinstellungenRoute
   FaelleRoute: typeof FaelleRouteWithChildren
+  ImpressumRoute: typeof ImpressumRoute
   KollegeRoute: typeof KollegeRoute
   NavigatorRoute: typeof NavigatorRoute
   PraesentationRoute: typeof PraesentationRoute
@@ -1728,6 +1754,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AssistentRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/datenschutz': {
+      id: '/datenschutz'
+      path: '/datenschutz'
+      fullPath: '/datenschutz'
+      preLoaderRoute: typeof DatenschutzRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/debug': {
       id: '/debug'
       path: '/debug'
@@ -1761,6 +1794,13 @@ declare module '@tanstack/react-router' {
       path: '/faelle'
       fullPath: '/faelle'
       preLoaderRoute: typeof FaelleRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/impressum': {
+      id: '/impressum'
+      path: '/impressum'
+      fullPath: '/impressum'
+      preLoaderRoute: typeof ImpressumRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/kollege': {
@@ -2964,11 +3004,13 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRouteWithChildren,
   AssistentRoute: AssistentRoute,
+  DatenschutzRoute: DatenschutzRoute,
   DebugRoute: DebugRoute,
   DokumentationRoute: DokumentationRoute,
   DokumenteRoute: DokumenteRoute,
   EinstellungenRoute: EinstellungenRoute,
   FaelleRoute: FaelleRouteWithChildren,
+  ImpressumRoute: ImpressumRoute,
   KollegeRoute: KollegeRoute,
   NavigatorRoute: NavigatorRoute,
   PraesentationRoute: PraesentationRoute,

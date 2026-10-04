@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Moon, Sun, Type, Shield, FileText, Info } from "lucide-react";
 import { PageShell } from "../components/PageShell";
@@ -88,16 +88,16 @@ function SettingsPage() {
       </section>
 
       <section className="mt-4 divide-y divide-border overflow-hidden rounded-2xl border border-border bg-card">
-        <InfoRow
-          icon={Shield}
-          title="Datenschutz"
-          text="RechtKompass Schule speichert keine personenbezogenen Daten. Einstellungen werden lokal im Browser gespeichert."
-        />
-        <InfoRow
-          icon={FileText}
-          title="Impressum"
-          text="Prototyp im Rahmen des MVP. Anbieterinformationen werden vor Veröffentlichung ergänzt."
-        />
+        <Link to="/datenschutz" className="block transition-colors hover:bg-muted/50">
+          <InfoRow
+            icon={Shield}
+            title="Datenschutz"
+            text="Welche Daten verarbeitet werden, wie lange, und welche Rechte Sie haben. Darstellungseinstellungen bleiben nur in Ihrem Browser."
+          />
+        </Link>
+        <Link to="/impressum" className="block transition-colors hover:bg-muted/50">
+          <InfoRow icon={FileText} title="Impressum" text="Anbieterkennzeichnung und Hinweis zur Rechtsberatung." />
+        </Link>
         <InfoRow icon={Info} title="App-Version" text={APP_VERSION} />
       </section>
 

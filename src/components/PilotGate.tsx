@@ -7,6 +7,7 @@
 // Prüfung gegen die Pilotliste (public.is_pilot_approved()) nach dem Login.
 import { type ReactNode, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "@tanstack/react-router";
 import { CheckCircle2, KeyRound, Mail, ShieldCheck } from "lucide-react";
 import { signInWithMagicLink, signOut, useAuthSession } from "@/lib/adminAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -41,6 +42,14 @@ function GateShell({ children }: { children: ReactNode }) {
           </div>
         </div>
         {children}
+        <p className="mt-6 flex justify-center gap-4 text-xs text-muted-foreground">
+          <Link to="/impressum" className="underline-offset-2 hover:underline">
+            Impressum
+          </Link>
+          <Link to="/datenschutz" className="underline-offset-2 hover:underline">
+            Datenschutz
+          </Link>
+        </p>
       </div>
     </div>
   );

@@ -101,10 +101,6 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     links: [
       { rel: "stylesheet", href: appCss },
       { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
-      {
-        rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap",
-      },
     ],
   }),
   shellComponent: RootShell,
@@ -131,11 +127,14 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const isAdmin = pathname.startsWith("/admin");
+  // Impressum und Datenschutzerklärung müssen ohne Anmeldung erreichbar sein
+  // (§ 5 DDG, Art. 13 DSGVO) - deshalb am PilotGate vorbei.
+  const isRechtsseite = pathname === "/impressum" || pathname === "/datenschutz";
 
   return (
     <QueryClientProvider client={queryClient}>
       <div className="min-h-screen bg-background text-foreground">
-        {isAdmin ? (
+        {isAdmin || isRechtsseite ? (
           <>
             <Outlet />
             <BottomNav />

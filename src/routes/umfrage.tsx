@@ -155,6 +155,9 @@ function UmfragePage() {
       subtitle="4 Klicks, 2 optionale Textfelder – dauert unter 2 Minuten. Eine Antwort pro Person, nachträglich änderbar."
     >
       <div className="space-y-6">
+        <p className="rounded-xl border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
+          Hinweis zum Datenschutz: Ihre Antwort wird Ihrem Konto zugeordnet gespeichert (damit Sie sie später ändern können) und ausschließlich von der Projektleitung zur Weiterentwicklung der Pilotphase ausgewertet. Bitte in den Freitextfeldern keine Namen oder personenbezogenen Angaben zu Dritten nennen.
+        </p>
         <Frage titel="1. Wie oft haben Sie RechtKompass in den letzten Wochen genutzt?">
           <OptionRow options={NUTZUNG} value={draft.nutzung} onChange={(v) => setDraft((d) => ({ ...d, nutzung: v }))} />
         </Frage>

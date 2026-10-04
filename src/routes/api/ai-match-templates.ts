@@ -102,6 +102,7 @@ export const Route = createFileRoute("/api/ai-match-templates")({
           parsed = await completeWithValidation(
             async () => {
               const result = await provider.complete({
+                taskId: "ai-match-templates",
                 model: "anthropic/claude-haiku-4-5",
                 messages: [
                   { role: "system", content: system },

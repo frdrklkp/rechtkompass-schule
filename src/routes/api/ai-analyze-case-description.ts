@@ -212,6 +212,7 @@ export const Route = createFileRoute("/api/ai-analyze-case-description")({
           parsed = await completeWithValidation(
             async () => {
               const result = await provider.complete({
+                taskId: "ai-analyze-case-description",
                 model: "anthropic/claude-haiku-4-5",
                 messages: [
                   { role: "system", content: system },

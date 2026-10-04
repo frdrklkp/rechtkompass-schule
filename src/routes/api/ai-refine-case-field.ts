@@ -118,6 +118,7 @@ export const Route = createFileRoute("/api/ai-refine-case-field")({
           parsed = (await completeWithValidation(
             async () => {
               const result = await provider.complete({
+                taskId: "ai-refine-case-field",
                 model: "anthropic/claude-haiku-4-5",
                 messages: [
                   { role: "system", content: system },

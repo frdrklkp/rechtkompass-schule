@@ -248,6 +248,7 @@ export const Route = createFileRoute("/api/generate-case-document")({
           parsed = await completeWithValidation(
             async () => {
               const result = await provider.complete({
+                taskId: "generate-case-document",
                 model: generationModel,
                 messages: [
                   { role: "system", content: system },

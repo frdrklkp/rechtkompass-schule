@@ -174,7 +174,22 @@ export class AnthropicProvider implements AIProvider {
     const raw = (await res.json().catch(() => null)) as {
       content?: AnthropicContentBlock[];
       usage?: { input_tokens?: number; output_tokens?: number };
+      stop_reason?: string;
     } | null;
+
+    // Fund 04.10.2026 (Copilot-Messung): Bei stop_reason "max_tokens" liefert
+    // die API den bis dahin erzeugten tool_use-Input - also ein unvollständiges
+    // JSON, dem hinten Felder fehlen (z. B. checklist). Das wurde bisher still
+    // als gültige Antwort akzeptiert. Abgeschnittene strukturierte Antworten
+    // sind ein Fehler, kein Ergebnis.
+    if (req.jsonSchema && raw?.stop_reason === "max_tokens") {
+      throw new AIError({
+        code: "invalid_response",
+        status: 200,
+        userMessage: "KI-Antwort wurde an der Token-Obergrenze abgeschnitten (unvollständig).",
+        detail: `max_tokens=${req.maxTokens ?? 4096}, output_tokens=${raw.usage?.output_tokens ?? "?"}`,
+      });
+    }
 
     const blocks = raw?.content ?? [];
     let content = "";
@@ -219,6 +234,20 @@ export class AnthropicProvider implements AIProvider {
 
     const promptTokens = raw?.usage?.input_tokens ?? 0;
     const completionTokens = raw?.usage?.output_tokens ?? 0;
+
+    if (raw?.usage) {
+      // Kostenmessung (Phase 1): Dynamischer Import, damit das Modul nie in
+      // ein Client-Bundle gezogen wird; Fehler werden dort verschluckt.
+      const { logAiUsage } = await import("@/lib/server/aiUsageLog");
+      await logAiUsage({
+        provider: this.id,
+        model: req.model,
+        taskId: req.taskId,
+        promptTokens,
+        completionTokens,
+        latencyMs: Date.now() - started,
+      });
+    }
 
     return {
       content,

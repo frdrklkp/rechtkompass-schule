@@ -74,6 +74,7 @@ export const Route = createFileRoute("/api/enrich-legal-section")({
           parsed = await completeWithValidation(
             async () => {
               const result = await provider.complete({
+                taskId: "enrich-legal-section",
                 model: "anthropic/claude-haiku-4-5",
                 messages: [
                   { role: "system", content: system },

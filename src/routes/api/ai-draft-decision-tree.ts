@@ -176,6 +176,7 @@ async function generateOnce(
     stepsResult = await completeWithValidation(
       async () => {
         const result = await provider.complete({
+                taskId: "ai-draft-decision-tree",
           model: "anthropic/claude-haiku-4-5",
           messages: [
             { role: "system", content: systemSteps },
@@ -273,6 +274,7 @@ async function generateOnce(
     resultsResult = await completeWithValidation(
       async () => {
         const result = await provider.complete({
+                taskId: "ai-draft-decision-tree",
           model: "anthropic/claude-haiku-4-5",
           messages: [
             { role: "system", content: systemResults },

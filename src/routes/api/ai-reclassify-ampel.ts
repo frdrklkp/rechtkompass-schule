@@ -80,6 +80,7 @@ export const Route = createFileRoute("/api/ai-reclassify-ampel")({
           parsed = await completeWithValidation(
             async () => {
               const result = await provider.complete({
+                taskId: "ai-reclassify-ampel",
                 model: "anthropic/claude-haiku-4-5",
                 messages: [
                   { role: "system", content: system },

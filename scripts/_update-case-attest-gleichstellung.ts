@@ -34,9 +34,9 @@ const _origFetch = globalThis.fetch.bind(globalThis);
 import { createClient } from "@supabase/supabase-js";
 import { writeFileSync } from "node:fs";
 
-const CASE_ID = "2abf1e78-d7a6-4767-85ee-c2d4c2cfcc1f";
+const CASE_ID = process.env.CASE_ID ?? "2abf1e78-d7a6-4767-85ee-c2d4c2cfcc1f";
 const ADMIN_EMAIL = "admin@rechtkompass.local";
-const BACKUP_PATH = "/private/tmp/claude-501/-Users-frederik-Downloads-A-Fresh-Start/05ab1dc5-2718-4ee1-97a7-493f09297f00/scratchpad/attest-case-backup.json";
+const BACKUP_PATH = process.env.BACKUP_PATH ?? "/private/tmp/claude-501/-Users-frederik-Downloads-A-Fresh-Start/05ab1dc5-2718-4ee1-97a7-493f09297f00/scratchpad/attest-case-backup.json";
 
 async function bootstrapSession(): Promise<void> {
   const admin = createClient(process.env.VITE_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, { auth: { persistSession: false } });
@@ -337,10 +337,10 @@ async function main() {
 
   // publish
   const row = await loadCase();
-  if (row.workflow_status !== "draft") throw new Error(`Fall ist nicht im Entwurf (${row.workflow_status}).`);
+  if (!["draft", "in_review"].includes(row.workflow_status)) throw new Error(`Fall ist weder Entwurf noch in Prüfung (${row.workflow_status}).`);
   const parsed = parseCuratedTree(row.decision_tree);
   if (!parsed || !validateCuratedTree(parsed).valid) throw new Error("Entscheidungsbaum ungültig - kein Publish.");
-  await EditorialWorkflowService.submitForReview({ caseId: CASE_ID } as any);
+  if (row.workflow_status === "draft") await EditorialWorkflowService.submitForReview({ caseId: CASE_ID } as any);
   const { data: reviewRows } = await (supabase.from("case_reviews") as any)
     .select("id").eq("case_id", CASE_ID).eq("status", "pending").order("created_at", { ascending: false }).limit(1);
   const reviewId = (reviewRows ?? [])[0]?.id;
@@ -349,7 +349,7 @@ async function main() {
     reviewId, decision: "approved",
     comment: process.env.PUBLISH_COMMENT ?? "Redaktionelle Überarbeitung 01.10.2026: Konstellation Gleichstellung mit Schwerbehinderung ergänzt (SGB IX §§ 2, 151, 156, 164, 167, 178, 181, 207, 208).",
   } as any);
-  await EditorialWorkflowService.publish({ caseId: CASE_ID, publicationTier: "internal" } as any);
+  await EditorialWorkflowService.publish({ caseId: CASE_ID, publicationTier: (process.env.PUBLISH_TIER ?? "internal") } as any);
   const after = await loadCase();
   console.log(`Veröffentlicht: workflow_status=${after.workflow_status}, tier=${after.publication_tier}, legal_review_status=${after.legal_review_status}`);
 }

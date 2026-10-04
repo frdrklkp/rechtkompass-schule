@@ -8,7 +8,7 @@
  * Aufruf: bun run scripts/_import-backlog-sources.ts
  */
 import { createClient } from "@supabase/supabase-js";
-import { aggParser, bggNrwParser, lpvgNrwParser, aiActParser, bbigParser, bggParser, bgbParser, bzrgParser, dsgNrwParser, jarbschgParser, juschgParser, kunsturhgParser, sgb7Parser, sgb8Parser, sgb9Parser, stgbParser, versmedvParser } from "../src/services/legal-knowledge/import";
+import { aggParser, bggNrwParser, lpvgNrwParser, aiActParser, bbigParser, bggParser, bgbParser, bzrgParser, dsgNrwParser, jarbschgParser, juschgParser, kkgParser, kunsturhgParser, sgb7Parser, sgb8Parser, sgb9Parser, stgbParser, urhgParser, versmedvParser } from "../src/services/legal-knowledge/import";
 import { mergeDocuments } from "../src/services/legal-knowledge/connectors/OfficialSourceConnectorService";
 import type { LegalImportInput, LegalImportParser, LegalNode } from "../src/services/legal-knowledge/import/types";
 import {
@@ -89,7 +89,7 @@ const TARGETS: Array<{ url: string; label: string; sourceId: string; parser: Leg
     bund: true,
     // Geschäftsfähigkeit Minderjähriger; Deliktsrecht inkl. Aufsichtspflicht
     // und Amtshaftung; elterliche Sorge und Vertretung; Kindeswohlgefährdung.
-    sections: ["104", "106", "107", "110", "823", "828", "831", "832", "839", "1626", "1629", "1631", "1666"],
+    sections: ["104", "106", "107", "110", "823", "828", "831", "832", "839", "1626", "1629", "1631", "1666", "1687"],
   },
   {
     url: "https://www.gesetze-im-internet.de/stgb/BJNR001270871.html",
@@ -101,7 +101,7 @@ const TARGETS: Array<{ url: string; label: string; sourceId: string; parser: Leg
     // Hausfriedensbruch; Beleidigungsdelikte; Wort-/Bildaufnahmen;
     // Körperverletzung; Nötigung/Bedrohung; Sachbeschädigung; unterlassene
     // Hilfeleistung - die in Mobbing-/Gewalt-/Film-Fällen zitierten Normen.
-    sections: ["123", "177", "184i", "185", "186", "187", "201", "201a", "223", "229", "240", "241", "303", "323c"],
+    sections: ["123", "177", "184i", "185", "186", "187", "201", "201a", "223", "229", "240", "241", "303", "32", "34", "138", "323c", "331", "332"],
   },
   {
     url: "https://www.gesetze-im-internet.de/sgb_7/BJNR125410996.html",
@@ -112,7 +112,7 @@ const TARGETS: Array<{ url: string; label: string; sourceId: string; parser: Leg
     bund: true,
     // Schülerunfallversicherung (§ 2 Abs. 1 Nr. 8b), Arbeitsunfall-Begriff,
     // Haftungsbeschränkung - beantwortet die "Wer haftet/zahlt?"-Fälle.
-    sections: ["2", "8", "105", "106"],
+    sections: ["2", "8", "104", "105", "106", "193"],
   },
   {
     url: "https://www.gesetze-im-internet.de/juschg/BJNR273000002.html",
@@ -162,6 +162,17 @@ const TARGETS: Array<{ url: string; label: string; sourceId: string; parser: Leg
     bund: true,
   },
   {
+    url: "https://www.gesetze-im-internet.de/kkg/BJNR297510011.html",
+    label: "KKG (Auszug)",
+    sourceId: "kkg",
+    parser: kkgParser,
+    legalDomain: "Kinderschutz",
+    bund: true,
+    // § 1 (Ziele), § 3 (Netzwerke), § 4 (Beratung und Übermittlung bei
+    // Kindeswohlgefährdung - ausdrücklich auch für Lehrkräfte).
+    sections: ["1", "3", "4"],
+  },
+  {
     url: "https://www.gesetze-im-internet.de/bgg/BJNR146800002.html",
     label: "BGG",
     sourceId: "bgg",
@@ -192,6 +203,18 @@ const TARGETS: Array<{ url: string; label: string; sourceId: string; parser: Leg
     parser: lpvgNrwParser,
     legalDomain: "Dienstrecht",
     bund: false,
+  },
+  {
+    url: "https://www.gesetze-im-internet.de/urhg/BJNR012730965.html",
+    label: "UrhG (Auszug)",
+    sourceId: "urhg",
+    parser: urhgParser,
+    legalDomain: "Urheberrecht",
+    bund: true,
+    // Urheber in Arbeits- oder Dienstverhältnissen (§ 43) und Computer-
+    // programme im Dienstverhältnis (§ 69b): Software, die im Zusammenhang
+    // mit dienstlichen Aufgaben entsteht (Fall Nebentätigkeit/Interessenkonflikt).
+    sections: ["43", "69b"],
   },
   {
     url: "https://eur-lex.europa.eu/legal-content/DE/TXT/HTML/?uri=CELEX:32024R1689",

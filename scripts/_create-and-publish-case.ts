@@ -422,6 +422,17 @@ async function main() {
     console.log("Baum strukturell nicht vollständig - bleibt unfreigegeben (Entscheidungsassistent erscheint nicht im Frontend).\n");
   }
 
+  // NO_PUBLISH=1: Fall bleibt Entwurf (Redaktionsschritte 8 entfallen) - für
+  // sensible Fälle, die vor der Veröffentlichung redaktionell geprüft werden.
+  if (process.env.NO_PUBLISH) {
+    const evNoPub = await loadCaseForEvaluation(caseId);
+    console.log("=== ABSCHLUSS (NICHT veröffentlicht, NO_PUBLISH) ===");
+    console.log(`Fall-ID: ${caseId}`);
+    console.log(`Score: ${evNoPub.score}/100`);
+    console.log(`Rechtsgrundlagen: ${links.length}`);
+    process.exit(0);
+  }
+
   // ---- 8) Redaktions-Workflow ----
   console.log("=== 8/9: Redaktions-Workflow (einreichen -> genehmigen -> veröffentlichen) ===");
   await EditorialWorkflowService.submitForReview({ caseId });

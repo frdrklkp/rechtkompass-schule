@@ -205,6 +205,15 @@ export const aggParser = makeGesetzeImInternetParser({
   detectRe: /Allgemeines Gleichbehandlungsgesetz/i,
 });
 
+export const kkgParser = makeGesetzeImInternetParser({
+  id: "kkg",
+  label: "KKG",
+  shortName: "KKG",
+  fallbackTitle: "Gesetz zur Kooperation und Information im Kinderschutz (KKG)",
+  urlFragment: "gesetze-im-internet.de/kkg",
+  detectRe: /Kooperation und Information im Kinderschutz/i,
+});
+
 export const bggParser = makeGesetzeImInternetParser({
   id: "bgg",
   label: "BGG",
@@ -221,4 +230,14 @@ export const versmedvParser = makeGesetzeImInternetParser({
   fallbackTitle: "Versorgungsmedizin-Verordnung (VersMedV)",
   urlFragment: "gesetze-im-internet.de/versmedv",
   detectRe: /Versorgungsmedizin-Verordnung/i,
+});
+
+// Urheberrecht an Software im Dienstverhältnis (Nutzer-Auftrag 02.10.2026).
+export const urhgParser = makeGesetzeImInternetParser({
+  id: "urhg",
+  label: "UrhG",
+  shortName: "UrhG",
+  fallbackTitle: "Gesetz über Urheberrecht und verwandte Schutzrechte (Urheberrechtsgesetz - UrhG)",
+  urlFragment: "gesetze-im-internet.de/urhg",
+  detectRe: /Urheberrechtsgesetz|Gesetz über Urheberrecht und verwandte Schutzrechte/i,
 });

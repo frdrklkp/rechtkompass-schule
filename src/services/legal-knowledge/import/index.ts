@@ -26,7 +26,7 @@ export { kunsturhgParser } from "./parsers/kunsturhgParser";
 export { sgb8Parser } from "./parsers/sgb8Parser";
 export { bbigParser } from "./parsers/bbigParser";
 export { jarbschgParser } from "./parsers/jarbschgParser";
-export { makeGesetzeImInternetParser, bgbParser, stgbParser, sgb7Parser, juschgParser, bzrgParser, sgb9Parser, aggParser, bggParser, versmedvParser } from "./parsers/gesetzeImInternetParserFactory";
+export { makeGesetzeImInternetParser, bgbParser, stgbParser, sgb7Parser, juschgParser, bzrgParser, sgb9Parser, aggParser, bggParser, versmedvParser, urhgParser, kkgParser } from "./parsers/gesetzeImInternetParserFactory";
 export { aiActParser } from "./parsers/aiActParser";
 export {
   bassParser,

@@ -17,6 +17,8 @@ export interface CopilotFilters {
   klassenstufe?: string | null;
   falltyp?: string | null;
   sourceIds?: string[];
+  /** Wird serverseitig aus den Fall-Verknüpfungen gesetzt (Route legal-copilot-ask). */
+  pinnedChunkIds?: string[];
 }
 
 /**
@@ -32,6 +34,20 @@ export interface CopilotCaseContext {
   legalExplanation?: string | null;
   /** Offene, nicht abschließend geklärte Rechtsfragen am Fall. */
   openQuestions?: string[];
+}
+
+/**
+ * Zwischenstände einer Anfrage für die gestufte Rückmeldung im Dialog
+ * (04.10.2026). Es wird NIE Antworttext vor der Prüfung ausgegeben - nur,
+ * welche Phase gerade läuft.
+ */
+export type CopilotProgressEvent =
+  | { stage: "retrieval_done"; hits: number; ms: number }
+  | { stage: "generating" }
+  | { stage: "checking" };
+
+export interface CopilotAskHooks {
+  onProgress?: (event: CopilotProgressEvent) => void;
 }
 
 export interface CopilotAskInput {

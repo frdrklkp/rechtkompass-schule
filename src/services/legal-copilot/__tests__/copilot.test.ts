@@ -281,3 +281,33 @@ test("LegalCopilotService gibt 'keine Rechtsgrundlage' zurück, wenn Retrieval l
   assert.equal(res.answer.citations.length, 0);
   assert.match(res.answer.sections.kurzantwort, /keine ausreichende Rechtsgrundlage/i);
 });
+
+test("HallucinationGuard akzeptiert Freitext mit erlaubter Paragraphennummer (Kürzel + Nummer statt ganzer Bezeichnung)", () => {
+  const grounded = fakeGrounded();
+  // Importierte Chunks: kein citation.law/paragraph, Nummer nur in der Bezeichnung (mit "§ §"-Artefakt).
+  grounded[0].hit.citation.display = "Schulgesetz für das Land Nordrhein-Westfalen (Schulgesetz NRW - SchulG) § § 120";
+  grounded[0].hit.citation.paragraph = null;
+  grounded[0].hit.citation.law = null;
+  const ok = HallucinationGuard.check("Dies fällt unter die Aufgabenerfüllung nach Schulgesetz NRW § 120.", grounded);
+  assert.equal(ok.ok, true, ok.violations.join(" | "));
+  const other = HallucinationGuard.check("Dies regelt Schulgesetz NRW § 121.", grounded);
+  assert.equal(other.ok, false);
+  assert.ok(other.violations.some((v) => v.includes("Freitext-Fundstelle")));
+});
+
+test("HallucinationGuard nutzt metadata.sectionNumber importierter Chunks", () => {
+  const grounded = fakeGrounded();
+  grounded[0].hit.citation.display = "Verwaltungsverfahrensgesetz NRW Teil II/Abschnitt 1";
+  grounded[0].hit.citation.paragraph = null;
+  grounded[0].hit.metadata = { sectionNumber: "§ 28" };
+  assert.equal(HallucinationGuard.check("Vor der Entscheidung ist nach § 28 anzuhören.", grounded).ok, true);
+  assert.equal(HallucinationGuard.check("Vor der Entscheidung ist nach § 29 anzuhören.", grounded).ok, false);
+});
+
+test("compactCitationLabel kürzt importierte Fundstellen für den Prompt", async () => {
+  const { compactCitationLabel } = await import("../ContextAssembler");
+  assert.equal(compactCitationLabel("Schulgesetz für das Land Nordrhein-Westfalen (Schulgesetz NRW - SchulG) § § 120"), "SchulG NRW § 120");
+  assert.equal(compactCitationLabel("Verwaltungsverfahrensgesetz für das Land Nordrhein-Westfalen (Verwaltungsverfahrensgesetz NRW – VwVfG NRW) Teil II/Abschnitt 1/§ 28", "§ 28"), "VwVfG NRW § 28");
+  assert.equal(compactCitationLabel("§ 42 SchulG NRW"), "§ 42 SchulG NRW");
+  assert.ok(compactCitationLabel("Verordnung (EU) 2016/679 (Datenschutz-Grundverordnung) Art 6").includes("Art. 6"));
+});

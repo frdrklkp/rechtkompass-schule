@@ -18,7 +18,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
-import type { CopilotCaseContext, CopilotResponse } from "@/services/legal-copilot/types";
+import type { CopilotCaseContext, CopilotProgressEvent, CopilotResponse } from "@/services/legal-copilot/types";
+import { readCopilotResponse, stageLabel } from "@/services/legal-copilot/progressStream";
 
 type Props = {
   caseContext: CopilotCaseContext;
@@ -54,6 +55,7 @@ export function CaseCopilotDialog({ caseContext, sourceIds, triggerClassName }: 
   const [turns, setTurns] = useState<Turn[]>([]);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const [stage, setStage] = useState<CopilotProgressEvent | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
   const canSend = question.trim().length >= 5 && !pending;
@@ -75,6 +77,8 @@ export function CaseCopilotDialog({ caseContext, sourceIds, triggerClassName }: 
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          // Gestufte Rückmeldung: Phasen-Ereignisse, Ergebnis erst nach der Prüfung.
+          Accept: "text/event-stream",
           Authorization: `Bearer ${accessToken}`,
         },
         body: JSON.stringify({
@@ -84,7 +88,7 @@ export function CaseCopilotDialog({ caseContext, sourceIds, triggerClassName }: 
           filters: sourceIds && sourceIds.length > 0 ? { sourceIds } : undefined,
         }),
       });
-      const payload = (await res.json()) as { result: CopilotResponse | null; error?: string };
+      const payload = await readCopilotResponse(res, (e) => setStage(e));
       if (!payload.result) {
         throw new Error(payload.error ?? "Der Copilot konnte die Frage nicht verarbeiten.");
       }
@@ -100,6 +104,7 @@ export function CaseCopilotDialog({ caseContext, sourceIds, triggerClassName }: 
       ]);
     } finally {
       setPending(false);
+      setStage(null);
       // Nach dem Rendern ans Ende scrollen, damit die neue Antwort sichtbar ist.
       requestAnimationFrame(() => {
         scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
@@ -167,9 +172,9 @@ export function CaseCopilotDialog({ caseContext, sourceIds, triggerClassName }: 
             })}
 
             {pending && (
-              <div className="mr-8 flex items-center gap-2 rounded-2xl border border-border bg-card p-3 text-xs text-muted-foreground">
+              <div className="mr-8 flex items-center gap-2 rounded-2xl border border-border bg-card p-3 text-xs text-muted-foreground" aria-live="polite">
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                Rechtsgrundlagen werden geprüft…
+                {stageLabel(stage)}
               </div>
             )}
           </div>
@@ -192,6 +197,9 @@ export function CaseCopilotDialog({ caseContext, sourceIds, triggerClassName }: 
               <Send className="h-4 w-4" />
             </Button>
           </div>
+          <p className="text-[11px] leading-snug text-muted-foreground">
+            Bitte keine Namen oder andere personenbezogene Angaben zu Schülerinnen, Schülern oder Kolleginnen und Kollegen eingeben. Ihre Rückfragen werden Ihrem Konto zugeordnet gespeichert.
+          </p>
         </DialogContent>
       </Dialog>
     </>

@@ -38,8 +38,15 @@ export const GroundingEngine = {
     const droppedChunkIds: string[] = [];
     const reasonings: string[] = [];
 
+    // Redaktionell am Fall verknüpfte Normen (Reason "editorial_link") kommen
+    // zuerst in den Prompt - sonst fallen sie bei maxHits=6 hinter reinen
+    // Ähnlichkeitstreffern heraus, und die KI zitiert sie aus dem Fallkontext
+    // ohne [R#], was der Halluzinationsschutz zu Recht blockiert (04.10.2026).
+    const isPinned = (h: RetrievalHit) => h.reasons.some((r) => r.code === "editorial_link");
+    const ordered = [...retrieval.hits.filter(isPinned), ...retrieval.hits.filter((h) => !isPinned(h))];
+
     let idx = 1;
-    for (const hit of retrieval.hits) {
+    for (const hit of ordered) {
       if (grounded.length >= cfg.maxHits) {
         droppedChunkIds.push(hit.chunkId);
         reasonings.push(`Verworfen ${hit.chunkId}: über maxHits=${cfg.maxHits}.`);

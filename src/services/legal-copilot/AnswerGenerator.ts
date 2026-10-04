@@ -16,7 +16,7 @@ export interface GeneratedAnswer {
   llmConfidence: number;
 }
 
-const ANSWER_SCHEMA = {
+export const ANSWER_SCHEMA = {
   type: "object",
   additionalProperties: false,
   properties: {
@@ -28,21 +28,25 @@ const ANSWER_SCHEMA = {
       properties: {
         kurzantwort: { type: "string" },
         einordnung: { type: "string" },
-        empfohleneHandlung: { type: "array", items: { type: "string" } },
+        // maxItems: Längenbegrenzung, die das Modell im Tool-Schema sieht
+        // (Prosa-Regeln allein wurden ignoriert - Messung 04.10.2026).
+        empfohleneHandlung: { type: "array", items: { type: "string" }, maxItems: 4 },
         begruendung: { type: "string" },
-        hinweise: { type: "array", items: { type: "string" } },
-        unsicherheiten: { type: "array", items: { type: "string" } },
-        typischeFehler: { type: "array", items: { type: "string" } },
-        naechsteSchritte: { type: "array", items: { type: "string" } },
+        hinweise: { type: "array", items: { type: "string" }, maxItems: 2 },
+        unsicherheiten: { type: "array", items: { type: "string" }, maxItems: 2 },
+        typischeFehler: { type: "array", items: { type: "string" }, maxItems: 2 },
+        naechsteSchritte: { type: "array", items: { type: "string" }, maxItems: 2 },
       },
-      required: [
-        "kurzantwort", "einordnung", "empfohleneHandlung", "begruendung",
-        "hinweise", "unsicherheiten", "typischeFehler", "naechsteSchritte",
-      ],
+      // Schlankes Format (04.10.2026): hinweise, typischeFehler und
+      // naechsteSchritte sind optional - der Fall-Dialog zeigt sie nicht an,
+      // sie kosteten aber ~40 % der Ausgabe-Token (= Wartezeit). Der Formatter
+      // setzt fehlende Listen auf [].
+      required: ["kurzantwort", "einordnung", "empfohleneHandlung", "begruendung", "unsicherheiten"],
     },
     citationRefs: { type: "array", items: { type: "string" } },
     checklist: {
       type: "array",
+      maxItems: 4,
       items: {
         type: "object",
         additionalProperties: false,
@@ -55,6 +59,7 @@ const ANSWER_SCHEMA = {
     },
     followUps: {
       type: "array",
+      maxItems: 2,
       items: {
         type: "object",
         additionalProperties: false,
@@ -99,7 +104,10 @@ export const AnswerGenerator = {
           { role: "user", content: prompt.user },
         ],
         temperature: 0,
-        maxTokens: 2000,
+        // 04.10.2026: 2000 → 1500. Mit LÄNGENVORGABE, kurzen Fundstellen-Labels
+        // und maxItems im Schema sind vollständige Antworten bei ~1.200 Token;
+        // die Grenze fängt Ausreißer ab, bevor sie 15 s und mehr kosten.
+        maxTokens: 1500,
         jsonSchema: { name: "grounded_copilot_answer", schema: ANSWER_SCHEMA as unknown as Record<string, unknown> },
         signal: opts.signal,
         taskId: "legal-copilot-answer",

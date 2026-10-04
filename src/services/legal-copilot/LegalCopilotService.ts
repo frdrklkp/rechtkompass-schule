@@ -40,8 +40,10 @@ import { SafetyGuard } from "./SafetyGuard";
 import { copilotTelemetry } from "./telemetry";
 import { legalCopilotFlags } from "./featureFlags";
 import type {
+  CopilotAskHooks,
   CopilotAskInput,
   CopilotDebugPayload,
+  CopilotProgressEvent,
   CopilotResponse,
 } from "./types";
 import { COPILOT_DOMAIN_VERSION } from "./types";
@@ -64,7 +66,10 @@ export class LegalCopilotService {
     this.workflowTemplateRepo = deps.workflowTemplateRepo ?? null;
   }
 
-  async ask(input: CopilotAskInput): Promise<CopilotResponse> {
+  async ask(input: CopilotAskInput, hooks: CopilotAskHooks = {}): Promise<CopilotResponse> {
+    // Fortschritt ist reine Statusinformation; ein fehlerhafter Listener darf
+    // die Anfrage nicht abbrechen.
+    const progress = (event: CopilotProgressEvent) => { try { hooks.onProgress?.(event); } catch { /* ignorieren */ } };
     if (!legalCopilotFlags.legalCopilotEnabled) throw new CopilotDisabledError();
     const question = (input.question ?? "").toString().trim();
     if (!question) throw new CopilotError("invalid_input", "Frage fehlt.");
@@ -72,7 +77,18 @@ export class LegalCopilotService {
     const started = Date.now();
     const mode = ExplanationModeSpec.normalize(input.mode ?? legalCopilotFlags.legalExplanationMode);
     const session = await this.conversations.openOrResume(input.sessionId);
-    await this.conversations.recordUser(session.sessionId, question);
+    // Nutzerfrage parallel zum Retrieval persistieren (Supabase-Roundtrip
+    // ~0,3 s aus Frankfurt) - abgewartet wird erst vor dem Antwort-Eintrag,
+    // damit die Reihenfolge der Turns erhalten bleibt (04.10.2026).
+    // Fehler werden eingefangen und beim Abwarten erneut geworfen, damit ein
+    // Abbruch des Retrievals keine unbehandelte Promise-Ablehnung hinterlässt.
+    const userRecorded = this.conversations.recordUser(session.sessionId, question).catch((e: unknown) => e);
+    const awaitUserRecorded = async () => { const e = await userRecorded; if (e instanceof Error) throw e; };
+    // Workflow-Vorlagen ebenfalls vorab laden; sie werden erst nach der
+    // KI-Antwort gebraucht und hingen bisher sequenziell hinter ihr.
+    const templatesPrefetch = this.workflowTemplateRepo
+      ? this.workflowTemplateRepo.listPublished().catch(() => null)
+      : Promise.resolve(null);
 
     copilotTelemetry.emit({ event: "copilot_started", sessionId: session.sessionId, mode });
 
@@ -80,6 +96,7 @@ export class LegalCopilotService {
     const filters: RetrievalFilters = {
       activeOnly: true,
       sourceIds: input.filters?.sourceIds,
+      pinnedChunkIds: input.filters?.pinnedChunkIds,
     };
     const retrievalStart = Date.now();
     let retrieval: RetrievalResult;
@@ -97,6 +114,7 @@ export class LegalCopilotService {
       throw new CopilotError("retrieval_failed", err instanceof Error ? err.message : "Retrieval fehlgeschlagen.", err);
     }
     const retrievalMs = Date.now() - retrievalStart;
+    progress({ stage: "retrieval_done", hits: retrieval.hits.length, ms: retrievalMs });
 
     // 2. Grounding
     const { grounded, droppedChunkIds, reasonings } = GroundingEngine.ground(retrieval);
@@ -104,6 +122,7 @@ export class LegalCopilotService {
     // 3. Wenn keine Grundlagen: sofort abgesicherte Nicht-Antwort
     if (grounded.length === 0) {
       const answer = AnswerFormatter.buildUnanswered(mode);
+      await awaitUserRecorded();
       await this.conversations.recordAnswer(session.sessionId, answer, []);
       const totalMs = Date.now() - started;
       copilotTelemetry.emit({
@@ -153,6 +172,7 @@ export class LegalCopilotService {
     const prompt = PromptBuilder.build({ mode, question, context, caseContext: input.caseContext ?? null });
 
     // 5. LLM (oder synthetische Antwort im Testmodus)
+    progress({ stage: "generating" });
     const llmStart = Date.now();
     const generated = input.forceMock
       ? {
@@ -196,6 +216,8 @@ export class LegalCopilotService {
       answered: Boolean(generated.raw?.answered),
     });
 
+    progress({ stage: "checking" });
+
     // 8. Antwort formatieren
     let answer = AnswerFormatter.format({ raw: generated.raw ?? {}, grounded, confidence, mode });
 
@@ -220,12 +242,24 @@ export class LegalCopilotService {
       answer = { ...answer, confidence, followUps: FollowUpGenerator.suggest(input, []) };
     }
 
-    // 11. Session-Verlauf schreiben
-    await this.conversations.recordAnswer(
-      session.sessionId,
-      answer,
-      grounded.map((g) => g.hit.citation.chunkId),
-    );
+    // 11. Session-Verlauf schreiben (Antwort erst nach der Frage) - parallel
+    // zur Workflow-Empfehlung, die nur noch rechnet (Vorlagen sind vorgeladen).
+    await awaitUserRecorded();
+    const [, workflows] = await Promise.all([
+      this.conversations.recordAnswer(
+        session.sessionId,
+        answer,
+        grounded.map((g) => g.hit.citation.chunkId),
+      ),
+      this.recommendWorkflows({
+        sessionId: session.sessionId,
+        question,
+        answer,
+        grounded,
+        filters: input.filters,
+        templates: await templatesPrefetch,
+      }),
+    ]);
 
     const totalMs = Date.now() - started;
     const stats = CopilotStatisticsBuilder.build({
@@ -257,13 +291,6 @@ export class LegalCopilotService {
 
     const templates = DocumentTemplateSuggester.suggest({ question, answer, grounded });
     const trust = TrustIndicatorBuilder.build({ answer, grounded, confidence });
-    const workflows = await this.recommendWorkflows({
-      sessionId: session.sessionId,
-      question,
-      answer,
-      grounded,
-      filters: input.filters,
-    });
 
     return {
       sessionId: session.sessionId,
@@ -302,11 +329,13 @@ export class LegalCopilotService {
     answer: import("./types").CopilotAnswer;
     grounded: import("./types").GroundedChunk[];
     filters?: import("./types").CopilotFilters;
+    /** Vorgeladene Vorlagen (parallel zum KI-Aufruf); null = selbst laden. */
+    templates?: Awaited<ReturnType<WorkflowTemplateRepositoryPort["listPublished"]>> | null;
   }): Promise<CopilotWorkflowRecommendation[]> {
     if (!this.workflowTemplateRepo) return [];
     if (!args.answer.answered) return [];
     try {
-      const templates = await this.workflowTemplateRepo.listPublished();
+      const templates = args.templates ?? (await this.workflowTemplateRepo.listPublished());
       const recs = WorkflowRecommender.recommend({
         question: args.question,
         answer: args.answer,

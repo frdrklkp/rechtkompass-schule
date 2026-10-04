@@ -16,6 +16,20 @@ const FREE_CITE_RE = /(§\s?\d+[a-z]?)(?:\s?Abs\.\s?\d+)?(?:\s?[A-ZÄÖÜ][A-ZÄ
 // Deutsche Gesetzeskürzel (grob), ohne dass sie mit einer bekannten Citation abgedeckt sind
 // "SGB IX" wird samt Buchnummer erfasst, damit SGB IX nicht SGB VIII mit belegt.
 const KNOWN_LAW_TOKEN_RE = /\b(SchulG|BASS|DSGVO|GG|SGB(?:\s[IVX]+\b)?|StGB|BGB|APO|GsVO|SoFVO|AO-GS|AO-SF)(?!\w)/g;
+// Normierte Fundstellen-Nummern ("§ 120", "art 6"), um Freitext gegen die
+// erlaubten Citations abzugleichen. Importierte Chunks tragen weder
+// citation.paragraph noch citation.law - ihre Nummer steht nur in der
+// Bezeichnung (displayPath, z. B. "... (Schulgesetz NRW - SchulG) § § 120")
+// und in metadata.sectionNumber ("§ 120").
+const SECTION_TOKEN_RE = /(§|art\.?)\s*(\d+[a-z]?)/gi;
+
+function sectionTokens(text: string): string[] {
+  const out: string[] = [];
+  for (const m of text.matchAll(SECTION_TOKEN_RE)) {
+    out.push(`${m[1].toLowerCase().startsWith("art") ? "art" : "§"} ${m[2].toLowerCase()}`);
+  }
+  return out;
+}
 
 export const HallucinationGuard = {
   check(answerText: string, grounded: GroundedChunk[]): HallucinationReport {
@@ -27,6 +41,14 @@ export const HallucinationGuard = {
         .map((s) => s.toLowerCase()),
     );
     const allowedDisplays = grounded.map((g) => g.hit.citation.display.toLowerCase());
+    const allowedSections = new Set<string>();
+    for (const g of grounded) {
+      const c = g.hit.citation;
+      if (c.paragraph) allowedSections.add(`§ ${c.paragraph.toString().replace(/^§\s*/, "").toLowerCase()}`);
+      if (c.article) allowedSections.add(`art ${c.article.toString().replace(/^art\.?\s*/i, "").toLowerCase()}`);
+      const sectionNumber = (g.hit.metadata as { sectionNumber?: unknown } | undefined)?.sectionNumber;
+      for (const tkn of sectionTokens(`${c.display} ${sectionNumber ?? ""}`)) allowedSections.add(tkn);
+    }
     const violations: string[] = [];
 
     // 1. Unbekannte [R#]
@@ -43,9 +65,17 @@ export const HallucinationGuard = {
       if (!hasFree) continue;
       const hasRef = /\[R\d+\]/.test(chunk);
       if (!hasRef) {
-        // Ist der Freitext exakt im display einer erlaubten Citation?
+        // Erlaubt, wenn die Bezeichnung einer Citation im Satz steht ODER jede
+        // genannte Nummer zu einer erlaubten Fundstelle gehört. Vorher musste die
+        // komplette Bezeichnung im Satz stehen - bei importierten Gesetzestiteln
+        // ("Schulgesetz für das Land Nordrhein-Westfalen (...) § § 120") nie der
+        // Fall, sodass korrekte Antworten mit "Schulgesetz NRW § 120" verworfen
+        // wurden (gemessen 04.10.2026). Fremde Gesetzeskürzel fängt Regel 3.
         const lower = chunk.toLowerCase();
-        const covered = allowedDisplays.some((d) => lower.includes(d));
+        const mentioned = sectionTokens(chunk);
+        const covered =
+          allowedDisplays.some((d) => lower.includes(d)) ||
+          (mentioned.length > 0 && mentioned.every((tkn) => allowedSections.has(tkn)));
         if (!covered) {
           violations.push(`Freitext-Fundstelle ohne [R#]: "${chunk.trim().slice(0, 120)}"`);
         }

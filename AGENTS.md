@@ -1,13 +1,18 @@
-<!-- LOVABLE:BEGIN -->
-> [!IMPORTANT]
-> This project is connected to [Lovable](https://lovable.dev). Avoid rewriting
-> published git history — force pushing, or rebasing/amending/squashing commits
-> that are already pushed — as it rewrites history on Lovable's side and the
-> user will likely lose their project history.
->
-> Commits you push to the connected branch sync back to Lovable and show up in
-> the editor, so keep the branch in a working state.
-<!-- LOVABLE:END -->
+## Deploy
+
+Das Projekt ist seit 24.08.2026 **nicht mehr mit Lovable verbunden**. Deploys
+laufen über **Cloudflare Workers Builds** (Worker `tanstack-start-ts`, Git-
+Verknüpfung zum GitHub-Repo): Jeder Push auf `main` startet in Cloudflare
+einen Build (`bun run build`) und ein `wrangler deploy`; andere Branches
+werden als Vorschau-Version hochgeladen. Es gibt keinen Deploy-Workflow in
+GitHub Actions. Geheimnisse (API-Schlüssel) liegen ausschließlich als
+Worker-Secrets in Cloudflare und werden mit `wrangler secret put` gepflegt -
+nicht im Build-Befehl, nicht in Build-Variablen (Fund 04.10.2026: der
+Deploy-Befehl schrieb nach jedem Build veraltete Schlüssel zurück).
+
+Keine veröffentlichte Git-Historie umschreiben (kein Force-Push, kein Rebase
+oder Squash bereits gepushter Commits); `main` muss immer baubar bleiben,
+weil jeder Push sofort live geht.
 
 ## Rechtsquellen-Datenqualität
 

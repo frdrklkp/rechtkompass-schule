@@ -127,14 +127,18 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const isAdmin = pathname.startsWith("/admin");
-  // Impressum und Datenschutzerklärung müssen ohne Anmeldung erreichbar sein
-  // (§ 5 DDG, Art. 13 DSGVO) - deshalb am PilotGate vorbei.
+  // Impressum und Datenschutzerklärung gehören eigentlich ohne Anmeldung
+  // erreichbar (§ 5 DDG, Art. 13 DSGVO). Betreiber-Entscheidung 04.10.2026:
+  // Solange die Betreiberangaben (src/lib/betreiber.ts) noch Platzhalter
+  // sind, bleiben beide Seiten hinter dem Pilot-Login. Zum Freischalten die
+  // Zeile unten wieder auf `isAdmin || isRechtsseite` setzen.
   const isRechtsseite = pathname === "/impressum" || pathname === "/datenschutz";
+  void isRechtsseite;
 
   return (
     <QueryClientProvider client={queryClient}>
       <div className="min-h-screen bg-background text-foreground">
-        {isAdmin || isRechtsseite ? (
+        {isAdmin ? (
           <>
             <Outlet />
             <BottomNav />

@@ -14,17 +14,26 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 async function fetchPilotApproved(): Promise<boolean> {
-  // is_pilot_approved() ist (wie has_role/current_app_role) noch nicht in
-  // supabase/types.ts enthalten - bewusster Cast, analog adminAuth.ts.
+  // is_pilot_approved() / claim_school_membership() sind (wie has_role) nicht
+  // in supabase/types.ts enthalten - bewusster Cast, analog adminAuth.ts.
   const client = supabase as unknown as {
-    rpc: (fn: string) => Promise<{ data: boolean | null; error: { message: string } | null }>;
+    rpc: (fn: string) => Promise<{ data: boolean | string | null; error: { message: string } | null }>;
   };
   const { data, error } = await client.rpc("is_pilot_approved");
   if (error) {
     console.warn("[PilotGate] is_pilot_approved fehlgeschlagen:", error.message);
     return false;
   }
-  return data === true;
+  if (data === true) return true;
+  // Mandantenkonzept Stufe 1 (05.10.2026): Wer noch kein Mitglied ist, aber
+  // eine offene Einladung seiner Schule hat, wird beim ersten Login Mitglied.
+  // Die Funktion ist idempotent; ohne Einladung antwortet sie "keine".
+  const claim = await client.rpc("claim_school_membership");
+  if (claim.error) {
+    console.warn("[PilotGate] claim_school_membership fehlgeschlagen:", claim.error.message);
+    return false;
+  }
+  return claim.data === "aktiv";
 }
 
 function GateShell({ children }: { children: ReactNode }) {

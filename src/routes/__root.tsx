@@ -14,6 +14,7 @@ import appCss from "../styles.css?url";
 import { BottomNav } from "../components/BottomNav";
 import { OnboardingModal } from "../components/OnboardingModal";
 import { PilotGate } from "../components/PilotGate";
+import { Toaster } from "../components/ui/sonner";
 
 function NotFoundComponent() {
   return (
@@ -137,6 +138,10 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
+      {/* Fund 05.10.2026: toast() aus "sonner" wurde an mehreren Stellen aufgerufen
+          (Umfrage, Dokumente), aber nirgends war der Toaster eingehängt - die
+          Meldungen blieben unsichtbar. Einmal hier für alle Seiten. */}
+      <Toaster position="top-center" richColors closeButton />
       <div className="min-h-screen bg-background text-foreground">
         {isAdmin ? (
           <>

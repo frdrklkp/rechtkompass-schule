@@ -23,6 +23,7 @@ import { Route as KollegeRouteImport } from './routes/kollege'
 import { Route as NavigatorRouteImport } from './routes/navigator'
 import { Route as PraesentationRouteImport } from './routes/praesentation'
 import { Route as RechtsgrundlagenRouteImport } from './routes/rechtsgrundlagen'
+import { Route as SchuleRouteImport } from './routes/schule'
 import { Route as UmfrageRouteImport } from './routes/umfrage'
 import { Route as VorgaengeRouteImport } from './routes/vorgaenge'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
@@ -48,6 +49,7 @@ import { Route as AdminQualitaetsmanagerRouteImport } from './routes/admin.quali
 import { Route as AdminQuellenwaechterRouteImport } from './routes/admin.quellenwaechter'
 import { Route as AdminRechtsgrundlagenRouteImport } from './routes/admin.rechtsgrundlagen'
 import { Route as AdminSchlagwoerterRouteImport } from './routes/admin.schlagwoerter'
+import { Route as AdminSchulenRouteImport } from './routes/admin.schulen'
 import { Route as AdminSuchindexRouteImport } from './routes/admin.suchindex'
 import { Route as AdminSuchtestRouteImport } from './routes/admin.suchtest'
 import { Route as AdminVerknuepfungenRouteImport } from './routes/admin.verknuepfungen'
@@ -85,6 +87,7 @@ import { Route as ApiLegalEmbeddingsStatusRouteImport } from './routes/api/legal
 import { Route as ApiLegalEmbeddingsValidateRouteImport } from './routes/api/legal-embeddings-validate'
 import { Route as ApiLegalRetrievalSearchRouteImport } from './routes/api/legal-retrieval-search'
 import { Route as ApiLegalSourceCrawlRouteImport } from './routes/api/legal-source-crawl'
+import { Route as ApiSchoolInviteRouteImport } from './routes/api/school-invite'
 import { Route as ApiSearchEmbeddingsQueryRouteImport } from './routes/api/search-embeddings-query'
 import { Route as ApiSearchEmbeddingsReindexRouteImport } from './routes/api/search-embeddings-reindex'
 import { Route as ApiSearchEmbeddingsStatusRouteImport } from './routes/api/search-embeddings-status'
@@ -214,6 +217,11 @@ const RechtsgrundlagenRoute = RechtsgrundlagenRouteImport.update({
   path: '/rechtsgrundlagen',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SchuleRoute = SchuleRouteImport.update({
+  id: '/schule',
+  path: '/schule',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const UmfrageRoute = UmfrageRouteImport.update({
   id: '/umfrage',
   path: '/umfrage',
@@ -339,6 +347,11 @@ const AdminRechtsgrundlagenRoute = AdminRechtsgrundlagenRouteImport.update({
 const AdminSchlagwoerterRoute = AdminSchlagwoerterRouteImport.update({
   id: '/schlagwoerter',
   path: '/schlagwoerter',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminSchulenRoute = AdminSchulenRouteImport.update({
+  id: '/schulen',
+  path: '/schulen',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminSuchindexRoute = AdminSuchindexRouteImport.update({
@@ -531,6 +544,11 @@ const ApiLegalRetrievalSearchRoute = ApiLegalRetrievalSearchRouteImport.update({
 const ApiLegalSourceCrawlRoute = ApiLegalSourceCrawlRouteImport.update({
   id: '/api/legal-source-crawl',
   path: '/api/legal-source-crawl',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiSchoolInviteRoute = ApiSchoolInviteRouteImport.update({
+  id: '/api/school-invite',
+  path: '/api/school-invite',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiSearchEmbeddingsQueryRoute =
@@ -874,6 +892,7 @@ export interface FileRoutesByFullPath {
   '/navigator': typeof NavigatorRoute
   '/praesentation': typeof PraesentationRoute
   '/rechtsgrundlagen': typeof RechtsgrundlagenRouteWithChildren
+  '/schule': typeof SchuleRoute
   '/umfrage': typeof UmfrageRoute
   '/vorgaenge': typeof VorgaengeRouteWithChildren
   '/admin/aenderungen': typeof AdminAenderungenRoute
@@ -898,6 +917,7 @@ export interface FileRoutesByFullPath {
   '/admin/quellenwaechter': typeof AdminQuellenwaechterRoute
   '/admin/rechtsgrundlagen': typeof AdminRechtsgrundlagenRouteWithChildren
   '/admin/schlagwoerter': typeof AdminSchlagwoerterRoute
+  '/admin/schulen': typeof AdminSchulenRoute
   '/admin/suchindex': typeof AdminSuchindexRoute
   '/admin/suchtest': typeof AdminSuchtestRoute
   '/admin/verknuepfungen': typeof AdminVerknuepfungenRoute
@@ -935,6 +955,7 @@ export interface FileRoutesByFullPath {
   '/api/legal-embeddings-validate': typeof ApiLegalEmbeddingsValidateRoute
   '/api/legal-retrieval-search': typeof ApiLegalRetrievalSearchRoute
   '/api/legal-source-crawl': typeof ApiLegalSourceCrawlRoute
+  '/api/school-invite': typeof ApiSchoolInviteRoute
   '/api/search-embeddings-query': typeof ApiSearchEmbeddingsQueryRoute
   '/api/search-embeddings-reindex': typeof ApiSearchEmbeddingsReindexRoute
   '/api/search-embeddings-status': typeof ApiSearchEmbeddingsStatusRoute
@@ -1009,6 +1030,7 @@ export interface FileRoutesByTo {
   '/navigator': typeof NavigatorRoute
   '/praesentation': typeof PraesentationRoute
   '/rechtsgrundlagen': typeof RechtsgrundlagenRouteWithChildren
+  '/schule': typeof SchuleRoute
   '/umfrage': typeof UmfrageRoute
   '/admin/aenderungen': typeof AdminAenderungenRoute
   '/admin/copilot': typeof AdminCopilotRoute
@@ -1029,6 +1051,7 @@ export interface FileRoutesByTo {
   '/admin/quellenwaechter': typeof AdminQuellenwaechterRoute
   '/admin/rechtsgrundlagen': typeof AdminRechtsgrundlagenRouteWithChildren
   '/admin/schlagwoerter': typeof AdminSchlagwoerterRoute
+  '/admin/schulen': typeof AdminSchulenRoute
   '/admin/suchindex': typeof AdminSuchindexRoute
   '/admin/suchtest': typeof AdminSuchtestRoute
   '/admin/verknuepfungen': typeof AdminVerknuepfungenRoute
@@ -1066,6 +1089,7 @@ export interface FileRoutesByTo {
   '/api/legal-embeddings-validate': typeof ApiLegalEmbeddingsValidateRoute
   '/api/legal-retrieval-search': typeof ApiLegalRetrievalSearchRoute
   '/api/legal-source-crawl': typeof ApiLegalSourceCrawlRoute
+  '/api/school-invite': typeof ApiSchoolInviteRoute
   '/api/search-embeddings-query': typeof ApiSearchEmbeddingsQueryRoute
   '/api/search-embeddings-reindex': typeof ApiSearchEmbeddingsReindexRoute
   '/api/search-embeddings-status': typeof ApiSearchEmbeddingsStatusRoute
@@ -1141,6 +1165,7 @@ export interface FileRoutesById {
   '/navigator': typeof NavigatorRoute
   '/praesentation': typeof PraesentationRoute
   '/rechtsgrundlagen': typeof RechtsgrundlagenRouteWithChildren
+  '/schule': typeof SchuleRoute
   '/umfrage': typeof UmfrageRoute
   '/vorgaenge': typeof VorgaengeRouteWithChildren
   '/admin/aenderungen': typeof AdminAenderungenRoute
@@ -1165,6 +1190,7 @@ export interface FileRoutesById {
   '/admin/quellenwaechter': typeof AdminQuellenwaechterRoute
   '/admin/rechtsgrundlagen': typeof AdminRechtsgrundlagenRouteWithChildren
   '/admin/schlagwoerter': typeof AdminSchlagwoerterRoute
+  '/admin/schulen': typeof AdminSchulenRoute
   '/admin/suchindex': typeof AdminSuchindexRoute
   '/admin/suchtest': typeof AdminSuchtestRoute
   '/admin/verknuepfungen': typeof AdminVerknuepfungenRoute
@@ -1202,6 +1228,7 @@ export interface FileRoutesById {
   '/api/legal-embeddings-validate': typeof ApiLegalEmbeddingsValidateRoute
   '/api/legal-retrieval-search': typeof ApiLegalRetrievalSearchRoute
   '/api/legal-source-crawl': typeof ApiLegalSourceCrawlRoute
+  '/api/school-invite': typeof ApiSchoolInviteRoute
   '/api/search-embeddings-query': typeof ApiSearchEmbeddingsQueryRoute
   '/api/search-embeddings-reindex': typeof ApiSearchEmbeddingsReindexRoute
   '/api/search-embeddings-status': typeof ApiSearchEmbeddingsStatusRoute
@@ -1279,6 +1306,7 @@ export interface FileRouteTypes {
     | '/navigator'
     | '/praesentation'
     | '/rechtsgrundlagen'
+    | '/schule'
     | '/umfrage'
     | '/vorgaenge'
     | '/admin/aenderungen'
@@ -1303,6 +1331,7 @@ export interface FileRouteTypes {
     | '/admin/quellenwaechter'
     | '/admin/rechtsgrundlagen'
     | '/admin/schlagwoerter'
+    | '/admin/schulen'
     | '/admin/suchindex'
     | '/admin/suchtest'
     | '/admin/verknuepfungen'
@@ -1340,6 +1369,7 @@ export interface FileRouteTypes {
     | '/api/legal-embeddings-validate'
     | '/api/legal-retrieval-search'
     | '/api/legal-source-crawl'
+    | '/api/school-invite'
     | '/api/search-embeddings-query'
     | '/api/search-embeddings-reindex'
     | '/api/search-embeddings-status'
@@ -1414,6 +1444,7 @@ export interface FileRouteTypes {
     | '/navigator'
     | '/praesentation'
     | '/rechtsgrundlagen'
+    | '/schule'
     | '/umfrage'
     | '/admin/aenderungen'
     | '/admin/copilot'
@@ -1434,6 +1465,7 @@ export interface FileRouteTypes {
     | '/admin/quellenwaechter'
     | '/admin/rechtsgrundlagen'
     | '/admin/schlagwoerter'
+    | '/admin/schulen'
     | '/admin/suchindex'
     | '/admin/suchtest'
     | '/admin/verknuepfungen'
@@ -1471,6 +1503,7 @@ export interface FileRouteTypes {
     | '/api/legal-embeddings-validate'
     | '/api/legal-retrieval-search'
     | '/api/legal-source-crawl'
+    | '/api/school-invite'
     | '/api/search-embeddings-query'
     | '/api/search-embeddings-reindex'
     | '/api/search-embeddings-status'
@@ -1545,6 +1578,7 @@ export interface FileRouteTypes {
     | '/navigator'
     | '/praesentation'
     | '/rechtsgrundlagen'
+    | '/schule'
     | '/umfrage'
     | '/vorgaenge'
     | '/admin/aenderungen'
@@ -1569,6 +1603,7 @@ export interface FileRouteTypes {
     | '/admin/quellenwaechter'
     | '/admin/rechtsgrundlagen'
     | '/admin/schlagwoerter'
+    | '/admin/schulen'
     | '/admin/suchindex'
     | '/admin/suchtest'
     | '/admin/verknuepfungen'
@@ -1606,6 +1641,7 @@ export interface FileRouteTypes {
     | '/api/legal-embeddings-validate'
     | '/api/legal-retrieval-search'
     | '/api/legal-source-crawl'
+    | '/api/school-invite'
     | '/api/search-embeddings-query'
     | '/api/search-embeddings-reindex'
     | '/api/search-embeddings-status'
@@ -1682,6 +1718,7 @@ export interface RootRouteChildren {
   NavigatorRoute: typeof NavigatorRoute
   PraesentationRoute: typeof PraesentationRoute
   RechtsgrundlagenRoute: typeof RechtsgrundlagenRouteWithChildren
+  SchuleRoute: typeof SchuleRoute
   UmfrageRoute: typeof UmfrageRoute
   VorgaengeRoute: typeof VorgaengeRouteWithChildren
   ApiAiAnalyzeCaseDescriptionRoute: typeof ApiAiAnalyzeCaseDescriptionRoute
@@ -1717,6 +1754,7 @@ export interface RootRouteChildren {
   ApiLegalEmbeddingsValidateRoute: typeof ApiLegalEmbeddingsValidateRoute
   ApiLegalRetrievalSearchRoute: typeof ApiLegalRetrievalSearchRoute
   ApiLegalSourceCrawlRoute: typeof ApiLegalSourceCrawlRoute
+  ApiSchoolInviteRoute: typeof ApiSchoolInviteRoute
   ApiSearchEmbeddingsQueryRoute: typeof ApiSearchEmbeddingsQueryRoute
   ApiSearchEmbeddingsReindexRoute: typeof ApiSearchEmbeddingsReindexRoute
   ApiSearchEmbeddingsStatusRoute: typeof ApiSearchEmbeddingsStatusRoute
@@ -1829,6 +1867,13 @@ declare module '@tanstack/react-router' {
       path: '/rechtsgrundlagen'
       fullPath: '/rechtsgrundlagen'
       preLoaderRoute: typeof RechtsgrundlagenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/schule': {
+      id: '/schule'
+      path: '/schule'
+      fullPath: '/schule'
+      preLoaderRoute: typeof SchuleRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/umfrage': {
@@ -2004,6 +2049,13 @@ declare module '@tanstack/react-router' {
       path: '/schlagwoerter'
       fullPath: '/admin/schlagwoerter'
       preLoaderRoute: typeof AdminSchlagwoerterRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/schulen': {
+      id: '/admin/schulen'
+      path: '/schulen'
+      fullPath: '/admin/schulen'
+      preLoaderRoute: typeof AdminSchulenRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/suchindex': {
@@ -2263,6 +2315,13 @@ declare module '@tanstack/react-router' {
       path: '/api/legal-source-crawl'
       fullPath: '/api/legal-source-crawl'
       preLoaderRoute: typeof ApiLegalSourceCrawlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/school-invite': {
+      id: '/api/school-invite'
+      path: '/api/school-invite'
+      fullPath: '/api/school-invite'
+      preLoaderRoute: typeof ApiSchoolInviteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/search-embeddings-query': {
@@ -2813,6 +2872,7 @@ interface AdminRouteChildren {
   AdminQuellenwaechterRoute: typeof AdminQuellenwaechterRoute
   AdminRechtsgrundlagenRoute: typeof AdminRechtsgrundlagenRouteWithChildren
   AdminSchlagwoerterRoute: typeof AdminSchlagwoerterRoute
+  AdminSchulenRoute: typeof AdminSchulenRoute
   AdminSuchindexRoute: typeof AdminSuchindexRoute
   AdminSuchtestRoute: typeof AdminSuchtestRoute
   AdminVerknuepfungenRoute: typeof AdminVerknuepfungenRoute
@@ -2852,6 +2912,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminQuellenwaechterRoute: AdminQuellenwaechterRoute,
   AdminRechtsgrundlagenRoute: AdminRechtsgrundlagenRouteWithChildren,
   AdminSchlagwoerterRoute: AdminSchlagwoerterRoute,
+  AdminSchulenRoute: AdminSchulenRoute,
   AdminSuchindexRoute: AdminSuchindexRoute,
   AdminSuchtestRoute: AdminSuchtestRoute,
   AdminVerknuepfungenRoute: AdminVerknuepfungenRoute,
@@ -3015,6 +3076,7 @@ const rootRouteChildren: RootRouteChildren = {
   NavigatorRoute: NavigatorRoute,
   PraesentationRoute: PraesentationRoute,
   RechtsgrundlagenRoute: RechtsgrundlagenRouteWithChildren,
+  SchuleRoute: SchuleRoute,
   UmfrageRoute: UmfrageRoute,
   VorgaengeRoute: VorgaengeRouteWithChildren,
   ApiAiAnalyzeCaseDescriptionRoute: ApiAiAnalyzeCaseDescriptionRoute,
@@ -3050,6 +3112,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiLegalEmbeddingsValidateRoute: ApiLegalEmbeddingsValidateRoute,
   ApiLegalRetrievalSearchRoute: ApiLegalRetrievalSearchRoute,
   ApiLegalSourceCrawlRoute: ApiLegalSourceCrawlRoute,
+  ApiSchoolInviteRoute: ApiSchoolInviteRoute,
   ApiSearchEmbeddingsQueryRoute: ApiSearchEmbeddingsQueryRoute,
   ApiSearchEmbeddingsReindexRoute: ApiSearchEmbeddingsReindexRoute,
   ApiSearchEmbeddingsStatusRoute: ApiSearchEmbeddingsStatusRoute,

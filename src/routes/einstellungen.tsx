@@ -1,7 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Moon, Sun, Type, Shield, FileText, Info } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { Moon, Sun, Type, Shield, FileText, Info, Users } from "lucide-react";
 import { PageShell } from "../components/PageShell";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/einstellungen")({
   head: () => ({
@@ -18,6 +20,16 @@ const APP_VERSION = "0.1.0 – MVP";
 function SettingsPage() {
   const [dark, setDark] = useState(false);
   const [fontScale, setFontScale] = useState(1);
+  // Mandantenkonzept Stufe 3: Schul-Admins sehen den Einstieg in die Schulverwaltung.
+  const schoolAdmin = useQuery({
+    queryKey: ["school", "is-admin"],
+    queryFn: async () => {
+      const { data, error } = await (supabase as unknown as { rpc: (fn: string) => Promise<{ data: unknown; error: { message: string } | null }> }).rpc("is_school_admin");
+      if (error) return false;
+      return data === true;
+    },
+    staleTime: 60_000,
+  });
 
   useEffect(() => {
     const savedDark = localStorage.getItem("rk-dark") === "1";
@@ -86,6 +98,12 @@ function SettingsPage() {
           />
         </div>
       </section>
+
+      {schoolAdmin.data === true && (
+        <Link to="/schule" className="mt-4 block overflow-hidden rounded-2xl border border-border bg-card transition-colors hover:bg-muted/50">
+          <InfoRow icon={Users} title="Schulverwaltung" text="Mitglieder Ihrer Schule einladen und verwalten – ohne Einblick in Inhalte." />
+        </Link>
+      )}
 
       <section className="mt-4 divide-y divide-border overflow-hidden rounded-2xl border border-border bg-card">
         <Link to="/datenschutz" className="block transition-colors hover:bg-muted/50">

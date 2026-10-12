@@ -135,6 +135,8 @@ function buildExtractor(abbreviations: string[], spelledOut: Record<string, stri
    */
   const paragraphReversedRe = new RegExp(`(${namePattern})${NAME_SYMBOL_GAP}${CONNECTOR_SKIP}§§?\\s*(\\d+[a-z]?)`, "g");
 
+  const followedByLawRe = new RegExp(`^\\s*${ABS_SKIP}(?:des\\s+|der\\s+)?(?:${namePattern})`);
+
   return (text) => {
     if (!text) return [];
     const results: ExtractedCitation[] = [];
@@ -150,9 +152,13 @@ function buildExtractor(abbreviations: string[], spelledOut: Record<string, stri
     };
 
     for (const m of text.matchAll(paragraphRe)) push(m[0], m[1], m[2], "paragraph");
-    for (const m of text.matchAll(paragraphReversedRe)) push(m[0], m[2], m[1], "paragraph");
+    // Fund 12.10.2026: "§ 52 DSG NRW (Art. 28 DSGVO)" - die umgekehrte
+    // Reihenfolge las daraus "Art. 28 DSG NRW". Steht direkt hinter der
+    // Nummer ein eigener Gesetzesname, gehört sie zu diesem (Vorwärts-Muster).
+    const ownLawFollows = (m: RegExpMatchArray) => followedByLawRe.test(text.slice((m.index ?? 0) + m[0].length));
+    for (const m of text.matchAll(paragraphReversedRe)) if (!ownLawFollows(m)) push(m[0], m[2], m[1], "paragraph");
     for (const m of text.matchAll(articleRe)) push(m[0], m[1], m[2], "article");
-    for (const m of text.matchAll(articleReversedRe)) push(m[0], m[2], m[1], "article");
+    for (const m of text.matchAll(articleReversedRe)) if (!ownLawFollows(m)) push(m[0], m[2], m[1], "article");
 
     return results;
   };

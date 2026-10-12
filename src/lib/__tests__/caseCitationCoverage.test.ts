@@ -18,6 +18,11 @@ test("Abdeckungs-Extraktor erkennt zusätzliche Gesetze, die Fallseiten-Variante
   assert.deepEqual(keys(extractLegalCitations(text)), ["SGB VIII 8a"]);
 });
 
+test("umgekehrte Reihenfolge ordnet keine Nummer zu, hinter der ein eigenes Gesetz steht", () => {
+  assert.deepEqual(keys(extractLegalCitationsForCoverage("Vertrag nach § 52 DSG NRW (Art. 28 DSGVO)")), ["DSG NRW 52", "DSGVO 28"]);
+  assert.deepEqual(keys(extractLegalCitations("Schulgesetz NRW (§ 43) regelt")), ["SchulG NRW 43"]);
+});
+
 test("sectionNumberOf liest nur das letzte Referenz-Segment", () => {
   assert.deepEqual(sectionNumberOf("Titel 27.§ 839"), { kind: "paragraph", number: "839" });
   assert.deepEqual(sectionNumberOf("Kapitel I.Art 2"), { kind: "article", number: "2" });

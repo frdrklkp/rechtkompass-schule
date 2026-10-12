@@ -89,7 +89,8 @@ const TARGETS: Array<{ url: string; label: string; sourceId: string; parser: Leg
     bund: true,
     // Geschäftsfähigkeit Minderjähriger; Deliktsrecht inkl. Aufsichtspflicht
     // und Amtshaftung; elterliche Sorge und Vertretung; Kindeswohlgefährdung.
-    sections: ["104", "106", "107", "110", "823", "828", "831", "832", "839", "1626", "1629", "1631", "1666", "1687"],
+    // Runde 3 (12.10.2026, Zitat-Abgleich): § 1684 Umgang - in Sorgerechtsfällen zitiert.
+    sections: ["104", "106", "107", "110", "823", "828", "831", "832", "839", "1626", "1629", "1631", "1666", "1684", "1687"],
   },
   {
     url: "https://www.gesetze-im-internet.de/stgb/BJNR001270871.html",
@@ -101,7 +102,12 @@ const TARGETS: Array<{ url: string; label: string; sourceId: string; parser: Leg
     // Hausfriedensbruch; Beleidigungsdelikte; Wort-/Bildaufnahmen;
     // Körperverletzung; Nötigung/Bedrohung; Sachbeschädigung; unterlassene
     // Hilfeleistung - die in Mobbing-/Gewalt-/Film-Fällen zitierten Normen.
-    sections: ["123", "177", "184i", "185", "186", "187", "201", "201a", "223", "229", "240", "241", "303", "32", "34", "138", "323c", "331", "332"],
+    // Runde 3 (12.10.2026, Zitat-Abgleich über den Fallbestand): in Fällen
+    // korrekt zitiert, aber nicht importiert - Volksverhetzung, Pornografie-
+    // Verbreitung, Schweigepflicht/Amtsträger, fahrlässige Tötung,
+    // Misshandlung Schutzbefohlener, schwere KV, Nachstellung, Erpressung,
+    // Urkundenfälschung, Gebrauch unrichtiger Gesundheitszeugnisse (Atteste).
+    sections: ["123", "130", "177", "184", "184i", "185", "186", "187", "201", "201a", "203", "222", "223", "225", "226", "229", "238", "240", "241", "253", "267", "279", "303", "32", "34", "138", "323c", "331", "332"],
   },
   {
     url: "https://www.gesetze-im-internet.de/sgb_7/BJNR125410996.html",
@@ -112,7 +118,8 @@ const TARGETS: Array<{ url: string; label: string; sourceId: string; parser: Leg
     bund: true,
     // Schülerunfallversicherung (§ 2 Abs. 1 Nr. 8b), Arbeitsunfall-Begriff,
     // Haftungsbeschränkung - beantwortet die "Wer haftet/zahlt?"-Fälle.
-    sections: ["2", "8", "104", "105", "106", "193"],
+    // Runde 3 (12.10.2026): § 22 Sicherheitsbeauftragte (Schulunfall-Fälle).
+    sections: ["2", "8", "22", "104", "105", "106", "193"],
   },
   {
     url: "https://www.gesetze-im-internet.de/juschg/BJNR273000002.html",

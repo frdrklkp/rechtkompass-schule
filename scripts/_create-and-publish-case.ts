@@ -15,6 +15,10 @@
  *   4. HARTE PRÜFUNG: mindestens eine Rechtsgrundlage muss verknüpft sein -
  *      sonst ein zweiter Versuch, danach klarer Abbruch mit Hinweis statt
  *      stillem Weiterlaufen oder Erfinden einer Norm
+ *   4.2 ZITAT-ABGLEICH: im Text zitierte Normen gegen die verknüpften
+ *      abgleichen, eindeutig im Bestand vorhandene nachverknüpfen, nicht
+ *      vorhandene als Rechts-Review-Hinweis melden (caseCitationCoverage.ts);
+ *      ein zweiter Durchlauf nach Schritt 6, weil die Optimierung Text ändert
  *   5. Entscheidungsbaum (/api/ai-draft-decision-tree, Zwei-Aufruf-Split +
  *      interne Validierungs-Retries bereits eingebaut)
  *   6. Iterative Qualitätsoptimierung bis Score 100 oder keine behebbaren
@@ -92,6 +96,83 @@ async function main() {
   const { parseCuratedTree, validateCuratedTree } = await import("../src/lib/decisionTree");
   const { EditorialWorkflowService } = await import("../src/services/editorial/EditorialWorkflowService");
   const { supabase } = await import("../src/integrations/supabase/client");
+  const { extractCaseCitations, citationKey, lawSourceKey, planCitationCoverage, sentenceStart, VALIDATED_FIELDS } = await import("../src/lib/caseCitationCoverage");
+
+  // Zitat-Abgleich (Fund 12.10.2026): zweimal hat die Pipeline Normen zitiert,
+  // die im Bestand liegen, aber nicht verknüpft wurden (§ 241 StGB, § 10
+  // JArbSchG) - die Claim-Validierung kannte den Wortlaut nicht -> rot.
+  const flaggedCitations = new Set<string>();
+  const citationReport = { linked: [] as string[], ambiguous: [] as string[], sectionMissing: [] as string[], lawMissing: [] as string[] };
+  async function syncCitedNorms(phase: "vor-validierung" | "nach-optimierung"): Promise<number> {
+    const { data: rows } = await supabase.from("practice_cases").select("*").eq("id", caseId).limit(1);
+    const row = (rows ?? [])[0] as Record<string, unknown>;
+    const citations = extractCaseCitations(row, { includeDecisionTree: phase === "nach-optimierung" });
+    // Nur Zitate aus Feldern, die die Claim-Validierung tatsächlich prüft,
+    // gelten nach dem Verknüpfen als abgesichert (FAQ/Baum/Sofortmaßnahmen nicht).
+    const validatedKeys = new Set(extractCaseCitations(row, { fields: VALIDATED_FIELDS }).map(citationKey));
+    const linked = new Set(((await listCaseLegalLinks(caseId)) as any[]).map((l) => l.legal_section_id as string));
+
+    const sourceIdByLaw = new Map<string, string | null>();
+    const sectionsByLaw = new Map<string, any[] | null>();
+    for (const c of citations) {
+      const key = lawSourceKey(c.lawAbbrev);
+      if (!key) continue;
+      if (!sourceIdByLaw.has(c.lawAbbrev)) {
+        let q = (supabase.from("legal_sources") as any).select("id").eq("status", "active");
+        q = "title" in key ? q.eq("title", key.title) : q.eq("short_name", key.shortName);
+        const { data: srcs } = await q;
+        // Nur eindeutig: genau eine aktive Quelle, sonst nicht raten.
+        sourceIdByLaw.set(c.lawAbbrev, (srcs ?? []).length === 1 ? srcs[0].id : null);
+      }
+      const sourceId = sourceIdByLaw.get(c.lawAbbrev);
+      if (!sourceId) { sectionsByLaw.set(c.lawAbbrev, null); continue; }
+      const forms = c.kind === "paragraph" ? [`§ ${c.paragraph}`] : [`Art ${c.paragraph}`, `Art. ${c.paragraph}`, `Artikel ${c.paragraph}`];
+      const filter = forms.flatMap((f) => [`reference.eq."${f}"`, `reference.like."%.${f}"`]).join(",");
+      const { data: secs } = await (supabase.from("legal_sections") as any)
+        .select("id, reference, section_number, title, content").eq("source_id", sourceId).or(filter);
+      sectionsByLaw.set(c.lawAbbrev, [...(sectionsByLaw.get(c.lawAbbrev) ?? []), ...(secs ?? [])]);
+    }
+
+    const plan = planCitationCoverage({ citations, sectionsByLaw, linkedSectionIds: linked });
+    if (plan.toLink.length) {
+      const { error } = await (supabase.from("case_legal_links") as any).insert(plan.toLink.map((t) => ({
+        case_id: caseId, legal_section_id: t.section.id, relevance: "high",
+        explanation: `Im Falltext zitiert: ${t.citation.raw}`,
+        content_summary: sentenceStart((t.section as any).content), content_summary_kind: "wortlaut",
+      })));
+      if (error) throw new Error(`Zitat-Abgleich: Verknüpfen fehlgeschlagen: ${error.message}`);
+    }
+    for (const t of plan.toLink) {
+      citationReport.linked.push(t.citation.raw);
+      console.log(`  + nachverknüpft: ${t.citation.raw} -> ${t.section.reference} ${t.section.title ?? ""}`);
+      if (phase === "nach-optimierung") {
+        await createLegalReviewFlag(caseId, `[Zitat-Abgleich] "${t.citation.raw}" erst nach der Qualitätsoptimierung zitiert - verknüpft, aber nicht claim-validiert. Aussage gegen den Wortlaut (${t.section.reference} ${t.section.title ?? ""}) prüfen.`);
+      } else if (!validatedKeys.has(citationKey(t.citation))) {
+        await createLegalReviewFlag(caseId, `[Zitat-Abgleich] "${t.citation.raw}" steht nur in FAQ/Sofortmaßnahmen/Zuständigkeiten, die nicht claim-validiert werden - verknüpft; Aussage gegen den Wortlaut (${t.section.reference} ${t.section.title ?? ""}) prüfen.`);
+      }
+    }
+    for (const a of plan.ambiguous) {
+      if (citationReport.ambiguous.includes(a.citation.raw)) continue;
+      citationReport.ambiguous.push(a.citation.raw);
+      console.log(`  ? mehrdeutig, nicht verknüpft: ${a.citation.raw} (${a.candidates.length} Abschnitte: ${a.candidates.map((x) => x.title ?? "?").join(" | ")})`);
+    }
+    for (const c of plan.sectionMissing) {
+      if (flaggedCitations.has(c.raw)) continue;
+      flaggedCitations.add(c.raw);
+      citationReport.sectionMissing.push(c.raw);
+      console.log(`  ! nicht im Bestand: ${c.raw}`);
+      await createLegalReviewFlag(caseId, `[Zitat-Abgleich] "${c.raw}" wird zitiert, die Norm liegt im Bestand aber nicht vor - erfunden, falsch nummeriert oder nicht importiert. Bitte prüfen.`);
+    }
+    for (const c of plan.lawMissing) {
+      if (citationReport.lawMissing.includes(c.raw)) continue;
+      citationReport.lawMissing.push(c.raw);
+      console.log(`  - Gesetz nicht im Bestand (nur Hinweis): ${c.raw}`);
+    }
+    if (!plan.toLink.length && !plan.ambiguous.length && !plan.sectionMissing.length && !plan.lawMissing.length) {
+      console.log(`  Alle ${plan.covered.length} zitierten Normen sind verknüpft.`);
+    }
+    return plan.toLink.length;
+  }
 
   // ---- 1) Entwurf ----
   console.log("=== 1/9: KI-Entwurf ===");
@@ -185,6 +266,10 @@ async function main() {
     console.log(`Fall-ID: ${caseId}`);
     process.exit(1);
   }
+  // ---- 4.2) Zitat-Abgleich vor der Claim-Validierung ----
+  console.log("=== 4.2/9: Zitat-Abgleich (zitierte vs. verknüpfte Normen) ===");
+  if (await syncCitedNorms("vor-validierung")) links = await listCaseLegalLinks(caseId);
+  console.log();
   console.log(`${links.length} Rechtsgrundlage(n) verknüpft:`);
   // listCaseLegalLinks()'s verschachtelter legal_sections-Join liefert derzeit
   // null (separater, hier nicht behobener Fund: mehrdeutige FK-Beziehung durch
@@ -408,6 +493,14 @@ async function main() {
   }
   console.log();
 
+  // ---- 6.5) Zitat-Abgleich nach der Optimierung ----
+  // Die Optimierung und der Entscheidungsbaum können neue Normen zitieren;
+  // die sind dann nicht mehr claim-validiert -> verknüpfen UND als Hinweis
+  // melden (blockiert die automatische Veröffentlichung).
+  console.log("=== 6.5/9: Zitat-Abgleich nach Optimierung (inkl. Entscheidungsbaum) ===");
+  if (await syncCitedNorms("nach-optimierung")) links = await listCaseLegalLinks(caseId);
+  console.log();
+
   // ---- 7) Baum-Freigabe ----
   console.log("=== 7/9: Entscheidungsbaum freigeben ===");
   const { data: treeRowFresh } = await supabase.from("practice_cases").select("decision_tree").eq("id", caseId).limit(1);
@@ -486,6 +579,10 @@ async function main() {
   console.log(`Rechtsgrundlagen: ${links.length}`);
   console.log(`Entscheidungsbaum: ${currentTreeOk ? "vollständig, freigegeben" : "unvollständig"}`);
   console.log(`Legal Export Quality Gate: ${qualityColor.toUpperCase()}`);
+  console.log(`Zitat-Abgleich: ${citationReport.linked.length} nachverknüpft, ${citationReport.sectionMissing.length} nicht im Bestand (Hinweis gesetzt), ${citationReport.ambiguous.length} mehrdeutig, ${citationReport.lawMissing.length} Gesetz nicht importiert`);
+  for (const r of citationReport.sectionMissing) console.log(`  ! nicht im Bestand: ${r}`);
+  for (const r of citationReport.ambiguous) console.log(`  ? mehrdeutig (manuell verknüpfen): ${r}`);
+  for (const r of citationReport.lawMissing) console.log(`  - Gesetz nicht importiert: ${r}`);
   console.log(`Status: ${published ? "veröffentlicht (internal)" : "genehmigt, NICHT veröffentlicht (offene Rechts-Review-Hinweise oder Quality Gate ROT)"}`);
   if (openQuestions.length > 0) {
     console.log(`Offene Fragen aus dem Entwurf: ${openQuestions.length}`);

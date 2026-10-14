@@ -193,6 +193,34 @@ function coerceJsonStrings(value: unknown, schema: Record<string, unknown>): voi
   }
 }
 
+/**
+ * Fund 14.10.2026 (Rot-Sanierung, 3 von ~55 Läufen): /api/ai-revise-legal-case
+ * scheiterte mit "root: missing required" für ALLE Pflichtfelder, obwohl
+ * kein Token-Abbruch vorlag (der würde im Provider als AIError gemeldet).
+ * Typische Ursache: Das Modell legt die vollständige Antwort unter einen
+ * einzigen Hüllschlüssel (z. B. {"legal_case_revision": {...}}) oder als
+ * JSON-String in einen solchen. Verlustfreie Reparatur: Fehlen der Wurzel
+ * alle Pflichtfelder und enthält genau EIN Wert ein Objekt mit mindestens
+ * der Hälfte der Pflichtfelder, wird dieses Objekt zur Wurzel.
+ */
+export function unwrapSingleWrapper(value: unknown, schema: Record<string, unknown>): unknown {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return value;
+  const required = (schema.required as string[] | undefined) ?? [];
+  if (required.length === 0) return value;
+  const obj = value as Record<string, unknown>;
+  if (required.some((k) => k in obj)) return value;
+  const candidates = Object.values(obj)
+    .map((v) => {
+      if (typeof v === "string" && v.trim().startsWith("{")) {
+        try { return JSON.parse(v); } catch { return undefined; }
+      }
+      return v;
+    })
+    .filter((v): v is Record<string, unknown> => !!v && typeof v === "object" && !Array.isArray(v))
+    .filter((v) => required.filter((k) => k in v).length >= Math.ceil(required.length / 2));
+  return candidates.length === 1 ? candidates[0] : value;
+}
+
 export class CompletionValidationError extends Error {
   errors: string[];
   constructor(errors: string[]) {
@@ -216,12 +244,16 @@ export async function completeWithValidation<T>(
 ): Promise<T> {
   return withRetry(
     async () => {
-      const result = await call();
+      const result = unwrapSingleWrapper(await call(), schema) as T;
       coerceJsonStrings(result, schema);
       coerceStringArrays(result, schema);
       coerceObjectArrayItems(result, schema);
       const check = validateCompletionOutput(result, schema);
-      if (!check.ok) throw new CompletionValidationError(check.errors);
+      if (!check.ok) {
+        // Diagnose: welche Felder tatsächlich kamen (ohne Inhalte).
+        const keys = result && typeof result === "object" && !Array.isArray(result) ? Object.keys(result as object) : [typeof result];
+        throw new CompletionValidationError([...check.errors, `erhaltene Felder: [${keys.join(", ")}]`]);
+      }
       return result;
     },
     { maxAttempts, isRetryable: () => true, initialDelayMs: 200 },

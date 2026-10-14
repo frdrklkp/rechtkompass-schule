@@ -205,6 +205,24 @@ export const Route = createFileRoute("/api/ai-revise-legal-case")({
                 const rest = followUp.json as Record<string, unknown> | undefined;
                 if (rest && typeof rest === "object") for (const k of missing) if (k in rest) json[k] = rest[k];
               }
+              // Fund 14.10.2026: vereinzelt kamen die Änderungsfelder als bloßer
+              // Text statt als {changed, text|items}. Der Text IST dann die
+              // Neufassung - verlustfrei in die erwartete Form bringen.
+              if (json) {
+                for (const key of ["short_answer", "recommendation", "immediate_actions", "practice_tip"]) {
+                  if (typeof json[key] === "string") json[key] = { changed: true, text: json[key] };
+                }
+                for (const key of ["checklist", "common_mistakes", "documentation"]) {
+                  const v = json[key];
+                  if (Array.isArray(v)) json[key] = { changed: true, items: v };
+                  else if (typeof v === "string") {
+                    let items: unknown = undefined;
+                    if (v.trim().startsWith("[")) { try { items = JSON.parse(v); } catch { /* unten zeilenweise */ } }
+                    if (!Array.isArray(items)) items = v.split(/\r?\n/).map((x) => x.replace(/^\s*[-*•]\s*/, "").trim()).filter(Boolean);
+                    json[key] = { changed: true, items };
+                  }
+                }
+              }
               const LEAK = /<\/?(parameter|invoke|function_calls?|antml:|tool_use)\b/i;
               for (const key of ["revision_notes", "unresolved"]) {
                 const list = json?.[key];

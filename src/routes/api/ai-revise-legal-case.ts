@@ -39,6 +39,9 @@ type RequestBody = {
   practice_tip?: string;
   common_mistakes?: string[];
   documentation?: string[];
+  faq?: Array<{ q: string; a: string }>;
+  /** Von der Redaktion entschiedene Auslegung der zentralen Rechtsfrage (Entscheidungsvorlage 14.10.2026). */
+  editorial_line?: string;
   sources?: SourceRef[];
   findings?: {
     reasoning?: string;
@@ -73,6 +76,8 @@ export const Route = createFileRoute("/api/ai-revise-legal-case")({
           "revision_notes: je geänderte Stelle eine knappe Zeile 'Feld: was geändert und warum (verankert/abgestuft/gestrichen)'.",
           "unresolved: Fragen, die auch mit den übergebenen Quellen nicht klärbar sind (bleiben offene Redaktionsfragen) - NICHT im Fließtext verstecken.",
           "KEINE Markdown-Formatierung (keine **, __, #, Backticks) - reiner Fließtext bzw. '-'-Aufzählungen.",
+          "REDAKTIONELLE LINIE (nur wenn redaktionelle_linie nicht leer ist): Die Redaktion hat entschieden, welche Auslegung RechtKompass zur zentralen Rechtsfrage vertritt. Setze diese Linie in ALLEN Feldern einschließlich faq konsequent um, statt die Kernfrage offen zu lassen; widerspricht der Bestandstext der Linie, gilt die Linie. Insoweit ist das Anreicherungsverbot aufgehoben - aber nur für Aussagen, die die Linie selbst vorgibt. Diese Aussagen gehören in 'einordnung' und in die Empfehlungsfelder; 'vorgegeben' bleibt reiner Quellenwortlaut. Normzitate aus der Linie nur verwenden, wenn die Norm unter rechtsgrundlagen übergeben ist, sonst ohne Fundstelle. Was die Linie als Auslegung oder 'Vorschlag, prüfen' kennzeichnet, formulierst du als Auslegung ('nach Auffassung der Redaktion', 'naheliegend', 'in der Regel'), nicht als Rechtspflicht, und nicht mit '[Rechtlich erforderlich]'. short_answer beginnt mit der Antwort der Linie, nicht mit 'Die Rechtslage ist offen'; eine Unsicherheit steht höchstens in einem kurzen Schlusssatz (z. B. 'Eine ausdrückliche Regelung gibt es nicht; RechtKompass vertritt diese Auslegung.'). Die Formel 'nach Auffassung der Redaktion' höchstens einmal je Feld. Über die Linie und die Quellen hinaus KEINE neuen Rechtsbehauptungen, auch nicht in faq - bestehende FAQ-Antworten mit solchen Behauptungen streichen oder auf Linie/Quelle zurückführen. Im Linienmodus gilt die Regel 'unbeanstandete Felder unverändert lassen' NICHT: Jedes Feld, das die Kernfrage als offen oder ungeklärt darstellt oder der Linie widerspricht, ist neu zu fassen.",
+          "faq: Liste von {q, a}. Nur mit changed: true und vollständiger neuer Liste liefern, wenn Antworten der Linie oder den Quellen widersprechen oder unbelegte Pflichten behaupten; sonst {\"changed\": false}.",
         ].join(" ");
 
         const user = {
@@ -88,7 +93,9 @@ export const Route = createFileRoute("/api/ai-revise-legal-case")({
             practice_tip: body.practice_tip ?? "",
             common_mistakes: body.common_mistakes ?? [],
             documentation: body.documentation ?? [],
+            faq: body.faq ?? [],
           },
+          ...(body.editorial_line?.trim() ? { redaktionelle_linie: body.editorial_line.trim() } : {}),
           rechtsgrundlagen: (body.sources ?? []).map((s) => ({
             id: s.id,
             quelle: s.source_name ?? "",
@@ -135,6 +142,16 @@ export const Route = createFileRoute("/api/ai-revise-legal-case")({
             checklist: changedArray,
             common_mistakes: changedArray,
             documentation: changedArray,
+            // faq optional: fehlt das Feld, bleibt die FAQ unverändert
+            faq: {
+              type: "object",
+              additionalProperties: false,
+              properties: {
+                changed: { type: "boolean" },
+                items: { type: "array", items: { type: "object", additionalProperties: false, properties: { q: { type: "string" }, a: { type: "string" } }, required: ["q", "a"] } },
+              },
+              required: ["changed"],
+            },
             revision_notes: { type: "array", items: { type: "string" } },
             unresolved: { type: "array", items: { type: "string" } },
           },
@@ -149,6 +166,11 @@ export const Route = createFileRoute("/api/ai-revise-legal-case")({
           ],
         };
 
+        // Linienmodus (14.10.2026): Haiku setzte die Redaktionslinie im Test nur
+        // halbherzig um (Kurzantwort blieb "Rechtslage offen", erfundene FAQ-
+        // Behauptungen blieben stehen) - dafür Sonnet mit längerem Timeout.
+        const lineMode = !!body.editorial_line?.trim();
+        const reviseModel = lineMode ? "anthropic/claude-sonnet-5" : "anthropic/claude-haiku-4-5";
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         let parsed: any;
         try {
@@ -157,7 +179,8 @@ export const Route = createFileRoute("/api/ai-revise-legal-case")({
             async () => {
               const result = await provider.complete({
                 taskId: "ai-revise-legal-case",
-                model: "anthropic/claude-haiku-4-5",
+                model: reviseModel,
+                ...(lineMode ? { signal: AbortSignal.timeout(480_000) } : {}),
                 messages: [
                   { role: "system", content: system },
                   { role: "user", content: JSON.stringify(user) },
@@ -192,7 +215,8 @@ export const Route = createFileRoute("/api/ai-revise-legal-case")({
                 };
                 const followUp = await provider.complete({
                   taskId: "ai-revise-legal-case",
-                  model: "anthropic/claude-haiku-4-5",
+                  model: reviseModel,
+                ...(lineMode ? { signal: AbortSignal.timeout(480_000) } : {}),
                   messages: [
                     { role: "system", content: system },
                     { role: "user", content: JSON.stringify(user) },

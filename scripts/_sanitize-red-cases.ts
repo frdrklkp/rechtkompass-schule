@@ -9,7 +9,10 @@
  * ausführen) legt für weiterhin Offenes frische Flags an und vergibt den
  * neuen Status. Diese Trennung hält die Abnahme unabhängig von der Sanierung.
  *
- * Aufruf: bun run scripts/_sanitize-red-cases.ts [--limit N] [--only-ids id1,id2,...] [--dry-run]
+ * Redaktionslinien (14.10.2026): --lines-file datei.json ({Fall-ID oder 8-stelliges Präfix: Linie})
+ * gibt je Fall die von der Redaktion entschiedene Auslegung der Kernfrage mit.
+ *
+ * Aufruf: bun run scripts/_sanitize-red-cases.ts [--limit N] [--only-ids id1,id2,...] [--lines-file f.json] [--dry-run]
  */
 (globalThis as any).window = globalThis;
 const _store = new Map<string, string>();
@@ -35,6 +38,7 @@ const SUPABASE_URL = process.env.VITE_SUPABASE_URL!;
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
 const supabaseAdmin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, { auth: { persistSession: false } });
+let editorialLines: Record<string, string> = {};
 
 async function bootstrapSession(): Promise<void> {
   const { data, error } = await supabaseAdmin.auth.admin.generateLink({ type: "magiclink", email: ADMIN_EMAIL });
@@ -60,6 +64,7 @@ type Revision = {
   checklist: ChangedArray;
   common_mistakes: ChangedArray;
   documentation: ChangedArray;
+  faq?: { changed: boolean; items?: Array<{ q: string; a: string }> };
   revision_notes: string[];
   unresolved: string[];
 };
@@ -103,6 +108,8 @@ async function processOne(
       immediate_actions: c.immediate_actions,
       checklist: toArray(c.checklist), practice_tip: c.practice_tip ?? "",
       common_mistakes: toArray(c.common_mistakes), documentation: toArray(c.documentation),
+      faq: Array.isArray(c.faq) ? c.faq : [],
+      editorial_line: editorialLines[caseId] ?? editorialLines[caseId.slice(0, 8)] ?? undefined,
       sources,
       findings: {
         reasoning: c.legal_review_reasoning ?? "",
@@ -124,6 +131,7 @@ async function processOne(
   if (rev.checklist.changed && rev.checklist.items) patch.checklist = rev.checklist.items;
   if (rev.common_mistakes.changed && rev.common_mistakes.items) patch.common_mistakes = rev.common_mistakes.items;
   if (rev.documentation.changed && rev.documentation.items) patch.documentation = rev.documentation.items;
+  if (rev.faq?.changed && rev.faq.items?.length) patch.faq = rev.faq.items.filter((f) => f.q?.trim() && f.a?.trim());
 
   const changedFields = Object.keys(patch).length;
   console.log(`  ${changedFields} Feld(er) geändert, ${rev.unresolved.length} weiterhin ungeklärt.`);
@@ -153,6 +161,11 @@ async function main() {
   const limitIdx = args.indexOf("--limit");
   const limit = limitIdx >= 0 ? Number(args[limitIdx + 1]) : 10;
   const onlyIdsIdx = args.indexOf("--only-ids");
+  const linesIdx = args.indexOf("--lines-file");
+  if (linesIdx >= 0) {
+    const { readFileSync } = await import("node:fs");
+    editorialLines = JSON.parse(readFileSync(args[linesIdx + 1], "utf8"));
+  }
 
   let targets: { id: string; title: string }[];
   if (onlyIdsIdx >= 0) {

@@ -175,6 +175,36 @@ export const Route = createFileRoute("/api/ai-revise-legal-case")({
               // reinen Protokoll-Listen werden solche Zeilen verworfen; die
               // Inhaltsfelder bleiben vom Leak-Schutz unverändert erfasst.
               const json = result.json as Record<string, unknown> | undefined;
+              // Fund 14.10.2026: bei einzelnen Fällen lieferte Haiku reproduzierbar
+              // NUR legal_explanation und beendete die Antwort (auch im zweiten
+              // Versuch). Statt alles zu verwerfen, werden die fehlenden Felder
+              // in einem Folgeaufruf nachgefordert - mit der bisherigen Antwort
+              // als Kontext, damit beide Teile zusammenpassen.
+              const required = schema.required as string[];
+              const missing = json ? required.filter((k) => !(k in json)) : [];
+              if (json && missing.length > 0 && missing.length < required.length) {
+                const props = schema.properties as Record<string, unknown>;
+                const subSchema = {
+                  type: "object",
+                  additionalProperties: false,
+                  properties: Object.fromEntries(missing.map((k) => [k, props[k]])),
+                  required: missing,
+                };
+                const followUp = await provider.complete({
+                  taskId: "ai-revise-legal-case",
+                  model: "anthropic/claude-haiku-4-5",
+                  messages: [
+                    { role: "system", content: system },
+                    { role: "user", content: JSON.stringify(user) },
+                    { role: "assistant", content: `Bisher geliefert: ${JSON.stringify(json)}` },
+                    { role: "user", content: `Deine Antwort war unvollständig. Liefere jetzt ausschließlich die fehlenden Felder ${missing.join(", ")} nach denselben Regeln und passend zu dem bereits Gelieferten.` },
+                  ],
+                  jsonSchema: { name: "legal_case_revision_rest", schema: subSchema },
+                  maxTokens: 24000,
+                });
+                const rest = followUp.json as Record<string, unknown> | undefined;
+                if (rest && typeof rest === "object") for (const k of missing) if (k in rest) json[k] = rest[k];
+              }
               const LEAK = /<\/?(parameter|invoke|function_calls?|antml:|tool_use)\b/i;
               for (const key of ["revision_notes", "unresolved"]) {
                 const list = json?.[key];

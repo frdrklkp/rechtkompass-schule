@@ -90,7 +90,8 @@ const TARGETS: Array<{ url: string; label: string; sourceId: string; parser: Leg
     // Geschäftsfähigkeit Minderjähriger; Deliktsrecht inkl. Aufsichtspflicht
     // und Amtshaftung; elterliche Sorge und Vertretung; Kindeswohlgefährdung.
     // Runde 3 (12.10.2026, Zitat-Abgleich): § 1684 Umgang - in Sorgerechtsfällen zitiert.
-    sections: ["104", "106", "107", "110", "823", "828", "831", "832", "839", "1626", "1629", "1631", "1666", "1684", "1687"],
+    // Runde 4 (14.10.2026, Rot-Sanierung): § 1686 Auskunft über die persönlichen Verhältnisse des Kindes.
+    sections: ["104", "106", "107", "110", "823", "828", "831", "832", "839", "1626", "1629", "1631", "1666", "1684", "1686", "1687"],
   },
   {
     url: "https://www.gesetze-im-internet.de/stgb/BJNR001270871.html",

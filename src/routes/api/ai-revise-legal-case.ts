@@ -169,6 +169,17 @@ export const Route = createFileRoute("/api/ai-revise-legal-case")({
                 // Knapphalten-Anweisung im Prompt auf 24000 erhöht.
                 maxTokens: 24000,
               });
+              // Fund 14.10.2026: vereinzelt enthielt eine Zeile der Protokoll-
+              // Listen ein Tool-Call-Fragment ("<invoke"), und der Leak-Schutz
+              // verwarf die gesamte, inhaltlich vollständige Sanierung. In den
+              // reinen Protokoll-Listen werden solche Zeilen verworfen; die
+              // Inhaltsfelder bleiben vom Leak-Schutz unverändert erfasst.
+              const json = result.json as Record<string, unknown> | undefined;
+              const LEAK = /<\/?(parameter|invoke|function_calls?|antml:|tool_use)\b/i;
+              for (const key of ["revision_notes", "unresolved"]) {
+                const list = json?.[key];
+                if (Array.isArray(list)) json![key] = list.filter((x) => typeof x !== "string" || !LEAK.test(x));
+              }
               return result.json;
             },
             schema,

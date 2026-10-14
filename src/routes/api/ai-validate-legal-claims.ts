@@ -232,7 +232,8 @@ export const Route = createFileRoute("/api/ai-validate-legal-claims")({
                   new_label: { type: "string" },
                   ...claimClassificationProps,
                 },
-                required: ["id", "verdict", "classification", "is_central"],
+                // is_central fehlt gelegentlich (14.10.2026) - dann gilt "im Zweifel zentral".
+                required: ["id", "verdict", "classification"],
               },
             },
             new_open_questions: { type: "array", items: { type: "string" } },
@@ -365,7 +366,7 @@ export const Route = createFileRoute("/api/ai-validate-legal-claims")({
                   new_label: newLabel,
                   note: typeof v.note === "string" ? v.note.slice(0, 300) : undefined,
                   classification,
-                  isCentral: v.is_central === true,
+                  isCentral: v.is_central !== false, // fehlt das Feld: im Zweifel zentral
                   flagType: sanitizeFlagType(v.flag_type),
                   problem: typeof v.problem === "string" ? v.problem.slice(0, 300) : undefined,
                 };

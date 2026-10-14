@@ -141,7 +141,11 @@ export const Route = createFileRoute("/api/ai-revise-legal-case")({
           required: [
             "legal_explanation", "short_answer", "recommendation", "immediate_actions",
             "practice_tip", "checklist", "common_mistakes", "documentation",
-            "revision_notes", "unresolved",
+            // revision_notes/unresolved bewusst NICHT required (Fund 14.10.2026):
+            // Haiku ließ bei langen Fällen genau diese beiden Protokoll-Listen am
+            // Ende weg, obwohl alle inhaltlichen Felder vollständig waren - die
+            // ganze Sanierung wurde verworfen. Sie dienen nur dem Protokoll und
+            // werden unten auf [] gesetzt, wenn sie fehlen.
           ],
         };
 
@@ -188,6 +192,8 @@ export const Route = createFileRoute("/api/ai-revise-legal-case")({
           );
         }
 
+        if (!Array.isArray(parsed.revision_notes)) parsed.revision_notes = [];
+        if (!Array.isArray(parsed.unresolved)) parsed.unresolved = [];
         return new Response(JSON.stringify(parsed), { headers: { "Content-Type": "application/json" } });
       },
     },

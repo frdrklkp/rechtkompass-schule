@@ -15,6 +15,10 @@
  *   4. HARTE PRÜFUNG: mindestens eine Rechtsgrundlage muss verknüpft sein -
  *      sonst ein zweiter Versuch, danach klarer Abbruch mit Hinweis statt
  *      stillem Weiterlaufen oder Erfinden einer Norm
+ *   6.6 ZITAT- UND ZAHLENPRÜFUNG (20.10.2026): Absätze gegen die amtliche
+ *       Gliederung, Zahlen/Fristen gegen den Normtext (citationIntegrity.ts);
+ *       unbelegte Fristen werden neutral umformuliert, falsche Absätze
+ *       blockieren die Veröffentlichung.
  *   4.2 ZITAT-ABGLEICH: im Text zitierte Normen gegen die verknüpften
  *      abgleichen, eindeutig im Bestand vorhandene nachverknüpfen, nicht
  *      vorhandene als Rechts-Review-Hinweis melden (caseCitationCoverage.ts);
@@ -501,6 +505,44 @@ async function main() {
   if (await syncCitedNorms("nach-optimierung")) links = await listCaseLegalLinks(caseId);
   console.log();
 
+  // ---- 6.6) Zitat- und Zahlenprüfung ohne KI (20.10.2026) ----
+  // Absatz-/Satzangaben gegen die amtliche Gliederung und Zahlen mit Einheit
+  // gegen den Wortlaut der verknüpften und zitierten Normen. Unbelegte Fristen
+  // werden neutral umformuliert (mit deterministischer Abnahme); ein nicht
+  // existierender Absatz blockiert die Veröffentlichung.
+  console.log("=== 6.6/9: Zitat- und Zahlenprüfung (Absätze, unbelegte Fristen) ===");
+  let integrityBlocked: string[] = [];
+  {
+    const { loadIntegrityContext } = await import("../src/lib/integrityContext");
+    const { checkCaseIntegrity, INTEGRITY_FIELDS } = await import("../src/lib/citationIntegrity");
+    const { neutralizeQuantities, NEUTRALIZE_SCHEMA, NEUTRALIZE_SYSTEM } = await import("../src/lib/quantityNeutralizer");
+    const { AIProviderFactory } = await import("../src/services/editorial/ai/providers/AIProviderFactory");
+    const ctx = await loadIntegrityContext(supabase);
+    const loadRow = async () => ((await supabase.from("practice_cases").select(INTEGRITY_FIELDS.join(",")).eq("id", caseId).limit(1)).data ?? [])[0] as Record<string, unknown>;
+    const linkedIds = (links as any[]).map((l) => l.legal_section_id as string);
+    let row = await loadRow();
+    let rep = checkCaseIntegrity(row, ctx.lookup, ctx.evidenceFor(row, linkedIds));
+    if (rep.zahlen.length) {
+      const provider = AIProviderFactory.get("anthropic-native");
+      const res = await neutralizeQuantities(row, new Set(rep.zahlen.map((z) => `${z.value}|${z.unit}`)), async (items) => {
+        const r = await provider.complete({
+          taskId: "neutralize-quantities", model: "anthropic/claude-sonnet-5",
+          messages: [{ role: "system", content: NEUTRALIZE_SYSTEM }, { role: "user", content: JSON.stringify({ items }) }],
+          jsonSchema: { name: "neutralized_sentences", schema: NEUTRALIZE_SCHEMA }, maxTokens: 8000,
+        } as any);
+        return ((r.json as any)?.items ?? []) as Array<{ i: number; text: string }>;
+      });
+      if (Object.keys(res.patch).length) await updateCase(caseId, res.patch as any);
+      console.log(`Unbelegte Zahlen: ${rep.zahlen.length} gefunden, ${res.replaced} Stellen neutral umformuliert, ${res.rejected.length} verworfen.`);
+      row = await loadRow();
+      rep = checkCaseIntegrity(row, ctx.lookup, ctx.evidenceFor(row, linkedIds));
+      for (const z of rep.zahlen) console.log(`  verbleibt: "${z.raw}" (${z.field}) – ${z.context.slice(0, 120)}`);
+    }
+    integrityBlocked = rep.absatz.map((a) => `"${a.raw}" (${a.field}): ${a.kind === "absatz_fehlt" ? `§ ${a.paragraph} hat nur ${a.vorhanden} Absatz/Absätze` : `Absatz hat nur etwa ${a.vorhanden} Sätze`}`);
+    for (const b of integrityBlocked) console.log(`  BLOCKIERT: ${b}`);
+    console.log(integrityBlocked.length ? "" : "Keine Absatzfehler.\n");
+  }
+
   // ---- 7) Baum-Freigabe ----
   console.log("=== 7/9: Entscheidungsbaum freigeben ===");
   const { data: treeRowFresh } = await supabase.from("practice_cases").select("decision_tree").eq("id", caseId).limit(1);
@@ -513,6 +555,13 @@ async function main() {
     console.log("Baum freigegeben (meta.status = approved).\n");
   } else {
     console.log("Baum strukturell nicht vollständig - bleibt unfreigegeben (Entscheidungsassistent erscheint nicht im Frontend).\n");
+  }
+
+  if (integrityBlocked.length) {
+    console.log("=== ABSCHLUSS (NICHT veröffentlicht: Zitatprüfung) ===");
+    console.log(`Fall-ID: ${caseId}`);
+    console.log("Die zitierten Absätze existieren nicht. Text korrigieren und erneut prüfen, bevor der Fall veröffentlicht wird.");
+    process.exit(2);
   }
 
   // NO_PUBLISH=1: Fall bleibt Entwurf (Redaktionsschritte 8 entfallen) - für

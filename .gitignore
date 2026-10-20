@@ -38,3 +38,4 @@ dist-ssr
 
 # Datenexporte je Schule (personenbezogen, nie ins Repo)
 exports/
+.backups/

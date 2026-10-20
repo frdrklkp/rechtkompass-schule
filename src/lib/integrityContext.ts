@@ -26,14 +26,18 @@ async function all<T>(db: Db, table: string, select: string, filter: (q: any) =>
 export interface IntegrityContext {
   lookup: LawSectionLookup;
   contentById: Map<string, string>;
+  /** Alle Abschnitte, die zu einer Norm passen könnten (auch bei Mehrdeutigkeit). */
+  candidates(lawAbbrev: string, paragraph: string, kind: "paragraph" | "article"): string[];
   /** Belegtexte: verknüpfte Abschnitte plus jede im Fall zitierte Norm aus dem Bestand. */
   evidenceFor(caseRow: Record<string, unknown>, linkedSectionIds: string[]): string[];
 }
 
 export async function loadIntegrityContext(db: Db): Promise<IntegrityContext> {
   const sources = await all<any>(db, "legal_sources", "id,title,short_name,source_type", (q) => q.eq("status", "active"));
-  const sections = await all<any>(db, "legal_sections", "id,source_id,reference,content,metadata");
+  const sections = await all<any>(db, "legal_sections", "id,source_id,reference,content,metadata,order_index");
   const contentById = new Map<string, string>(sections.map((s) => [s.id, s.content ?? ""]));
+  const referenceById = new Map<string, string>(sections.map((s) => [s.id, s.reference ?? ""]));
+  const orderById = new Map<string, number>(sections.map((s) => [s.id, Number(s.order_index ?? 0)]));
   const absatzCountById = new Map<string, number>(sections.filter((s) => s.metadata?.absatz_count).map((s) => [s.id, Number(s.metadata.absatz_count)]));
   const bySource = new Map<string, Map<string, string[]>>();
   for (const s of sections) {
@@ -63,19 +67,34 @@ export async function loadIntegrityContext(db: Db): Promise<IntegrityContext> {
     find(law, paragraph, kind) {
       const src = sourceFor(law);
       if (!src) return null;
-      const ids = bySource.get(src)?.get(`${kind === "article" ? "a" : "p"}${paragraph}`) ?? [];
-      if (ids.length !== 1) return null; // mehrdeutig (APO-BK-Anlagen): nicht raten
+      let ids = bySource.get(src)?.get(`${kind === "article" ? "a" : "p"}${paragraph}`) ?? [];
+      // APO-BK: jede Anlage zählt ihre Paragrafen neu. Ein Zitat ohne Anlagenangabe
+      // ("§ 8 APO-BK") meint den Haupttext - das ist der Abschnitt ohne Präfix in der Referenz.
+      if (ids.length > 1) {
+        const top = ids.filter((id) => !String(referenceById.get(id) ?? "").includes("."));
+        // Mehrere ohne Präfix: Im Bestand tragen einzelne APO-BK-Anlagen kein Kennzeichen
+        // (Fund 20.10.2026: "§ 10" ohne Präfix stammt aus einer Anlage) - dann nicht raten.
+        if (top.length === 1) ids = top;
+      }
+      if (ids.length !== 1) return null; // weiterhin mehrdeutig: nicht raten
       return { content: contentById.get(ids[0])!, lineStructured: src === SCHULG_SOURCE_ID, absatzCount: absatzCountById.get(ids[0]) };
     },
+  };
+  const candidates = (law: string, paragraph: string, kind: "paragraph" | "article"): string[] => {
+    const src = sourceFor(law);
+    if (!src) return [];
+    return (bySource.get(src)?.get(`${kind === "article" ? "a" : "p"}${paragraph}`) ?? []).map((id) => contentById.get(id) ?? "");
   };
   return {
     lookup,
     contentById,
+    candidates,
     evidenceFor(caseRow, linkedSectionIds) {
       const texts = linkedSectionIds.map((id) => contentById.get(id) ?? "");
       for (const f of INTEGRITY_FIELDS) for (const c of extractLegalCitationsForCoverage(fieldText(caseRow[f]))) {
-        const sec = lookup.find(c.lawAbbrev, c.paragraph, c.kind);
-        if (sec) texts.push(sec.content);
+        // Für Zahlen genügt es, wenn eine der möglichen Fassungen sie trägt (Fund 20.10.2026:
+        // "innerhalb von zwei Jahren" aus § 20 Abs. 4 APO-BK wurde wegen Mehrdeutigkeit entfernt).
+        texts.push(...candidates(c.lawAbbrev, c.paragraph, c.kind));
       }
       return texts;
     },

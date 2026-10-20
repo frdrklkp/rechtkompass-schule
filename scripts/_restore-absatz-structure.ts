@@ -24,6 +24,7 @@ import { createClient } from "@supabase/supabase-js";
 import { execFileSync } from "node:child_process";
 import { mkdtempSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
+import { absatzStructure } from "../src/lib/citationIntegrity";
 import { join } from "node:path";
 
 const args = process.argv.slice(2);
@@ -58,7 +59,11 @@ function absaetzeOf(rawSegs: string[]): string[] {
     if (/^\(\d+[a-z]?\)\s/.test(s) || out.length === 0) out.push(s);
     else out[out.length - 1] += " " + s;
   }
-  return out.map((a) => a.replace(/\s+([,.;:)])/g, "$1").replace(/\(\s+/g, "(").trim());
+  const parts = out.map((a) => a.replace(/\s+([,.;:)])/g, "$1").replace(/\(\s+/g, "(").trim());
+  // Absatzmarken können auch mitten im Fließtext stehen (BASS, Fund 20.10.2026: § 10 APO-BK
+  // "(1) ... (2) ... (3)" in einem Segment) - dann über die aufsteigende Markenfolge teilen.
+  const inline = absatzStructure(parts.join(" "));
+  return inline && inline.absaetze.length > parts.length ? inline.absaetze.map((t, i) => `(${i + 1}) ${t}`) : parts;
 }
 
 /** HTML-Seite mit Überschriften "§ N" bzw. "Artikel N" in Blöcke zerlegen. */

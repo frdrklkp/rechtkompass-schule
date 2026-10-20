@@ -22,7 +22,7 @@ const SENTENCE = /[^.!?\n]+(?:[.!?](?!\d)|\n|$)/g;
 // Abkürzungen ("z. B.", "mind.", "Nr.") sind kein Satzende (Fund 20.10.2026: "z.B. 25%, 30%" wurde zerschnitten)
 const ABBREV = /\b(z\. ?B|u\. ?a|d\. ?h|i\. ?d\. ?R|bzw|ggf|vgl|Nr|Abs|Art|ca|inkl|max|mind|min|evtl|insb|sog|usw|etc)\./g;
 const PROTECT = "\u2063";
-function sentencesOf(text: string): string[] {
+export function sentencesOf(text: string): string[] {
   const protectedText = text.replace(ABBREV, (m) => m.replace(/\./g, PROTECT));
   return [...protectedText.matchAll(SENTENCE)].map((m) => m[0].split(PROTECT).join("."));
 }

@@ -37,14 +37,21 @@ export function AssistantCaseGenerationOffer({ sketch }: AssistantCaseGeneration
 
   if (state.status === "idle") {
     return (
+      <div className="mt-3">
       <button
         type="button"
         onClick={() => start(sketch)}
-        className="mt-3 inline-flex items-center gap-1.5 rounded-xl border border-accent/50 bg-accent/10 px-3 py-2 text-xs font-semibold text-accent hover:bg-accent/20"
+        className="inline-flex items-center gap-1.5 rounded-xl border border-accent/50 bg-accent/10 px-3 py-2 text-xs font-semibold text-accent hover:bg-accent/20"
       >
         <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
         Passenden Praxisfall erstellen lassen
       </button>
+      <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground">
+        Ihre Schilderung wird gespeichert und an einen KI-Dienst übermittelt; nach 30 Tagen wird sie gelöscht.
+        Bitte ohne Namen oder erkennbare Angaben zu Schüler:innen, Eltern oder Kolleg:innen.{" "}
+        <Link to="/datenschutz" className="underline underline-offset-2 hover:text-accent">Datenschutz</Link>
+      </p>
+      </div>
     );
   }
 

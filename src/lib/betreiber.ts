@@ -26,7 +26,7 @@ export const BETREIBER = {
     web: "https://www.ldi.nrw.de",
   },
   /** Stand der Datenschutzerklärung - bei jeder inhaltlichen Änderung anpassen. */
-  standDatenschutz: "4. Oktober 2026",
+  standDatenschutz: "23. Oktober 2026",
 } as const;
 
 export function istPlatzhalter(wert: string): boolean {

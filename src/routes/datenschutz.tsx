@@ -1,12 +1,13 @@
 // Datenschutzerklärung (Art. 13/14 DSGVO). Öffentlich erreichbar, auch ohne
 // Anmeldung (Ausnahme vom PilotGate in __root.tsx).
 //
-// Jeder Abschnitt beschreibt NUR, was der Code tatsächlich tut (Stand 04.10.2026):
+// Jeder Abschnitt beschreibt NUR, was der Code tatsächlich tut (Stand 23.10.2026):
 //   - Anmeldung per Magic-Link (Supabase Auth, Pilotliste)        → PilotGate.tsx, adminAuth.ts
 //   - Profil: E-Mail, Anzeigename, Rolle, Organisation            → db/2026-07-23_user_profiles_and_roles.sql
-//   - Rückfragen-Copilot: Frage + Antwortkürzel, 90 Tage          → db/2026-09-29_copilot_conversations.sql, 2026-10-04_copilot_retention.sql
+//   - Rückfragen-Copilot: Frage + Antwortkürzel, 90 Tage          → db/2026-09-29_copilot_conversations.sql, 2026-10-04_copilot_retention.sql, 2026-10-23 (pg_cron)
+//   - Neuen Fall erstellen lassen: Schilderung + Konto, 30 Tage    → api/case-generation-jobs.ts, db/2026-10-23_dsgvo_loeschfristen.sql
 //   - Fall schildern: Freitext nur an KI, keine Speicherung       → api/ai-analyze-case-description.ts, DescriptionIntake.tsx (sessionStorage)
-//   - Vorgänge/Fallakten, Dokumente, Umfrage, Fehlermeldungen     → workflow_*, case_documents, pilot_survey_responses, case_feedback_reports
+//   - Vorgänge/Fallakten, Dokumente, Umfrage, Fehlermeldungen     → workflow_*, case_documents, pilot_survey_responses, case_feedback_reports (Kontobezug weg bei Abschluss, Trigger 2026-10-23)
 //   - KI-Anbieter Anthropic/OpenAI, E-Mail über Resend             → AnthropicProvider.ts, OpenAIEmbeddingProvider.ts, resend.server.ts
 //   - Browser-Speicher: Login-Token, Favoriten, Darstellung        → client.ts, StickyActionBar.tsx, einstellungen.tsx
 //   - Keine Analyse-/Tracking-Dienste, Schriftart lokal            → __root.tsx (kein externes Stylesheet mehr)
@@ -137,6 +138,17 @@ function DatenschutzPage() {
             Rückfragen zu stellen. Die Schilderung wird nicht in unserer Datenbank gespeichert; sie bleibt nur im
             Browser-Tab, bis Sie ihn schließen.
           </p>
+          <p className="font-medium text-foreground">Neuen Praxisfall erstellen lassen</p>
+          <p>
+            Findet die Suche keinen passenden Fall, können Sie aus Ihrer Schilderung einen neuen Praxisfall erzeugen
+            lassen. Dafür speichern wir die Schilderung Ihrem Konto zugeordnet und senden sie an einen KI-Dienst
+            (Abschnitt 6). Der erzeugte Fall ist allgemein formuliert und geht vor einer Veröffentlichung in die
+            redaktionelle Prüfung. Schlägt die Erzeugung fehl, erhält die Redaktion eine E-Mail mit Ihrer
+            E-Mail-Adresse und einem Auszug der Schilderung, damit sie den Auftrag erneut anstoßen oder bei Ihnen
+            nachfragen kann. 30 Tage nach Abschluss des Auftrags werden die Schilderung und der Bezug zu Ihrem
+            Konto automatisch gelöscht. Bitte schildern Sie die Situation ohne Namen oder andere Angaben, die
+            Schülerinnen, Schüler, Eltern oder Kolleginnen und Kollegen erkennbar machen.
+          </p>
           <p className="font-medium text-foreground">Vorgänge und Fallakten</p>
           <p>
             Wenn Sie einen Vorgang anlegen, speichern wir Ihre Checklisten-Haken, Notizen und erzeugten Dokumente
@@ -214,7 +226,8 @@ function DatenschutzPage() {
             <li>Copilot-Gespräche: 90 Tage nach der letzten Aktivität, dann automatische Löschung.</li>
             <li>Vorgänge, Fallakten, Dokumente: bis Sie sie löschen oder das Konto gelöscht wird.</li>
             <li>Umfrageantworten: bis zum Abschluss der Auswertung der Pilotphase.</li>
-            <li>Fehlermeldungen: bis zur Erledigung durch die Redaktion, danach ohne Kontobezug.</li>
+            <li>Schilderungen für neue Praxisfälle: 30 Tage nach Abschluss des Auftrags, dann automatische Löschung der Schilderung und des Kontobezugs.</li>
+            <li>Fehlermeldungen: bis zur Erledigung durch die Redaktion, beim Abschluss wird der Kontobezug automatisch entfernt.</li>
             <li>Zugriffsdaten bei Cloudflare und Anmeldeprotokolle bei Supabase: nach den Fristen der Anbieter, in der Regel wenige Tage bis Wochen.</li>
           </ul>
         </Abschnitt>

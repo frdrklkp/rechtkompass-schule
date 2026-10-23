@@ -6,15 +6,21 @@ import {
   ShieldCheck,
   Compass,
   Info,
-  UserCog,
-  Sparkles,
   CheckCircle2,
   HelpCircle,
+  BookOpen,
+  GraduationCap,
+  ShieldAlert,
+  Lock,
+  Users,
+  Briefcase,
+  Landmark,
+  Scale,
+  type LucideIcon,
 } from "lucide-react";
 import { Disclaimer } from "../components/Disclaimer";
 import { AssistantCaseGenerationOffer } from "@/components/assistant/AssistantCaseGenerationOffer";
 import { usePublishedCases } from "../lib/casesFromDb";
-import { useProfile } from "../lib/profile";
 import {
   confidenceLabelText,
   searchPublishedPracticeCases,
@@ -48,13 +54,13 @@ const EXAMPLE_PROMPTS = [
   "Ein Kollege erzählt vertrauliche Infos über einen Schüler weiter.",
 ];
 
-const QUICK_TOPICS: Array<{ label: string; cat: string; emoji: string }> = [
-  { label: "Unterricht & Verhalten", cat: "Unterricht", emoji: "📘" },
-  { label: "Prüfungen & Noten", cat: "Prüfungen", emoji: "🎓" },
-  { label: "Aufsicht & Sicherheit", cat: "Aufsicht", emoji: "🛡️" },
-  { label: "Datenschutz", cat: "Datenschutz", emoji: "🔒" },
-  { label: "Eltern", cat: "Eltern und Kommunikation", emoji: "👥" },
-  { label: "Dienstrecht & Kollegium", cat: "Dienstrecht", emoji: "👩‍🏫" },
+const QUICK_TOPICS: Array<{ label: string; cat: string; icon: LucideIcon; hint: string }> = [
+  { label: "Unterricht & Verhalten", cat: "Unterricht", icon: BookOpen, hint: "Ordnungsmaßnahmen, Störungen" },
+  { label: "Prüfungen & Noten", cat: "Prüfungen", icon: GraduationCap, hint: "Leistung, Täuschung, APO-BK" },
+  { label: "Aufsicht & Sicherheit", cat: "Aufsicht", icon: ShieldAlert, hint: "Aufsichtspflicht, Unfälle" },
+  { label: "Datenschutz", cat: "Datenschutz", icon: Lock, hint: "Fotos, Daten, Weitergabe" },
+  { label: "Eltern", cat: "Eltern und Kommunikation", icon: Users, hint: "Gespräche, Auskunft, Konflikte" },
+  { label: "Dienstrecht & Kollegium", cat: "Dienstrecht", icon: Briefcase, hint: "Pflichten, Mehrarbeit, Haftung" },
 ];
 
 function ampelDot(a: string) {
@@ -69,10 +75,10 @@ function ResultCard({ result, primary }: { result: SearchResult; primary?: boole
     <Link
       to="/fall/$id"
       params={{ id: c.id }}
-      className={`group block rounded-2xl border p-4 transition-all hover:-translate-y-0.5 hover:shadow-[var(--shadow-card)] ${
+      className={`group block rounded-xl border bg-card p-5 transition-[box-shadow,border-color,transform] duration-200 hover:-translate-y-px hover:shadow-[var(--shadow-elevated)] ${
         primary
-          ? "border-accent/60 bg-gradient-to-br from-accent/10 via-accent/5 to-transparent"
-          : "border-border bg-card hover:border-accent/60"
+          ? "border-accent/40 shadow-[var(--shadow-card)] ring-1 ring-accent/15"
+          : "border-border hover:border-accent/40"
       }`}
     >
       <div className="flex items-center gap-2 text-[11px] font-medium">
@@ -82,24 +88,24 @@ function ResultCard({ result, primary }: { result: SearchResult; primary?: boole
           {label}
         </span>
       </div>
-      <h3 className="mt-1 text-sm font-semibold text-foreground sm:text-base">{c.title}</h3>
+      <h3 className={`mt-2 font-semibold leading-snug text-foreground ${primary ? "font-serif text-lg sm:text-xl" : "text-[15px]"}`}>{c.title}</h3>
       {primary && result.matchReasons[0] ? (
-        <p className="mt-1 text-[11px] text-accent/90">Warum dieser Fall: {result.matchReasons[0]}</p>
+        <p className="mt-1.5 text-xs text-accent">Warum dieser Fall: {result.matchReasons[0]}</p>
       ) : null}
-      <p className="mt-2 line-clamp-2 text-xs text-muted-foreground sm:text-sm">
+      <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-muted-foreground">
         {c.shortAnswer || c.shortDescription}
       </p>
       {primary && top3.length > 0 ? (
-        <ul className="mt-3 space-y-1">
+        <ul className="mt-4 space-y-1.5 border-t border-border pt-4">
           {top3.map((step, i) => (
-            <li key={i} className="flex items-start gap-2 text-xs text-foreground/90">
-              <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-accent" />
+            <li key={i} className="flex items-start gap-2 text-sm text-foreground/90">
+              <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-accent" />
               <span>{step}</span>
             </li>
           ))}
         </ul>
       ) : null}
-      <div className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-accent">
+      <div className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-accent">
         {primary ? "Praxisfall vollständig öffnen" : "Fall öffnen"}
         <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
       </div>
@@ -128,7 +134,6 @@ function Home() {
       else sessionStorage.removeItem("rk-start-suche-submitted");
     } catch { /* Storage gesperrt - Suche läuft ohne Persistenz. */ }
   }, [q, submitted]);
-  const { profile } = useProfile();
   const { data: dbCases, isLoading } = usePublishedCases();
 
   const cases: CaseData[] = useMemo(() => dbCases ?? [], [dbCases]);
@@ -152,89 +157,68 @@ function Home() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-2xl px-4 pt-6 pb-28 sm:px-6">
-      {/* Header */}
-      <div className="mb-6 flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2 text-xs font-medium text-accent">
-          <ShieldCheck className="h-4 w-4" />
-          <span>RechtKompass Schule</span>
-        </div>
-        <button
-          onClick={() => window.dispatchEvent(new Event("rk-open-onboarding"))}
-          className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-2.5 py-1 text-[11px] font-medium text-muted-foreground hover:border-accent hover:text-accent"
-        >
-          <UserCog className="h-3.5 w-3.5" />
-          {profile ? profile.funktion : "Profil"}
-        </button>
-      </div>
-
+    <div className="mx-auto w-full max-w-3xl px-4 pt-8 pb-28 sm:px-6 md:pt-16 md:pb-16">
       {/* Hero */}
-      <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
+      <p className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-xs font-medium text-muted-foreground">
+        <Landmark className="h-3.5 w-3.5 text-accent" aria-hidden />
+        Rechtliche Orientierung für Lehrkräfte an Berufskollegs in NRW
+      </p>
+      <h1 className="mt-5 text-[2rem] font-semibold leading-[1.12] text-foreground sm:text-5xl">
         Was ist passiert – oder welche rechtliche Frage hast du?
       </h1>
-      <p className="mt-2 text-sm text-muted-foreground sm:text-base">
-        Situation in eigenen Worten beschreiben. Die Plattform findet den passenden
-        Praxisfall – mit Handlungsschritten und Rechtsgrundlagen.
+      <p className="mt-4 max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg">
+        Situation in eigenen Worten beschreiben. RechtKompass findet den passenden
+        Praxisfall – mit Handlungsschritten, Rechtsgrundlagen und Vorlagen.
       </p>
 
       {/* Suche */}
-      <div className="mt-5 rounded-2xl border border-border bg-card p-2 shadow-[var(--shadow-card)] focus-within:border-accent">
-        <label className="flex items-center gap-3 rounded-xl px-3 py-3">
-          <Search className="h-5 w-5 shrink-0 text-muted-foreground" />
+      <form
+        role="search"
+        onSubmit={(e) => {
+          e.preventDefault();
+          doSearch();
+        }}
+        className="mt-8 flex flex-col gap-2 rounded-2xl border border-input bg-card p-2 shadow-[var(--shadow-elevated)] transition-colors focus-within:border-accent focus-within:ring-4 focus-within:ring-accent/10 sm:flex-row sm:items-center"
+      >
+        <label className="flex min-w-0 flex-1 items-center gap-3 px-3 py-2.5">
+          <Search className="h-5 w-5 shrink-0 text-muted-foreground" aria-hidden />
+          <span className="sr-only">Situation oder Frage beschreiben</span>
           <input
             type="text"
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder="Ein Schüler filmt mich im Unterricht …"
-            className="w-full bg-transparent text-base outline-none placeholder:text-muted-foreground"
-            onKeyDown={(e) => {
-              if (e.key === "Enter") doSearch();
-            }}
+            className="w-full bg-transparent text-base text-foreground outline-none placeholder:text-muted-foreground/80"
           />
         </label>
-      </div>
+        <button
+          type="submit"
+          disabled={!q.trim() || isLoading}
+          className="inline-flex h-12 shrink-0 items-center justify-center gap-2 rounded-xl bg-primary px-6 text-sm font-semibold text-primary-foreground transition-[opacity,transform] hover:opacity-90 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          Orientierung finden
+          <ArrowRight className="h-4 w-4" aria-hidden />
+        </button>
+      </form>
 
-      <button
-        onClick={() => doSearch()}
-        disabled={!q.trim() || isLoading}
-        className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-card)] transition-all hover:opacity-90 disabled:opacity-50 sm:w-auto"
-      >
-        <Sparkles className="h-4 w-4" />
-        Orientierung finden
-        <ArrowRight className="h-4 w-4" />
-      </button>
-
-      <p className="mt-2 text-[11px] text-muted-foreground">
+      <p className="mt-3 flex items-start gap-1.5 text-xs text-muted-foreground">
+        <Lock className="mt-px h-3.5 w-3.5 shrink-0" aria-hidden />
         Bitte keine vollständigen Namen oder unnötige personenbezogene Daten von Schüler:innen eingeben.
       </p>
-
-      {/* Schnellzugriffe */}
-      <div className="mt-5 flex flex-wrap gap-2">
-        {QUICK_TOPICS.map((t) => (
-          <Link
-            key={t.cat}
-            to="/faelle"
-            search={{ cat: t.cat }}
-            className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground/80 hover:border-accent hover:text-accent"
-          >
-            <span aria-hidden>{t.emoji}</span>
-            {t.label}
-          </Link>
-        ))}
-      </div>
 
       {/* Beispiele */}
       {!submitted && (
         <div className="mt-6">
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-            Beispiele
+          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+            Häufige Fragen
           </p>
-          <div className="mt-2 flex flex-wrap gap-2">
+          <div className="mt-3 flex flex-wrap gap-2">
             {EXAMPLE_PROMPTS.map((ex) => (
               <button
                 key={ex}
+                type="button"
                 onClick={() => doSearch(ex)}
-                className="rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground/80 transition-colors hover:border-accent hover:text-accent"
+                className="min-h-9 rounded-full border border-border bg-card px-3.5 py-1.5 text-left text-sm text-foreground/80 transition-colors hover:border-accent/50 hover:text-accent"
               >
                 {ex}
               </button>
@@ -243,13 +227,45 @@ function Home() {
         </div>
       )}
 
+      {/* Themenbereiche */}
+      {!submitted && (
+        <section aria-labelledby="themen-heading" className="mt-12">
+          <div className="flex items-end justify-between gap-4">
+            <h2 id="themen-heading" className="font-serif text-xl font-semibold text-foreground sm:text-2xl">
+              Themenbereiche
+            </h2>
+            <Link to="/faelle" className="inline-flex items-center gap-1 text-sm font-medium text-accent hover:underline underline-offset-4">
+              Alle Fälle <ArrowRight className="h-3.5 w-3.5" aria-hidden />
+            </Link>
+          </div>
+          <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {QUICK_TOPICS.map((t) => (
+              <Link
+                key={t.cat}
+                to="/faelle"
+                search={{ cat: t.cat }}
+                className="group flex items-start gap-3 rounded-xl border border-border bg-card p-4 transition-[border-color,box-shadow] hover:border-accent/40 hover:shadow-[var(--shadow-card)]"
+              >
+                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-secondary text-primary transition-colors group-hover:bg-accent group-hover:text-accent-foreground">
+                  <t.icon className="h-5 w-5" aria-hidden />
+                </span>
+                <span className="min-w-0">
+                  <span className="block text-sm font-semibold text-foreground">{t.label}</span>
+                  <span className="mt-0.5 block text-xs text-muted-foreground">{t.hint}</span>
+                </span>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* Ergebnisse */}
       {submitted && (
-        <section className="mt-8" aria-live="polite">
+        <section className="mt-10" aria-live="polite">
           {isLoading ? (
-            <div className="h-40 animate-pulse rounded-2xl border border-border bg-card" />
+            <div className="h-40 animate-pulse rounded-xl border border-border bg-card" />
           ) : response.clarificationNeeded && response.clarificationQuestions.length > 0 ? (
-            <div className="rounded-2xl border border-border bg-card p-4">
+            <div className="rounded-xl border border-border bg-card p-5 shadow-[var(--shadow-card)]">
               <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
                 <HelpCircle className="h-4 w-4 text-accent" />
                 Bitte präzisiere deine Frage
@@ -290,7 +306,7 @@ function Home() {
               )}
             </div>
           ) : response.results.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-border bg-muted/30 p-6 text-sm">
+            <div className="rounded-xl border border-dashed border-input bg-card p-6 text-sm">
               <p className="font-semibold text-foreground">
                 Zu deiner Frage haben wir aktuell noch keinen ausreichend passenden Praxisfall.
               </p>
@@ -321,7 +337,7 @@ function Home() {
           ) : (
             <div className="space-y-4">
               <div>
-                <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                <p className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
                   Das passt am ehesten zu deiner Situation
                 </p>
                 <ResultCard result={response.results[0]} primary />
@@ -329,7 +345,7 @@ function Home() {
 
               {response.alternatives.length > 0 && (
                 <div>
-                  <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  <p className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
                     Das könnte ebenfalls relevant sein
                   </p>
                   <ul className="space-y-2">
@@ -380,32 +396,33 @@ function Home() {
       {!submitted && (
         <section
           aria-labelledby="fall-klaeren-heading"
-          className="mt-8 rounded-2xl border border-accent/40 bg-gradient-to-br from-accent/10 via-accent/5 to-transparent p-5"
+          className="relative mt-12 overflow-hidden rounded-2xl bg-primary p-6 text-primary-foreground shadow-[var(--shadow-elevated)] sm:p-8"
         >
-          <div className="flex items-start gap-4">
-            <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-accent text-accent-foreground shadow-lg">
-              <Compass className="h-5 w-5" />
+          <Scale className="pointer-events-none absolute -right-6 -top-6 h-40 w-40 text-white/[0.06]" aria-hidden />
+          <div className="relative flex flex-col gap-5 sm:flex-row sm:items-start">
+            <div className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-white/10 text-gold ring-1 ring-inset ring-white/15">
+              <Compass className="h-6 w-6" aria-hidden />
             </div>
             <div className="min-w-0 flex-1">
-              <h2 id="fall-klaeren-heading" className="text-base font-semibold text-foreground">
+              <h2 id="fall-klaeren-heading" className="font-serif text-xl font-semibold sm:text-2xl">
                 Einen Fall klären
               </h2>
-              <p className="mt-1 text-sm text-muted-foreground">
+              <p className="mt-2 max-w-xl text-[15px] leading-relaxed text-primary-foreground/80">
                 Schildern Sie die Situation in eigenen Worten. RechtKompass stellt gezielte
                 Rückfragen und führt Sie anschließend Schritt für Schritt durch Bewertung,
                 Maßnahmen, Rechtsgrundlagen und Dokumentation.
               </p>
               <Link
                 to="/assistent"
-                className="mt-4 inline-flex items-center gap-2 rounded-full bg-accent px-5 py-2.5 text-sm font-semibold text-accent-foreground hover:opacity-90"
+                className="mt-5 inline-flex h-11 items-center gap-2 rounded-xl bg-white px-5 text-sm font-semibold text-primary transition-[opacity,transform] hover:opacity-90 active:scale-[0.98]"
               >
-                Fall schildern <ArrowRight className="h-4 w-4" />
+                Fall schildern <ArrowRight className="h-4 w-4" aria-hidden />
               </Link>
-              <p className="mt-3 text-xs text-muted-foreground">
+              <p className="mt-4 text-sm text-primary-foreground/70">
                 Ohne freie Schilderung arbeiten?{" "}
                 <Link
                   to="/navigator"
-                  className="font-medium underline underline-offset-2 hover:text-accent"
+                  className="font-medium text-primary-foreground underline underline-offset-4 hover:text-gold"
                 >
                   Fall direkt strukturiert erfassen
                 </Link>
@@ -415,27 +432,41 @@ function Home() {
         </section>
       )}
 
-      {/* Trust */}
-      <section className="mt-8 rounded-2xl border border-border bg-card p-4">
-        <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-          <ShieldCheck className="h-3.5 w-3.5 text-accent" />
+      {/* Grundlage */}
+      <section aria-labelledby="grundlage-heading" className="mt-12 border-t border-border pt-10">
+        <h2 id="grundlage-heading" className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+          <ShieldCheck className="h-4 w-4 text-accent" aria-hidden />
           Grundlage dieser Orientierung
-        </p>
-        <p className="mt-2 text-sm text-foreground/90">
-          {cases.length > 0
-            ? `${cases.length} redaktionell geprüfte Praxisfälle mit Wissenskarten, Rechtsgrundlagen und Dokumentvorlagen.`
-            : "Redaktionell geprüfte Praxisfälle mit Wissenskarten und Rechtsgrundlagen."}
-        </p>
-        <p className="mt-2 text-[11px] text-muted-foreground">
-          Maßgeblich bleiben die offiziellen Rechtsquellen.
-        </p>
+        </h2>
+        <dl className="mt-5 grid grid-cols-1 gap-6 sm:grid-cols-3">
+          <div>
+            <dt className="text-sm font-semibold text-foreground">Praxisfälle</dt>
+            <dd className="mt-1 text-sm leading-relaxed text-muted-foreground">
+              {cases.length > 0
+                ? `${cases.length} redaktionell geprüfte Fälle mit Handlungsschritten und Dokumentvorlagen.`
+                : "Redaktionell geprüfte Fälle mit Handlungsschritten und Dokumentvorlagen."}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-sm font-semibold text-foreground">Amtliche Normtexte</dt>
+            <dd className="mt-1 text-sm leading-relaxed text-muted-foreground">
+              Verknüpft mit SchulG NRW, APO-BK, BASS und weiteren Rechtsquellen im Wortlaut.
+            </dd>
+          </div>
+          <div>
+            <dt className="text-sm font-semibold text-foreground">Verlässlichkeits-Ampel</dt>
+            <dd className="mt-1 text-sm leading-relaxed text-muted-foreground">
+              Jeder Fall zeigt, wie gesichert die Einschätzung ist – offene Rechtsfragen werden benannt.
+            </dd>
+          </div>
+        </dl>
       </section>
 
-      <div className="mt-6 flex items-start gap-3 rounded-xl border border-border bg-muted/40 p-4 text-xs text-muted-foreground">
-        <Info className="mt-0.5 h-4 w-4 shrink-0 text-accent" />
+      <div className="mt-8 flex items-start gap-3 rounded-xl border border-border bg-secondary/60 p-4 text-sm text-muted-foreground">
+        <Info className="mt-0.5 h-4 w-4 shrink-0 text-accent" aria-hidden />
         <p>
-          <strong>RechtKompass Schule</strong> bietet Orientierung – ersetzt aber keine
-          individuelle Rechtsberatung und keine Entscheidung der Schulleitung.
+          <strong className="text-foreground">RechtKompass Schule</strong> bietet Orientierung – ersetzt aber keine
+          individuelle Rechtsberatung und keine Entscheidung der Schulleitung. Maßgeblich bleiben die offiziellen Rechtsquellen.
         </p>
       </div>
 

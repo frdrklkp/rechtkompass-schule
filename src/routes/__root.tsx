@@ -11,6 +11,7 @@ import {
 import type { ReactNode } from "react";
 
 import appCss from "../styles.css?url";
+import { SiteHeader } from "../components/SiteHeader";
 import { BottomNav } from "../components/BottomNav";
 import { OnboardingModal } from "../components/OnboardingModal";
 import { PilotGate } from "../components/PilotGate";
@@ -150,6 +151,7 @@ function RootComponent() {
           </>
         ) : (
           <PilotGate>
+            <SiteHeader />
             <Outlet />
             <BottomNav />
             <OnboardingModal />

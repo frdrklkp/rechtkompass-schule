@@ -108,14 +108,14 @@ function FaellePage() {
       subtitle={`${cases.length} Situationen aus dem Schulalltag am BKO – filtern oder gezielt suchen.`}
     >
       <div className="mb-3"><Breadcrumbs items={[{ label: "Praxisfälle" }]} /></div>
-      <div className="mb-4 flex items-center gap-3 rounded-xl border border-border bg-card px-3 py-2">
+      <div className="mb-4 flex min-h-12 items-center gap-3 rounded-xl border border-input bg-card px-4 py-2 shadow-[var(--shadow-card)] transition-colors focus-within:border-accent focus-within:ring-4 focus-within:ring-accent/10">
         <Search className="h-4 w-4 text-muted-foreground" />
         <input
           type="text"
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder="Titel, Stichwort, Rechtsgrundlage …"
-          className="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+          className="w-full bg-transparent text-base outline-none placeholder:text-muted-foreground"
         />
       </div>
 
@@ -191,24 +191,24 @@ function FaellePage() {
                   <Link
                     to="/fall/$id"
                     params={{ id: c.id }}
-                    className="flex items-start gap-3 rounded-xl border border-border bg-card p-4 transition-colors hover:border-accent/60"
+                    className="group flex items-start gap-3 rounded-xl border border-border bg-card p-4 transition-[border-color,box-shadow] hover:border-accent/40 hover:shadow-[var(--shadow-card)] sm:p-5"
                   >
                     <span
                       className={`mt-1 h-2.5 w-2.5 shrink-0 rounded-full ${ampelColors[c.ampel]}`}
                       aria-hidden
                     />
                     <div className="min-w-0 flex-1">
-                      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
                         {c.category}{c.subcategory ? ` · ${c.subcategory}` : ""}
                       </p>
-                      <h3 className="mt-0.5 truncate text-sm font-semibold text-foreground">
+                      <h3 className="mt-1 text-[15px] font-semibold leading-snug text-foreground">
                         {c.title}
                       </h3>
-                      <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
+                      <p className="mt-1.5 line-clamp-2 text-sm leading-relaxed text-muted-foreground">
                         {c.shortDescription}
                       </p>
                     </div>
-                    <ChevronRight className="mt-3 h-4 w-4 shrink-0 text-muted-foreground" />
+                    <ChevronRight className="mt-3 h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-accent" />
                   </Link>
                 </li>
               ))}

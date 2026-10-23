@@ -7,7 +7,7 @@
 // Prüfung gegen die Pilotliste (public.is_pilot_approved()) nach dem Login.
 import { type ReactNode, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { CheckCircle2, KeyRound, Mail, ShieldCheck } from "lucide-react";
+import { CheckCircle2, KeyRound, Mail, Scale, ShieldCheck } from "lucide-react";
 import { signInWithMagicLink, signOut, useAuthSession } from "@/lib/adminAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -38,20 +38,30 @@ async function fetchPilotApproved(): Promise<boolean> {
 
 function GateShell({ children }: { children: ReactNode }) {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-muted/30 px-4">
-      <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-8 shadow-lg">
-        <div className="mb-6 flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
-            <ShieldCheck className="h-5 w-5" />
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background px-4 py-12">
+      <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-[45vh] bg-primary" />
+      <div className="relative w-full max-w-md">
+        <div className="mb-6 flex items-center gap-3 text-primary-foreground">
+          <div className="grid h-11 w-11 place-items-center rounded-xl bg-white/10 text-gold ring-1 ring-inset ring-white/15">
+            <Scale className="h-5 w-5" aria-hidden />
           </div>
           <div>
-            <h1 className="text-lg font-semibold">RechtKompass Schule</h1>
-            <p className="text-xs text-muted-foreground">Geschlossene Pilotphase</p>
+            <p className="font-serif text-xl font-semibold leading-none">RechtKompass Schule</p>
+            <p className="mt-1.5 text-xs uppercase tracking-[0.14em] text-primary-foreground/70">Rechtliche Orientierung · NRW</p>
           </div>
         </div>
-        {children}
-        {/* Impressum-/Datenschutz-Links auf dem Login-Screen folgen, sobald die
-            Seiten öffentlich sind (siehe __root.tsx, isRechtsseite). */}
+        <div className="rounded-2xl border border-border bg-card p-7 shadow-[var(--shadow-elevated)] sm:p-8">
+          <div className="mb-6 flex items-center gap-2 text-sm font-medium text-muted-foreground">
+            <ShieldCheck className="h-4 w-4 text-accent" aria-hidden />
+            <h1 className="font-sans text-sm font-medium tracking-normal">Geschlossene Pilotphase</h1>
+          </div>
+          {children}
+          {/* Impressum-/Datenschutz-Links auf dem Login-Screen folgen, sobald die
+              Seiten öffentlich sind (siehe __root.tsx, isRechtsseite). */}
+        </div>
+        <p className="mt-6 text-center text-xs text-muted-foreground">
+          Orientierung für den Schulalltag – keine individuelle Rechtsberatung.
+        </p>
       </div>
     </div>
   );
@@ -92,8 +102,10 @@ function LoginForm() {
         Kolleginnen und Kollegen melden sich hier mit ihrer dienstlichen E-Mail-Adresse an.
       </p>
       <div>
-        <label className="mb-1.5 block text-xs font-medium text-muted-foreground">E-Mail</label>
+        <label htmlFor="pilot-email" className="mb-1.5 block text-sm font-medium text-foreground">Dienstliche E-Mail-Adresse</label>
         <Input
+          id="pilot-email"
+          className="h-11 text-base"
           type="email"
           value={email}
           onChange={(e) => {
@@ -106,7 +118,7 @@ function LoginForm() {
         />
         {err && <p className="mt-2 text-xs text-destructive">{err}</p>}
       </div>
-      <Button type="submit" className="w-full" disabled={busy || !email.trim()}>
+      <Button type="submit" className="h-11 w-full" disabled={busy || !email.trim()}>
         <Mail className="h-4 w-4" />
         {busy ? "Wird gesendet…" : "Anmeldelink anfordern"}
       </Button>

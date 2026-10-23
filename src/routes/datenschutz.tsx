@@ -9,6 +9,7 @@
 //   - Fall schildern: Freitext nur an KI, keine Speicherung       → api/ai-analyze-case-description.ts, DescriptionIntake.tsx (sessionStorage)
 //   - Vorgänge/Fallakten, Dokumente, Umfrage, Fehlermeldungen     → workflow_*, case_documents, pilot_survey_responses, case_feedback_reports (Kontobezug weg bei Abschluss, Trigger 2026-10-23)
 //   - KI-Anbieter Anthropic/OpenAI, E-Mail über Resend             → AnthropicProvider.ts, OpenAIEmbeddingProvider.ts, resend.server.ts
+//   - Auskunft/Löschung zur Selbstbedienung                       → api/my-data.ts, lib/server/myData.ts, einstellungen.tsx
 //   - Browser-Speicher: Login-Token, Favoriten, Darstellung        → client.ts, StickyActionBar.tsx, einstellungen.tsx
 //   - Keine Analyse-/Tracking-Dienste, Schriftart lokal            → __root.tsx (kein externes Stylesheet mehr)
 // Wenn sich eines davon ändert, MUSS dieser Text mitgezogen werden (Stand in betreiber.ts anpassen).
@@ -236,9 +237,11 @@ function DatenschutzPage() {
           <p>
             Sie haben das Recht auf Auskunft (Art. 15 DSGVO), Berichtigung (Art. 16), Löschung (Art. 17),
             Einschränkung der Verarbeitung (Art. 18), Datenübertragbarkeit (Art. 20) und Widerspruch gegen
-            Verarbeitungen auf Grundlage berechtigter Interessen (Art. 21). Wenden Sie sich dafür an die oben genannte
-            E-Mail-Adresse; die Löschung Ihres Kontos einschließlich aller zugeordneten Daten veranlassen wir auf
-            Anfrage. Außerdem können Sie sich bei einer Aufsichtsbehörde beschweren, zum Beispiel bei der{" "}
+            Verarbeitungen auf Grundlage berechtigter Interessen (Art. 21). Unter{" "}
+            <Link to="/einstellungen" className="underline underline-offset-2">Einstellungen → Meine Daten</Link>{" "}
+            können Sie alle Ihrem Konto zugeordneten Daten selbst herunterladen und Ihr Konto einschließlich dieser
+            Daten selbst löschen. Fehlermeldungen und Aufträge für neue Fälle bleiben dabei ohne Bezug zu Ihnen für
+            die Redaktion erhalten. Für alle anderen Anliegen wenden Sie sich an die oben genannte E-Mail-Adresse. Außerdem können Sie sich bei einer Aufsichtsbehörde beschweren, zum Beispiel bei der{" "}
             {b.aufsicht.name}, {b.aufsicht.adresse},{" "}
             <a href={b.aufsicht.web} className="underline underline-offset-2" rel="noreferrer" target="_blank">
               {b.aufsicht.web.replace("https://", "")}

@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Moon, Sun, Type, Shield, FileText, Info, Users } from "lucide-react";
+import { Moon, Sun, Type, Shield, FileText, Info, Users, Download, Trash2, Loader2 } from "lucide-react";
 import { PageShell } from "../components/PageShell";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -105,6 +105,8 @@ function SettingsPage() {
         </Link>
       )}
 
+      <MyDataSection />
+
       <section className="mt-4 divide-y divide-border overflow-hidden rounded-2xl border border-border bg-card">
         <Link to="/datenschutz" className="block transition-colors hover:bg-muted/50">
           <InfoRow
@@ -155,5 +157,148 @@ function InfoRow({
         <p className="mt-0.5 text-xs text-muted-foreground">{text}</p>
       </div>
     </div>
+  );
+}
+
+// DSGVO-Audit 01.10.2026, Punkt 6 (umgesetzt 23.10.2026): Auskunft und
+// Löschung zur Selbstbedienung über /api/my-data.
+async function authHeader(): Promise<Record<string, string>> {
+  const { data } = await supabase.auth.getSession();
+  const token = data.session?.access_token;
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
+function MyDataSection() {
+  const [email, setEmail] = useState<string | null>(null);
+  const [busy, setBusy] = useState<"export" | "delete" | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+  const [askDelete, setAskDelete] = useState(false);
+  const [confirm, setConfirm] = useState("");
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => setEmail(data.session?.user.email ?? null));
+  }, []);
+
+  if (!email) return null;
+
+  const doExport = async () => {
+    setErr(null);
+    setBusy("export");
+    try {
+      const res = await fetch("/api/my-data", { headers: await authHeader() });
+      if (!res.ok) throw new Error((await res.json().catch(() => null))?.error ?? "Export fehlgeschlagen.");
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `rechtkompass-meine-daten-${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Export fehlgeschlagen.");
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const doDelete = async () => {
+    setErr(null);
+    setBusy("delete");
+    try {
+      const res = await fetch("/api/my-data", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json", ...(await authHeader()) },
+        body: JSON.stringify({ confirm }),
+      });
+      if (!res.ok) throw new Error((await res.json().catch(() => null))?.error ?? "Löschung fehlgeschlagen.");
+      try {
+        for (const k of Object.keys(localStorage)) if (k.startsWith("rk-") || k.startsWith("sb-")) localStorage.removeItem(k);
+        sessionStorage.clear();
+      } catch { /* Speicher gesperrt */ }
+      await supabase.auth.signOut().catch(() => undefined);
+      window.location.href = "/";
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Löschung fehlgeschlagen.");
+      setBusy(null);
+    }
+  };
+
+  const confirmed = confirm.trim().toLowerCase() === email.toLowerCase();
+
+  return (
+    <section aria-labelledby="meine-daten" className="mt-4 rounded-2xl border border-border bg-card p-5">
+      <h2 id="meine-daten" className="text-sm font-semibold text-foreground">Meine Daten</h2>
+      <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+        Angemeldet als <span className="font-medium text-foreground">{email}</span>. Sie können alle Daten, die Ihrem
+        Konto zugeordnet sind, jederzeit herunterladen oder Ihr Konto samt dieser Daten löschen (Art. 15, 17 und 20 DSGVO).
+      </p>
+
+      <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+        <button
+          type="button"
+          onClick={doExport}
+          disabled={busy !== null}
+          className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-input bg-background px-4 text-sm font-medium text-foreground transition-colors hover:bg-muted disabled:opacity-50"
+        >
+          {busy === "export" ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Download className="h-4 w-4" aria-hidden />}
+          Meine Daten herunterladen
+        </button>
+        {!askDelete && (
+          <button
+            type="button"
+            onClick={() => { setAskDelete(true); setErr(null); }}
+            disabled={busy !== null}
+            className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-destructive/40 px-4 text-sm font-medium text-destructive transition-colors hover:bg-destructive/5 disabled:opacity-50"
+          >
+            <Trash2 className="h-4 w-4" aria-hidden />
+            Konto löschen
+          </button>
+        )}
+      </div>
+
+      {askDelete && (
+        <div className="mt-4 rounded-xl border border-destructive/40 bg-destructive/5 p-4">
+          <p className="text-sm font-semibold text-foreground">Konto endgültig löschen?</p>
+          <ul className="mt-2 list-disc space-y-1 pl-5 text-xs leading-relaxed text-muted-foreground">
+            <li>Gelöscht werden Ihr Konto, Copilot-Gespräche, Vorgänge mit Notizen und Dokumenten, Fallakten, Favoriten und Umfrageantworten.</li>
+            <li>Ihre Fehlermeldungen und Aufträge für neue Fälle bleiben für die Redaktion ohne Bezug zu Ihnen erhalten; Ihre Schilderungen werden entfernt.</li>
+            <li>Ihre Freischaltung für die Pilotphase endet. Das lässt sich nicht rückgängig machen – laden Sie Ihre Daten vorher herunter, wenn Sie sie behalten möchten.</li>
+          </ul>
+          <label htmlFor="delete-confirm" className="mt-3 block text-xs font-medium text-foreground">
+            Zur Bestätigung Ihre E-Mail-Adresse eingeben
+          </label>
+          <input
+            id="delete-confirm"
+            type="email"
+            value={confirm}
+            onChange={(e) => setConfirm(e.target.value)}
+            autoComplete="off"
+            className="mt-1.5 h-10 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none focus:border-destructive"
+            placeholder={email}
+          />
+          <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+            <button
+              type="button"
+              onClick={doDelete}
+              disabled={!confirmed || busy !== null}
+              className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-destructive px-4 text-sm font-semibold text-destructive-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
+            >
+              {busy === "delete" ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Trash2 className="h-4 w-4" aria-hidden />}
+              Konto und Daten löschen
+            </button>
+            <button
+              type="button"
+              onClick={() => { setAskDelete(false); setConfirm(""); }}
+              disabled={busy !== null}
+              className="inline-flex h-10 items-center justify-center rounded-lg px-4 text-sm font-medium text-muted-foreground hover:bg-muted"
+            >
+              Abbrechen
+            </button>
+          </div>
+        </div>
+      )}
+
+      {err && <p role="alert" className="mt-3 text-xs text-destructive">{err}</p>}
+    </section>
   );
 }

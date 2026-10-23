@@ -87,6 +87,7 @@ import { Route as ApiLegalEmbeddingsStatusRouteImport } from './routes/api/legal
 import { Route as ApiLegalEmbeddingsValidateRouteImport } from './routes/api/legal-embeddings-validate'
 import { Route as ApiLegalRetrievalSearchRouteImport } from './routes/api/legal-retrieval-search'
 import { Route as ApiLegalSourceCrawlRouteImport } from './routes/api/legal-source-crawl'
+import { Route as ApiMyDataRouteImport } from './routes/api/my-data'
 import { Route as ApiSchoolInviteRouteImport } from './routes/api/school-invite'
 import { Route as ApiSearchEmbeddingsQueryRouteImport } from './routes/api/search-embeddings-query'
 import { Route as ApiSearchEmbeddingsReindexRouteImport } from './routes/api/search-embeddings-reindex'
@@ -546,6 +547,11 @@ const ApiLegalSourceCrawlRoute = ApiLegalSourceCrawlRouteImport.update({
   path: '/api/legal-source-crawl',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiMyDataRoute = ApiMyDataRouteImport.update({
+  id: '/api/my-data',
+  path: '/api/my-data',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiSchoolInviteRoute = ApiSchoolInviteRouteImport.update({
   id: '/api/school-invite',
   path: '/api/school-invite',
@@ -955,6 +961,7 @@ export interface FileRoutesByFullPath {
   '/api/legal-embeddings-validate': typeof ApiLegalEmbeddingsValidateRoute
   '/api/legal-retrieval-search': typeof ApiLegalRetrievalSearchRoute
   '/api/legal-source-crawl': typeof ApiLegalSourceCrawlRoute
+  '/api/my-data': typeof ApiMyDataRoute
   '/api/school-invite': typeof ApiSchoolInviteRoute
   '/api/search-embeddings-query': typeof ApiSearchEmbeddingsQueryRoute
   '/api/search-embeddings-reindex': typeof ApiSearchEmbeddingsReindexRoute
@@ -1089,6 +1096,7 @@ export interface FileRoutesByTo {
   '/api/legal-embeddings-validate': typeof ApiLegalEmbeddingsValidateRoute
   '/api/legal-retrieval-search': typeof ApiLegalRetrievalSearchRoute
   '/api/legal-source-crawl': typeof ApiLegalSourceCrawlRoute
+  '/api/my-data': typeof ApiMyDataRoute
   '/api/school-invite': typeof ApiSchoolInviteRoute
   '/api/search-embeddings-query': typeof ApiSearchEmbeddingsQueryRoute
   '/api/search-embeddings-reindex': typeof ApiSearchEmbeddingsReindexRoute
@@ -1228,6 +1236,7 @@ export interface FileRoutesById {
   '/api/legal-embeddings-validate': typeof ApiLegalEmbeddingsValidateRoute
   '/api/legal-retrieval-search': typeof ApiLegalRetrievalSearchRoute
   '/api/legal-source-crawl': typeof ApiLegalSourceCrawlRoute
+  '/api/my-data': typeof ApiMyDataRoute
   '/api/school-invite': typeof ApiSchoolInviteRoute
   '/api/search-embeddings-query': typeof ApiSearchEmbeddingsQueryRoute
   '/api/search-embeddings-reindex': typeof ApiSearchEmbeddingsReindexRoute
@@ -1369,6 +1378,7 @@ export interface FileRouteTypes {
     | '/api/legal-embeddings-validate'
     | '/api/legal-retrieval-search'
     | '/api/legal-source-crawl'
+    | '/api/my-data'
     | '/api/school-invite'
     | '/api/search-embeddings-query'
     | '/api/search-embeddings-reindex'
@@ -1503,6 +1513,7 @@ export interface FileRouteTypes {
     | '/api/legal-embeddings-validate'
     | '/api/legal-retrieval-search'
     | '/api/legal-source-crawl'
+    | '/api/my-data'
     | '/api/school-invite'
     | '/api/search-embeddings-query'
     | '/api/search-embeddings-reindex'
@@ -1641,6 +1652,7 @@ export interface FileRouteTypes {
     | '/api/legal-embeddings-validate'
     | '/api/legal-retrieval-search'
     | '/api/legal-source-crawl'
+    | '/api/my-data'
     | '/api/school-invite'
     | '/api/search-embeddings-query'
     | '/api/search-embeddings-reindex'
@@ -1754,6 +1766,7 @@ export interface RootRouteChildren {
   ApiLegalEmbeddingsValidateRoute: typeof ApiLegalEmbeddingsValidateRoute
   ApiLegalRetrievalSearchRoute: typeof ApiLegalRetrievalSearchRoute
   ApiLegalSourceCrawlRoute: typeof ApiLegalSourceCrawlRoute
+  ApiMyDataRoute: typeof ApiMyDataRoute
   ApiSchoolInviteRoute: typeof ApiSchoolInviteRoute
   ApiSearchEmbeddingsQueryRoute: typeof ApiSearchEmbeddingsQueryRoute
   ApiSearchEmbeddingsReindexRoute: typeof ApiSearchEmbeddingsReindexRoute
@@ -2315,6 +2328,13 @@ declare module '@tanstack/react-router' {
       path: '/api/legal-source-crawl'
       fullPath: '/api/legal-source-crawl'
       preLoaderRoute: typeof ApiLegalSourceCrawlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/my-data': {
+      id: '/api/my-data'
+      path: '/api/my-data'
+      fullPath: '/api/my-data'
+      preLoaderRoute: typeof ApiMyDataRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/school-invite': {
@@ -3112,6 +3132,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiLegalEmbeddingsValidateRoute: ApiLegalEmbeddingsValidateRoute,
   ApiLegalRetrievalSearchRoute: ApiLegalRetrievalSearchRoute,
   ApiLegalSourceCrawlRoute: ApiLegalSourceCrawlRoute,
+  ApiMyDataRoute: ApiMyDataRoute,
   ApiSchoolInviteRoute: ApiSchoolInviteRoute,
   ApiSearchEmbeddingsQueryRoute: ApiSearchEmbeddingsQueryRoute,
   ApiSearchEmbeddingsReindexRoute: ApiSearchEmbeddingsReindexRoute,

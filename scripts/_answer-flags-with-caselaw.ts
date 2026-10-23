@@ -84,7 +84,8 @@ async function passagesFor(query: string): Promise<Passage[]> {
 const SYSTEM = [
   "Du prüfst für RechtKompass Schule (Schulrecht NRW, Zielgruppe Lehrkräfte), ob Gerichtsentscheidungen offene Rechtsfragen eines Praxisfalls beantworten.",
   "Für jede Frage: Beantwortet eine der übergebenen Fundstellen die Frage inhaltlich und für NRW (SchulG NRW, APO-BK, NRW-Landesrecht oder allgemein geltendes Bundesrecht)? Nur dann answer liefern; sonst passage = null.",
-  "Nicht ausreichend: Die Fundstelle streift das Thema nur, betrifft ein anderes Bundesland mit anderem Recht, oder beantwortet nur einen Einzelfall ohne verallgemeinerbaren Rechtssatz.",
+  "Nicht ausreichend: Die Fundstelle streift das Thema nur, betrifft ein anderes Bundesland mit anderem Recht, oder beantwortet nur einen Einzelfall ohne verallgemeinerbaren Rechtssatz. Die Antwort muss GENAU die gestellte Frage beantworten: Beantwortet die Fundstelle eine verwandte, aber andere Frage (z. B. Nachfrage bei den Eltern statt beim Arzt), dann passage = null.",
+  "Zitiere in answer ausschließlich die gewählte Fundstelle; keine weiteren Entscheidungen oder Aktenzeichen nennen.",
   "answer: 2 bis 4 Sätze in klarer Sprache für Lehrkräfte. Beginne mit der Rechtsaussage, nenne dann die Quelle in der Form '(OVG NRW, Beschluss vom 12.3.2020 – 19 B 123/20, Rn. 14)' mit dem Aktenzeichen der Fundstelle. Ist es ein Verwaltungsgericht, schreibe 'nach Auffassung des VG ...'. Keine Zahlen oder Fristen, die nicht in der Fundstelle stehen. Keine eigenen Rechtsbehauptungen über die Fundstelle hinaus.",
   "quote: 10 bis 40 Wörter WÖRTLICH und zusammenhängend aus der Fundstelle kopiert, die die Antwort trägt.",
   "question: die Frage in einer für Lehrkräfte verständlichen Kurzform (eine Zeile, endet mit '?').",
@@ -127,8 +128,11 @@ await Promise.all(Array.from({ length: 4 }, async () => {
         const okFile = p.fileNumber && it.answer.includes(p.fileNumber);
         const pq = new Set(extractQuantities(p.text).map((q) => `${q.value}|${q.unit}`));
         const okNums = extractQuantities(it.answer).every((q) => pq.has(`${q.value}|${q.unit}`));
+        // jedes Aktenzeichen in der Antwort muss das der Fundstelle sein (Fund 20.10.2026: ungeprüftes Zweitzitat)
+        const files = String(it.answer).match(/\b\d{1,3} [A-Z][A-Za-z]{0,3} \d{1,6}\/\d{2}\b/g) ?? [];
+        const okOnlyFile = files.every((fno) => fno === p.fileNumber);
         const answer = String(it.answer).trim().replace(/^\p{Ll}/u, (ch) => ch.toUpperCase());
-        if (okQuote && okFile && okNums) accepted.push({ flag: f, p, question: String(it.question || f.reason).trim(), answer });
+        if (okQuote && okFile && okNums && okOnlyFile) accepted.push({ flag: f, p, question: String(it.question || f.reason).trim(), answer });
         else stats.rejected++;
       }
       stats.cases++; stats.questions += fl.length; stats.answered += accepted.length;
